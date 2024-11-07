@@ -23,7 +23,7 @@ export default [
       "max-len": ["error", { code: 80 }],
       "no-trailing-spaces": "error",
       "no-multiple-empty-lines": ["error", { max: 1 }],
-      "no-console": "warn",
+      "no-console": "off",
       "arrow-parens": ["error", "always"],
       "react/jsx-first-prop-new-line": ["error", "multiline"],
       "react/jsx-max-props-per-line": ["error", { maximum: 1 }],
