@@ -7,8 +7,8 @@ export interface IUser {
     email: string;
     password: string;
     location?: object;
-    created_at?: Date;
-    updated_at?: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface IUserInput {
