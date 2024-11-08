@@ -21,9 +21,13 @@ export interface IUserInput {
     password: string;
     location?: object;
 }
-export interface IFrontUser {
+export interface IRegisterUser {
     username: string;
     email: string;
     password: string;
     location: object;
+}
+export interface ILoginUser {
+    email: string;
+    password: string;
 }
