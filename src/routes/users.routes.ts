@@ -2,7 +2,7 @@ import express, {NextFunction, Request, Response} from "express";
 import UserModel from "../models/user.js";
 import {handleError} from "../utils/handleError.js";
 import {type Model} from "sequelize";
-import {IUser, IUserInput} from "../interfaces";
+import {IUser, IUserInput} from "../interfaces/user.interfaces.js";
 
 import {hashPassword} from "../utils/passwordUtils.js";
 
