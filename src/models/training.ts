@@ -1,7 +1,7 @@
 import {DataTypes} from "sequelize";
-import {sequelize} from "../database.js";
+import {sequelize} from "../config/database.js";
 
-const Training = sequelize.define(
+const TrainingModel = sequelize.define(
     "Training",
     {
         id: {
@@ -46,4 +46,4 @@ const Training = sequelize.define(
     }
 );
 
-export default Training;
+export default TrainingModel;

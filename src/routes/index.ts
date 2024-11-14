@@ -1,7 +1,7 @@
 import express from "express";
 import usersRoutes from "./users.routes.js";
 import authRoutes from "./auth.routes.js";
-import trainingRoutes from "./training.routes.js";
+import trainingRoutes from "./training.routes";
 
 const router = express.Router({mergeParams: true});
 

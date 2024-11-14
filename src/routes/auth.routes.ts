@@ -7,7 +7,7 @@ import UserModel from "../models/user.js";
 import {nanoid} from "nanoid";
 import {verifyPassword, hashPassword} from "../utils/passwordUtils.js";
 import jwt from "jsonwebtoken";
-import {ILoginUser, IUser, IUserInput,IRegisterUser} from "../interfaces";
+import {ILoginUser, IUser, IUserInput,IRegisterUser} from "../interfaces/user.interfaces";
 
 type UserInstance = Model<IUser, IUserInput>;
 
