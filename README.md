@@ -14,37 +14,37 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File            | Description                                       |
-|-----------------------------|---------------------------------------------------|
-| `src/`                      | Main code directory                               |
-| ├── `config/`               | Configuration files (e.g., database, environment) |
-| │    └── `database.ts`      | Database connection configuration                 |
-| │    └── `env.d.ts`         | Environment variables                             |
-| ├── `controllers/`          | Controllers for handling requests                 |
-| │   └──   |                                                   |
-| ├── `models/`               | Database structure definitions (Models)           |
-| │   └── `user.ts`           | User model                                        |
-| │   └── `training.ts`       | Training model                                    |
-| ├── `routes/`               | API route definitions                             |
-| │   └── `auth.routes.ts`    | Routes for auth-related endpoints                 |
-| │   └── `user.routes.ts`    | Routes for user-related endpoints                 |
+| Directory / File          | Description                                       |
+|---------------------------|---------------------------------------------------|
+| `src/`                    | Main code directory                               |
+| ├── `config/`             | Configuration files (e.g., database, environment) |
+| │    └── `database.ts`    | Database connection configuration                 |
+| │    └── `env.d.ts`       | Environment variables                             |
+| ├── `controllers/`        | Controllers for handling requests                 |
+| │   └──                   |                                                   |
+| ├── `models/`             | Database structure definitions (Models)           |
+| │   └── `user.ts`         | User model                                        |
+| │   └── `training.ts`     | Training model                                    |
+| ├── `routes/`             | API route definitions                             |
+| │   └── `auth.routes.ts`  | Routes for auth-related endpoints                 |
+| │   └── `user.routes.ts`  | Routes for user-related endpoints                 |
 | │   └── `training.routes.ts` | Routes for training-related endpoints             |
-| ├── `services/`             | Business logic not tied to HTTP requests          |
-| │   └── `userService.ts`    | Service for user business logic                   |
-| ├── `middlewares/`          | Middleware functions for request handling         |
+| ├── `services/`           | Business logic not tied to HTTP requests          |
+| │   └── `userService.ts`  | Service for user business logic                   |
+| ├── `middlewares/`        | Middleware functions for request handling         |
 | │   └── `authMiddleware.ts` | Middleware for user authentication                |
-| ├── `utils/`                | Utility and helper functions                      |
-| │   └── `hashPassword.ts`   | Function for password hashing                     |
-| ├── `interfaces/`           | TypeScript interfaces                             |
-| │   └── `userInterface.ts`  | User interface                                    |
-| ├── `app.ts`                | Main application file (server initialization)     |
-| └── `server.ts`             | File to start the server                          |
-| `.env`                      | Environment variables file                        |
-| `.eslintrc.json`            | ESLint configuration                              |
-| `.prettierrc`               | Prettier configuration                            |
-| `.gitignore`                | Git ignore file                                   |
-| `package.json`              | Node.js dependencies file                         |
-| `README.md`                 | Project documentation                             |
+| ├── `utils/`              | Utility and helper functions                      |
+| │   └── `passwordUtils.ts` | Function for password hashing                     |
+| │   └── `handleError.ts`  | Function for password hashing                     |
+| ├── `interfaces/`         | TypeScript interfaces                             |
+| │   └── `userInterface.ts` | User interface                                    |
+| ├── `app.ts`              | Main application file (server initialization)     |
+| └── `server.ts`           | File to start the server                          |
+| `.eslintrc.json`          | ESLint configuration                              |
+| `.prettierrc`             | Prettier configuration                            |
+| `.gitignore`              | Git ignore file                                   |
+| `package.json`            | Node.js dependencies file                         |
+| `README.md`               | Project documentation                             |
 ## Technologies
 
 - **Node.js**
