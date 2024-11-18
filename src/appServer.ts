@@ -2,6 +2,7 @@ import express, {Express} from "express";
 import dotenv from "dotenv";
 import { sequelize } from "./config/database.js";
 import router from "./routes/index.js";
+import {errorHandler} from "./middlewares/errorHendler.js";
 
 dotenv.config();
 
@@ -27,10 +28,7 @@ appServer.use(express.json());
 appServer.use(express.urlencoded({ extended: true }));
 appServer.use("/api", router);
 
-appServer.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Internal Server Error" });
-});
+appServer.use(errorHandler);
 
 async function start(): Promise<void> {
   try {
