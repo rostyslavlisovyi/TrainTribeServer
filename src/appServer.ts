@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import { sequelize } from "./config/sequelize.js";
 import { connectDB } from "./config/database.js";
 import router from "./routes/index.js";
-import { errorHandler } from "./middlewares/errorHendler.js";
 import { syncMock } from "./config/syncMock.js";
 
 dotenv.config();
@@ -23,8 +22,6 @@ const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
 appServer.use(express.json());
 appServer.use(express.urlencoded({ extended: true }));
 appServer.use("/api", router);
-
-appServer.use(errorHandler);
 
 async function start(): Promise<void> {
   try {
