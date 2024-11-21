@@ -1,111 +1,87 @@
-import express, { NextFunction, Request, Response } from "express";
-import { handleError } from "../utils/handleError.js";
-import { type Model } from "sequelize";
+import express, { Request, Response, Router } from "express";
+import UserModel from "../models/MongoDB/user.model.mongoDB.js";
 
-import UserModel from "../models/user.js";
+import { IUser } from "../interfaces/user.interfaces";
 
-import { nanoid } from "nanoid";
-import { verifyPassword, hashPassword } from "../utils/passwordUtils.js";
-import jwt from "jsonwebtoken";
-import {
-  ILoginUser,
-  IUser,
-  IUserInput,
-  IRegisterUser
-} from "../interfaces/user.interfaces";
+import { hashPassword, verifyPassword } from "../utils/passwordUtils.js";
+import { HydratedDocument } from "mongoose";
+import { generateToken } from "../utils/jwt.utils.js";
 
-type UserInstance = Model<IUser, IUserInput>;
+const authRoute: Router = express.Router({ mergeParams: true });
 
-const authRoutes = express.Router({ mergeParams: true });
-
-// @ts-ignore
-authRoutes.post(
-  "/signUp",
-  async (req: Request, res: Response, next: NextFunction) => {
+authRoute.post(
+  "/signup",
+  async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log("post");
-      const { username, email, password, location }: IRegisterUser = req.body;
-      const existingUser: UserInstance | null = await UserModel.findOne({
-        where: {
-          email: email
-        }
-      });
+      const { email, password } = req.body;
+
+      const existingUser: HydratedDocument<IUser> | null =
+        await UserModel.findOne().where("email").equals(email);
+
+      if (existingUser) {
+        res.status(409).json({ message: "User already exists" });
+        return;
+      }
       const hashedPassword: string = await hashPassword(password);
-      if (!existingUser) {
-        console.log("create user");
-        const newUser: IUserInput = {
-          external_id: nanoid(12),
-          username: username,
-          first_name: "",
-          last_name: "",
-          email: email,
-          password: hashedPassword,
-          location: location
-        };
-        await UserModel.create<UserInstance>(newUser);
-        const token: string = jwt.sign(
-          {
-            email: email
-          },
-          process.env.JWT_SECRET ?? "",
-          {
-            expiresIn: "1h"
-          }
-        );
-        console.log("User created");
-        return res.status(201).json({ token: token, user: newUser });
-      } else {
-        console.log("User already exists");
-        return res.status(409).json({ message: "User already exists" });
-      }
-    } catch (error) {
-      handleError(error);
-      next(error);
-    }
-  }
-);
-
-// @ts-ignore
-authRoutes.post(
-  "/signIn",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      console.log("post");
-      const { email, password }: ILoginUser = req.body;
-      const user: UserInstance | null = await UserModel.findOne({
-        where: {
-          email: email
-        }
+      const newUser = new UserModel({
+        email,
+        password_hashed: hashedPassword,
+        username: "",
+        first_name: "",
+        last_name: "",
+        image_url: "",
+        latitude: 0,
+        longitude: 0
       });
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-      const userPassword: string = user.getDataValue("password");
-      console.log("userPassword", userPassword);
-      console.log("password", password);
-      const passwordMatch: boolean = await verifyPassword(
-        password,
-        userPassword
-      );
-      if (!passwordMatch) {
-        return res.status(401).json({ message: "Invalid password" });
-      }
-      const token: string = jwt.sign(
-        {
-          id: user.getDataValue("id"),
-          email: user.getDataValue("email")
-        },
-        process.env.JWT_SECRET ?? "",
-        {
-          expiresIn: "1h"
-        }
-      );
-      return res.status(200).json({ token: token });
+      const savedUser: IUser = await newUser.save();
+      const token: string = generateToken({ id: savedUser._id });
+      res.status(201).json({
+        user: savedUser,
+        token
+      });
+      return;
     } catch (error) {
-      handleError(error);
-      next(error);
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 );
 
-export default authRoutes;
+authRoute.post(
+  "/signin",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+
+      const existingUser: HydratedDocument<IUser> | null =
+        await UserModel.findOne().where("email").equals(email);
+
+      if (!existingUser) {
+        res.status(404).json({ message: "USER DOES NOT EXIST" });
+        return;
+      }
+
+      const isPasswordCorrect: boolean = await verifyPassword(
+        password,
+        existingUser.password_hashed
+      );
+
+      if (!isPasswordCorrect) {
+        res.status(401).json({ message: "INVALID CREDENTIALS" });
+        return;
+      }
+      const token: string = generateToken({ id: existingUser._id });
+      res.status(200).json({
+        user: existingUser,
+        token
+      });
+      return;
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
+      return;
+    }
+  }
+);
+
+export default authRoute;
