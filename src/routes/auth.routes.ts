@@ -10,7 +10,7 @@ import { generateToken } from "../utils/jwt.utils.js";
 const authRoute: Router = express.Router({ mergeParams: true });
 
 authRoute.post(
-  "/signup",
+  "/signUp",
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
@@ -19,7 +19,7 @@ authRoute.post(
         await UserModel.findOne().where("email").equals(email);
 
       if (existingUser) {
-        res.status(409).json({ message: "User already exists" });
+        res.status(409).json({ message: "USER ALREADY EXIST" });
         return;
       }
       const hashedPassword: string = await hashPassword(password);
@@ -42,13 +42,13 @@ authRoute.post(
       return;
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
     }
   }
 );
 
 authRoute.post(
-  "/signin",
+  "/signIn",
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
@@ -78,7 +78,7 @@ authRoute.post(
       return;
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
       return;
     }
   }
