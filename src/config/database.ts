@@ -1,14 +1,19 @@
-import { Sequelize } from "sequelize";
-import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { sequelize } from "./sequelize.js";
 
-dotenv.config();
+type DBType = "mysql" | "mongodb";
+export const connectDB = async (): Promise<void> => {
+  const dbType: DBType = process.env.DB_TYPE;
 
-export const sequelize = new Sequelize(
-  process.env.MYSQL_DB_NAME ?? "",
-  process.env.MYSQL_DB_USER ?? "",
-  process.env.MYSQL_DB_PASSWORD ?? "",
-  {
-    host: process.env.MYSQL_DB_HOST ?? "",
-    dialect: "mysql"
+  if (dbType === "mysql") {
+    console.log("Connecting to MySQL database...");
+    await sequelize.authenticate();
+    console.log("Connected to MySQL database");
+  } else if (dbType === "mongodb") {
+    console.log("Connecting to MongoDB database...");
+    await mongoose.connect(process.env.MONGO_DB_URI ?? "");
+    console.log("Connected to MongoDB database");
+  } else {
+    throw new Error(`Unsupported DB_TYPE: ${dbType}`);
   }
-);
+};
