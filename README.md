@@ -21,7 +21,6 @@ Before installing and running the server, make sure the following tools are inst
 
 - **Node.js** (v16.x or later)
 - **npm** (v8.x or later)
-- **MySQL** (v8.x or later)
 
 ### Installation
 
@@ -34,41 +33,27 @@ Before installing and running the server, make sure the following tools are inst
    ```
 
 2. **Install Dependencies**:
+
    ```bash
    npm install
 
    ```
+
 3. **Set Up Environment Variables**:
    Create a `.env` file in the root directory and add the following environment variables:
    ```bash
    PORT=666
-   DB_HOST=localhost
-   DB_USER=db_username
-   DB_PASSWORD=db_password
-   DB_NAME=db_name
+   
+   DB_TYPE=mongoDB
+   
+   
    JWT_SECRET=secret_key
+   JWT_EXPIRES_IN=12h
+   
+    MONGO_DB_URI='your mongo db uri'
    ```
-4. **Create new MySQL Database**:
-   1. Open new terminal and run `mysql -u root -p` to log in to MySQL.
-   2. Create a new database by running the following command:
-      ```sql
-      CREATE DATABASE db_name;
-      ```
-   3. Verify that the database was created by running:
-      ```sql
-      SHOW DATABASES;
-      ```
-   4. Create a new user and grant privileges to the database:
-      ```sql
-      CREATE USER 'db_username'@'localhost' IDENTIFIED BY 'db_password';
-      GRANT ALL PRIVILEGES ON db_name.* TO 'db_username'@'localhost';
-      FLUSH PRIVILEGES;
-      ```
-   5. Use the database by running:
-      ```sql
-      USE db_name;
-      ```
-5. **Run the Server**:
+   
+4. **Run the Server**:
    ```bash
    npm run build
    npm start
@@ -80,46 +65,115 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File           | Description                                       |
-| -------------------------- | ------------------------------------------------- |
-| `src/`                     | Main code directory                               |
-| ├── `config/`              | Configuration files (e.g., database, environment) |
-| │ └── `database.ts`        | Database connection configuration                 |
-| │ └── `env.d.ts`           | Environment variables                             |
-| ├── `controllers/`         | Controllers for handling requests                 |
-| │ └──                      |                                                   |
-| ├── `models/`              | Database structure definitions (Models)           |
-| │ └── `user.ts`            | User model                                        |
-| │ └── `training.ts`        | Training model                                    |
-| ├── `routes/`              | API route definitions                             |
-| │ └── `auth.routes.ts`     | Routes for auth-related endpoints                 |
-| │ └── `user.routes.ts`     | Routes for user-related endpoints                 |
-| │ └── `training.routes.ts` | Routes for training-related endpoints             |
-| ├── `services/`            | Business logic not tied to HTTP requests          |
-| │ └── `userService.ts`     | Service for user business logic                   |
-| ├── `middlewares/`         | Middleware functions for request handling         |
-| │ └── `authMiddleware.ts`  | Middleware for user authentication                |
-| ├── `utils/`               | Utility and helper functions                      |
-| │ └── `passwordUtils.ts`   | Function for password hashing                     |
-| │ └── `handleError.ts`     | Function for password hashing                     |
-| ├── `interfaces/`          | TypeScript interfaces                             |
-| │ └── `userInterface.ts`   | User interface                                    |
-| ├── `app.ts`               | Main application file (server initialization)     |
-| └── `server.ts`            | File to start the server                          |
-| `.eslintrc.json`           | ESLint configuration                              |
-| `.prettierrc`              | Prettier configuration                            |
-| `.gitignore`               | Git ignore file                                   |
-| `package.json`             | Node.js dependencies file                         |
-| `README.md`                | Project documentation                             |
+| Directory / File                    | Description                                        |
+|-------------------------------------|----------------------------------------------------|
+| `src/`                              | Main code directory                                |
+| ├── `config/`                       | Configuration files (e.g., database, environment)  |
+| │ └── `database.ts`                 | Database connection configuration                  |
+| │ └── `sequelize.ts`                | Connect to MySql DB                                |
+| │ └── `syncMock.ts`                 | Connect do MongoDB and sync collections with Mock  |
+| ├── `interfaces/`                   | Controllers for handling requests                  |
+| │ └── `sport.interfaces.ts`         | Define TypeScript interfaces for sport entities    |
+| │ └── `training.interfaces.ts`      | Define TypeScript interfaces for training entities |
+| │ └── `user.interfaces.ts`          | Define TypeScript interfaces for user entities     |
+| ├── `middleware/`                   | Middleware functions                               |
+| │ └── `auth.middleware.ts`          | Middleware for handling user authentication        |
+| ├── `mock/`                         | Mock data for development and testing              |
+| │ └── `sportsMock.mock.ts`          | Mock data for sports-related entities              |
+| ├── `models/`                       | Database structure definitions (Models)            |
+| │ └── `MongoDB/`                    | MongoDB models for application                     |
+| │ │  └── `sport.model.mongoDB.ts`   | MongoDB model for sports entities                  |
+| │ │  └── `training.model.mongoDB.ts`| MongoDB model for training entities                |
+| │ │  └── `user.model.mongoDB.ts`    | MongoDB model for user entities                    |
+| │ └── `mySql/`                      | MySQL models for application                       |
+| │    └── `user.model.mySql.ts`      | MySQL model for user entities                      |
+| │    └── `training.ts`              | MySQL model for training entities                  |
+| ├── `routes/`                       | API route definitions                              |
+| │ └── `index.ts`                    | Main router combining all routes                   |
+| │ └── `auth.routes.ts`              | Routes for authentication-related endpoints        |
+| │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
+| │ └── `training.routes.ts`          | Routes for training-related endpoints              |
+| │ └── `sport.routes.ts`             | Routes for sport-related endpoints                 |
+| ├── `types/`                        | Global TypeScript type definitions                 |
+| │ └── `env.d.ts`                    | Type definitions for environment variables         |
+| │ └── `express.d.ts`                | Extended Express types for TypeScript              |
+| ├── `utils/`                        | Utility and helper functions                       |
+| │ └── `jwt.utils.ts`                | Utility functions for working with JWT tokens      |
+| │ └── `password.utils.ts`           | Function for password hashing and verification     |
+| └── `appServer.ts`                  | Main server initialization logic                   |
+| `.eslintrc.json`                    | ESLint configuration                               |
+| `.prettierrc`                       | Prettier configuration                             |
+| `.gitignore`                        | Git ignore file                                    |
+| `package.json`                      | Node.js dependencies file                          |
+| `README.md`                         | Project documentation                              |
 
 ## Technologies
 
 - **Node.js**
 - **Express**
-- **MySQL**
-- **Sequelize**
+- **Mongoose**
 - **Bcrypt**
 - **JWT**
 - **Dotenv**
-- **Nodemon**
-- **Cors**
+- **nanoid**
+
+## API Endpoints
+
+The server provides the following API endpoints:
+
+### **Authentication**
+| Method | Endpoint           | Description                  |
+|--------|--------------------|------------------------------|
+| POST   | `/api/auth/signUp` | Register a new user          |
+| POST   | `/api/auth/signIn` | Log in as an existing user   |
+
+### **User**
+| Method | Endpoint    | Description                                  |
+|--------|-------------|----------------------------------------------|
+| GET    | `/api/user` | Fetch user data                              |
+| PUT    | `/api/user` | Update user by Token (ID extracted from JWT) |
+| DELETE | `/api/user` | Delete user by Token (ID extracted from JWT) |
+
+
+
+
+
+[//]: # (4. **Create new MySQL Database**:)
+
+[//]: # (   1. Open new terminal and run `mysql -u root -p` to log in to MySQL.)
+
+[//]: # (   2. Create a new database by running the following command:)
+
+[//]: # (      ```sql)
+
+[//]: # (      CREATE DATABASE db_name;)
+
+[//]: # (      ```)
+
+[//]: # (   3. Verify that the database was created by running:)
+
+[//]: # (      ```sql)
+
+[//]: # (      SHOW DATABASES;)
+
+[//]: # (      ```)
+
+[//]: # (   4. Create a new user and grant privileges to the database:)
+
+[//]: # (      ```sql)
+
+[//]: # (      CREATE USER 'db_username'@'localhost' IDENTIFIED BY 'db_password';)
+
+[//]: # (      GRANT ALL PRIVILEGES ON db_name.* TO 'db_username'@'localhost';)
+
+[//]: # (      FLUSH PRIVILEGES;)
+
+[//]: # (      ```)
+
+[//]: # (   5. Use the database by running:)
+
+[//]: # (      ```sql)
+
+[//]: # (      USE db_name;)
+
+[//]: # (      ```)
