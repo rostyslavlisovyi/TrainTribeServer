@@ -38,7 +38,7 @@ userRoute.put("/", authenticate, async (req:Request, res:Response):Promise<void>
       }, {} as Record<string, any>);
 
       if (Object.keys(updates).length === 0) {
-        res.status(400).json({message: "NO FIELDS PROVIDED FOR UPDATEN"});
+        res.status(400).json({message: "NO FIELDS PROVIDED FOR UPDATE"});
         return;
       }
 
@@ -82,7 +82,7 @@ userRoute.delete("/", authenticate, async (req:Request, res:Response):Promise<vo
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({message: "INTERNAL SERVER ERROR"});
+    res.status(500).json({message: "INTERNAL SERVER ERROR", error});
   }
 });
 export default userRoute;

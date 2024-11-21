@@ -3,7 +3,7 @@ import UserModel from "../models/MongoDB/user.model.mongoDB.js";
 
 import { IUser } from "../interfaces/user.interfaces";
 
-import { hashPassword, verifyPassword } from "../utils/passwordUtils.js";
+import { hashPassword, verifyPassword } from "../utils/password.utils.js";
 import { HydratedDocument } from "mongoose";
 import { generateToken } from "../utils/jwt.utils.js";
 
@@ -14,6 +14,11 @@ authRoute.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({ message: "EMAIL & PASSWORD ARE REQUIRED" });
+        return;
+      }
 
       const existingUser: HydratedDocument<IUser> | null =
         await UserModel.findOne().where("email").equals(email);
@@ -42,7 +47,7 @@ authRoute.post(
       return;
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+      res.status(500).json({ message: "INTERNAL SERVER ERROR", error });
     }
   }
 );
@@ -53,11 +58,16 @@ authRoute.post(
     try {
       const { email, password } = req.body;
 
+      if (!email || !password) {
+        res.status(400).json({ message: "EMAIL & PASSWORD ARE REQUIRED" });
+        return;
+      }
+
       const existingUser: HydratedDocument<IUser> | null =
         await UserModel.findOne().where("email").equals(email);
 
       if (!existingUser) {
-        res.status(404).json({ message: "USER DOES NOT EXIST" });
+        res.status(404).json({ message: "INVALID CREDENTIALS" });
         return;
       }
 
@@ -78,7 +88,7 @@ authRoute.post(
       return;
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+      res.status(500).json({ message: "INTERNAL SERVER ERROR", error });
       return;
     }
   }
