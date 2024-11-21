@@ -4,7 +4,6 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch 'src/**/*.ts' --require ts-node/register src/appServer.ts",
     "start": "node dist/appServer.js",
     "build": "tsc",
     "format": "prettier --write .",
@@ -21,6 +20,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.2",
     "mysql2": "^3.11.4",
     "nanoid": "^5.0.8",
     "sequelize": "^6.37.5"
@@ -36,7 +36,6 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.2",
     "globals": "^15.11.0",
-    "nodemon": "^3.1.7",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
