@@ -12,9 +12,9 @@ export const generateToken = (
   return jwt.sign(payload, secret, { expiresIn });
 };
 
-export const validateToken = (token: string): string | JwtPayload | null => {
+export const validateToken = (token: string): JwtPayload & {id:string} | null => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET) as JwtPayload & {id:string};
   } catch (error) {
     console.error("Error validating token", error);
     return null;
