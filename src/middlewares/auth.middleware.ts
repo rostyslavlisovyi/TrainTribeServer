@@ -11,14 +11,14 @@ export const authenticate = async (
     const token = authHeader?.split(" ")[1];
 
     if (!token) {
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "UNAUTHORIZED" });
       return;
     }
 
     const decodedToken = validateToken(token);
 
     if (!decodedToken) {
-      res.status(401).json({ message: "Invalid token" });
+      res.status(401).json({ message: "INVALID TOKEN" });
       return;
     }
 
@@ -26,6 +26,6 @@ export const authenticate = async (
     next();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "INTERNAL SERVER ERROR", error });
   }
 };
