@@ -1,18 +1,14 @@
-import express, {Express} from "express";
+import express, { Express } from "express";
 import dotenv from "dotenv";
-import { sequelize } from "./config/database.js";
+import { sequelize } from "./config/sequelize.js";
+import { connectDB } from "./config/database.js";
 import router from "./routes/index.js";
-import {errorHandler} from "./middlewares/errorHendler.js";
+import { errorHandler } from "./middlewares/errorHendler.js";
+import { syncMock } from "./config/syncMock.js";
 
 dotenv.config();
 
-const REQUIRED_ENV_VARS: string[] = [
-    "SERVER_PORT",
-    "MYSQL_DB_HOST",
-    "MYSQL_DB_USER",
-    "MYSQL_DB_PASSWORD",
-    "MYSQL_DB_NAME"
-];
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE", "JWT_SECRET"];
 
 for (const varName of REQUIRED_ENV_VARS) {
   if (!process.env[varName]) {
@@ -32,8 +28,9 @@ appServer.use(errorHandler);
 
 async function start(): Promise<void> {
   try {
-    await sequelize.authenticate();
+    await connectDB();
     console.log("Connected to database");
+    await syncMock();
     appServer.listen(SERVER_PORT, () => {
       console.log(`Server is running on http://localhost:${SERVER_PORT}`);
     });
@@ -43,7 +40,7 @@ async function start(): Promise<void> {
   }
 }
 
-process.on("SIGINT", async (): Promise<void>  => {
+process.on("SIGINT", async (): Promise<void> => {
   console.log("Gracefully shutting down...");
   await sequelize.close();
   process.exit(0);
