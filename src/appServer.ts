@@ -4,6 +4,7 @@ import { sequelize } from "./config/sequelize.js";
 import { connectDB } from "./config/database.js";
 import router from "./routes/index.js";
 import { syncMock } from "./config/syncMock.js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const appServer: Express = express();
 const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
 
 appServer.use(express.json());
+appServer.use(cors());
 appServer.use(express.urlencoded({ extended: true }));
 appServer.use("/api", router);
 
