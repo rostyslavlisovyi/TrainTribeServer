@@ -3,7 +3,7 @@ import { sequelize } from "./sequelize.js";
 
 type DBType = "mysql" | "mongodb";
 export const connectDB = async (): Promise<void> => {
-  const dbType: DBType = process.env.DB_TYPE;
+  const dbType: DBType = (process.env.DB_TYPE as DBType) || "mongodb"; // Default to "mongodb"
 
   if (dbType === "mysql") {
     console.log("Connecting to MySQL database...");
