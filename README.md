@@ -41,18 +41,19 @@ Before installing and running the server, make sure the following tools are inst
 
 3. **Set Up Environment Variables**:
    Create a `.env` file in the root directory and add the following environment variables:
+
    ```bash
    PORT=666
-   
+
    DB_TYPE=mongoDB
+
+   AUTH0_AUDIENCE='your auth0 audience'
    
-   
-   JWT_SECRET=secret_key
-   JWT_EXPIRES_IN=12h
-   
+   AUTH0_DOMAIN='your auth0 domain'
+
     MONGO_DB_URI='your mongo db uri'
    ```
-   
+
 4. **Run the Server**:
    ```bash
    npm run build
@@ -66,7 +67,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 ## Project Structure
 
 | Directory / File                    | Description                                        |
-|-------------------------------------|----------------------------------------------------|
+| ----------------------------------- | -------------------------------------------------- |
 | `src/`                              | Main code directory                                |
 | ├── `config/`                       | Configuration files (e.g., database, environment)  |
 | │ └── `database.ts`                 | Database connection configuration                  |
@@ -82,15 +83,14 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `sportsMock.mock.ts`          | Mock data for sports-related entities              |
 | ├── `models/`                       | Database structure definitions (Models)            |
 | │ └── `MongoDB/`                    | MongoDB models for application                     |
-| │ │  └── `sport.model.mongoDB.ts`   | MongoDB model for sports entities                  |
-| │ │  └── `training.model.mongoDB.ts`| MongoDB model for training entities                |
-| │ │  └── `user.model.mongoDB.ts`    | MongoDB model for user entities                    |
+| │ │ └── `sport.model.mongoDB.ts`    | MongoDB model for sports entities                  |
+| │ │ └── `training.model.mongoDB.ts` | MongoDB model for training entities                |
+| │ │ └── `user.model.mongoDB.ts`     | MongoDB model for user entities                    |
 | │ └── `mySql/`                      | MySQL models for application                       |
-| │    └── `user.model.mySql.ts`      | MySQL model for user entities                      |
-| │    └── `training.ts`              | MySQL model for training entities                  |
+| │ └── `user.model.mySql.ts`         | MySQL model for user entities                      |
+| │ └── `training.ts`                 | MySQL model for training entities                  |
 | ├── `routes/`                       | API route definitions                              |
 | │ └── `index.ts`                    | Main router combining all routes                   |
-| │ └── `auth.routes.ts`              | Routes for authentication-related endpoints        |
 | │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
 | │ └── `training.routes.ts`          | Routes for training-related endpoints              |
 | │ └── `sport.routes.ts`             | Routes for sport-related endpoints                 |
@@ -98,8 +98,6 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `env.d.ts`                    | Type definitions for environment variables         |
 | │ └── `express.d.ts`                | Extended Express types for TypeScript              |
 | ├── `utils/`                        | Utility and helper functions                       |
-| │ └── `jwt.utils.ts`                | Utility functions for working with JWT tokens      |
-| │ └── `password.utils.ts`           | Function for password hashing and verification     |
 | └── `appServer.ts`                  | Main server initialization logic                   |
 | `.eslintrc.json`                    | ESLint configuration                               |
 | `.prettierrc`                       | Prettier configuration                             |
@@ -122,58 +120,86 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 The server provides the following API endpoints:
 
 ### **Authentication**
-| Method | Endpoint           | Description                  |
-|--------|--------------------|------------------------------|
-| POST   | `/api/auth/signUp` | Register a new user          |
-| POST   | `/api/auth/signIn` | Log in as an existing user   |
+
+| Method | Endpoint           | Description                |
+| ------ | ------------------ | -------------------------- |
+| POST   | `/api/auth/signUp` | Register a new user        |
+| POST   | `/api/auth/signIn` | Log in as an existing user |
 
 ### **User**
+
 | Method | Endpoint    | Description                                  |
-|--------|-------------|----------------------------------------------|
+| ------ | ----------- | -------------------------------------------- |
 | GET    | `/api/user` | Fetch user data                              |
 | PUT    | `/api/user` | Update user by Token (ID extracted from JWT) |
 | DELETE | `/api/user` | Delete user by Token (ID extracted from JWT) |
 
+## Models
 
+### User
 
+| Field              | Type         | Required | Unique | Description                                                                   |
+| ------------------ | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
+| `_id`              | `String`     | Yes      | Yes    | User's id.                                                                    |
+| `username`         | `String`     | No       | No     | User's display name.                                                          |
+| `first_name`       | `String`     | No       | No     | User's first name.                                                            |
+| `last_name`        | `String`     | No       | No     | User's last name.                                                             |
+| `email`            | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
+| `sports`           | `[ObjectId]` | Yes      | No     | Array of references to the `Sport` collection, representing user preferences. |
+| `password_hashed`  | `String`     | Yes      | No     | Hashed password for authentication.                                           |
+| `image_url`        | `String`     | No       | No     | URL to the user's profile picture.                                            |
+| `latitude`         | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
+| `longitude`        | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
+| `training_created` | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
+| `training_join`    | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
+| `createdAt`        | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
+| `updatedAt`        | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
 
+### Training Model
 
-[//]: # (4. **Create new MySQL Database**:)
+The `Training` model represents training events created by users in the system.
 
-[//]: # (   1. Open new terminal and run `mysql -u root -p` to log in to MySQL.)
+| **Field**      | **Type**     | **Required** | **Description**                                                                              |
+| -------------- | ------------ | ------------ | -------------------------------------------------------------------------------------------- |
+| `title`        | `String`     | Yes          | The title or name of the training event.                                                     |
+| `description`  | `String`     | No           | Additional details about the training event.                                                 |
+| `date`         | `Date`       | Yes          | The date and time of the training event.                                                     |
+| `latitude`     | `Number`     | Yes          | The geographical latitude where the training event will take place.                          |
+| `longitude`    | `Number`     | Yes          | The geographical longitude where the training event will take place.                         |
+| `sport`        | `ObjectId`   | Yes          | A reference to the `Sport` collection, representing the sport category for the training.     |
+| `creator`      | `ObjectId`   | Yes          | A reference to the `User` collection, identifying the creator of the training event.         |
+| `participants` | `ObjectId[]` | No           | An array of references to the `User` collection, representing users who joined the training. |
+| `createdAt`    | `Date`       | Auto         | The timestamp when the training document was created.                                        |
+| `updatedAt`    | `Date`       | Auto         | The timestamp when the training document was last updated.                                   |
 
-[//]: # (   2. Create a new database by running the following command:)
+### Sport Model
 
-[//]: # (      ```sql)
+The `Sport` model represents various sports that can be associated with users or training events in the system.
 
-[//]: # (      CREATE DATABASE db_name;)
+| **Field** | **Type** | **Required** | **Description**                        |
+| --------- | -------- | ------------ | -------------------------------------- |
+| `_id`     | `String` | Yes          | The name of the sport. Must be unique. |
+| `name`    | `String` | Yes          | The name of the sport. Must be unique. |
 
-[//]: # (      ```)
+---
 
-[//]: # (   3. Verify that the database was created by running:)
-
-[//]: # (      ```sql)
-
-[//]: # (      SHOW DATABASES;)
-
-[//]: # (      ```)
-
-[//]: # (   4. Create a new user and grant privileges to the database:)
-
-[//]: # (      ```sql)
-
-[//]: # (      CREATE USER 'db_username'@'localhost' IDENTIFIED BY 'db_password';)
-
-[//]: # (      GRANT ALL PRIVILEGES ON db_name.* TO 'db_username'@'localhost';)
-
-[//]: # (      FLUSH PRIVILEGES;)
-
-[//]: # (      ```)
-
-[//]: # (   5. Use the database by running:)
-
-[//]: # (      ```sql)
-
-[//]: # (      USE db_name;)
-
-[//]: # (      ```)
+[//]: # "4. **Create new MySQL Database**:"
+[//]: # "   1. Open new terminal and run `mysql -u root -p` to log in to MySQL."
+[//]: # "   2. Create a new database by running the following command:"
+[//]: # "      ```sql"
+[//]: # "      CREATE DATABASE db_name;"
+[//]: # "      ```"
+[//]: # "   3. Verify that the database was created by running:"
+[//]: # "      ```sql"
+[//]: # "      SHOW DATABASES;"
+[//]: # "      ```"
+[//]: # "   4. Create a new user and grant privileges to the database:"
+[//]: # "      ```sql"
+[//]: # "      CREATE USER 'db_username'@'localhost' IDENTIFIED BY 'db_password';"
+[//]: # "      GRANT ALL PRIVILEGES ON db_name.* TO 'db_username'@'localhost';"
+[//]: # "      FLUSH PRIVILEGES;"
+[//]: # "      ```"
+[//]: # "   5. Use the database by running:"
+[//]: # "      ```sql"
+[//]: # "      USE db_name;"
+[//]: # "      ```"
