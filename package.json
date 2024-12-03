@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "dev": "tsx --env-file=.env --watch src/appServer.ts",
     "start": "node dist/appServer.js",
     "build": "tsc",
     "format": "prettier --write .",
