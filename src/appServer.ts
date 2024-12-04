@@ -8,7 +8,7 @@ import cors from "cors";
 
 dotenv.config();
 
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE", "JWT_SECRET"];
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE"];
 
 for (const varName of REQUIRED_ENV_VARS) {
   if (!process.env[varName]) {
