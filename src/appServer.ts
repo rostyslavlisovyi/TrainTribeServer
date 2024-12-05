@@ -8,28 +8,58 @@ import cors from "cors";
 
 dotenv.config();
 
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE", "JWT_SECRET"];
-
-for (const varName of REQUIRED_ENV_VARS) {
+// Environment Variables Validation
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE", "JWT_SECRET"] as const;
+REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(`Environment variable ${varName} is not defined.`);
     process.exit(1);
   }
-}
+});
 
-const appServer: Express = express();
+// Constants
 const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
 
+// Initialize Express App
+const appServer: Express = express();
+
+//Middlewares
 appServer.use(express.json());
 appServer.use(cors());
 appServer.use(express.urlencoded({ extended: true }));
+
+// Routes
 appServer.use("/api", router);
 
-async function start(): Promise<void> {
+// Graceful Shutdown
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.log(`Received ${signal}. Gracefully shutting down...`);
   try {
+    await sequelize.close();
+    console.log("Database connection closed.");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown: ", error);
+    process.exit(1);
+  }
+}
+
+// Register Shutdown Hooks
+["SIGINT", "SIGTERM"].forEach((signal) =>
+    process.on(signal, () => gracefulShutdown(signal))
+);
+
+// Start Server
+async function startServer(): Promise<void> {
+  try {
+    // Connect to database
     await connectDB();
-    console.log("Connected to database");
+
+    // Sync mock data
     await syncMock();
+    console.log("Mock data synced successfully.");
+
+    // Start listening
     appServer.listen(SERVER_PORT, () => {
       console.log(`Server is running on http://localhost:${SERVER_PORT}`);
     });
@@ -39,16 +69,7 @@ async function start(): Promise<void> {
   }
 }
 
-process.on("SIGINT", async (): Promise<void> => {
-  console.log("Gracefully shutting down...");
-  await sequelize.close();
-  process.exit(0);
+startServer().catch((error) => {
+  console.error("Failed to start the server:", error);
+  process.exit(1);
 });
-
-process.on("SIGTERM", async (): Promise<void> => {
-  console.log("Terminating application...");
-  await sequelize.close();
-  process.exit(0);
-});
-
-start();
