@@ -8,11 +8,11 @@ export const connectDB = async (): Promise<void> => {
   if (dbType === "mysql") {
     console.log("Connecting to MySQL database...");
     await sequelize.authenticate();
-    console.log("Connected to MySQL database");
+    console.log("Connected to MySQL database.");
   } else if (dbType === "mongodb") {
     console.log("Connecting to MongoDB database...");
     await mongoose.connect(process.env.MONGO_DB_URI ?? "");
-    console.log("Connected to MongoDB database");
+    console.log("Connected to MongoDB database.");
   } else {
     throw new Error(`Unsupported DB_TYPE: ${dbType}`);
   }
