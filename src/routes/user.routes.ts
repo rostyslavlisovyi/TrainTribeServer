@@ -123,7 +123,7 @@ userRoute.delete(
     try {
       const { _id } = req.body;
       if (!mongoose.isValidObjectId(_id)) {
-        res.status(400).json({ message: "Invalid ID format" });
+        res.status(400).json({ message: "INVALID ID FORMAT" });
         return;
       }
       const deletedUser = await UserModel.findByIdAndDelete(_id);
