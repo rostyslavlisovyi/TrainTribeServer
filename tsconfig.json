@@ -1,23 +1,23 @@
 {
   "compilerOptions": {
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "commonJS",
     "target": "ESNext",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
     "baseUrl": "./src",
     "paths": {
       "@routes": ["routes/*"],
       "@interfaces": ["interfaces/*"],
       "@models": ["models/*"]
     },
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
   },
   "include": ["src/**/*", "env.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
 }

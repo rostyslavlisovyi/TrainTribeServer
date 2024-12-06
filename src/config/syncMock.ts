@@ -1,7 +1,7 @@
-import Sport from "../models/MongoDB/sport.model.mongoDB.js";
-import { sportsMock } from "../mocks/sports.mock.js";
+const Sport = require("../models/MongoDB/sport.model.mongoDB");
+const { sportsMock } = require("../mocks/sports.mock");
 
-export const syncMock = async (): Promise<void> => {
+const syncMock = async (): Promise<void> => {
   try {
     console.log("Checking if mock data...");
     const existingSports = await Sport.find();
@@ -20,3 +20,5 @@ export const syncMock = async (): Promise<void> => {
     process.exit(1);
   }
 };
+
+module.exports = syncMock;

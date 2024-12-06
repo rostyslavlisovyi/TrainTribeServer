@@ -26,3 +26,7 @@ const TrainingSchema: Schema<ITraining> = new Schema(
     timestamps: true
   }
 );
+
+const TrainingModel = mongoose.model<ITraining>("Training", TrainingSchema);
+
+module.exports = TrainingModel;

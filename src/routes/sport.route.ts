@@ -1,7 +1,8 @@
-import express, { Request, Response, Router } from "express";
-import SportsModel from "../models/MongoDB/sport.model.mongoDB.js";
-import { HydratedDocument } from "mongoose";
+const express = require("express");
+const SportsModel = require("../models/MongoDB/sport.model.mongoDB");
 
+import { Request, Response, Router} from "express";
+import { HydratedDocument } from "mongoose";
 import { ISportMongoDB } from "../interfaces/sport.interfaces";
 
 const sportRoute: Router = express.Router({ mergeParams: true });
@@ -24,4 +25,4 @@ sportRoute.get("/", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-export default sportRoute;
+module.exports = sportRoute;

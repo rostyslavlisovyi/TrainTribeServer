@@ -1,9 +1,11 @@
-import mongoose from "mongoose";
-import { sequelize } from "./sequelize.js";
-import * as process from "process";
+const mongoose = require("mongoose");
+const { sequelize } = require("./sequelize");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 type DBType = "mysql" | "mongodb";
-export const connectDB = async (): Promise<void> => {
+async function connectDB(): Promise<void> {
   const dbType: DBType = process.env.DB_TYPE as DBType;
   try {
     if (dbType === "mysql") {
@@ -22,4 +24,6 @@ export const connectDB = async (): Promise<void> => {
     console.error(`Error connection to ${dbType} database`, error);
     process.exit(1);
   }
-};
+}
+
+module.exports = { connectDB };

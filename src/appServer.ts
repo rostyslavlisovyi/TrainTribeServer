@@ -1,10 +1,13 @@
-import express, { Express } from "express";
-import dotenv from "dotenv";
-import { sequelize } from "./config/sequelize.js";
-import { connectDB } from "./config/database.js";
-import router from "./routes/index.js";
-import { syncMock } from "./config/syncMock.js";
-import cors from "cors";
+const express = require("express");
+const dotenv = require("dotenv");
+const { sequelize } = require("./config/sequelize");
+const { connectDB } = require("./config/database");
+const router = require("./routes");
+const syncMock = require("./config/syncMock");
+const cors = require("cors");
+
+import { Express } from "express";
+
 
 dotenv.config();
 

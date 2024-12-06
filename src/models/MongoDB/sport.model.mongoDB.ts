@@ -8,4 +8,4 @@ const SportSchema: Schema = new Schema({
 
 const SportModel = mongoose.model<ISport>("Sport", SportSchema);
 
-export default SportModel;
+module.exports = SportModel;

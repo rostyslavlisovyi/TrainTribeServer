@@ -1,11 +1,14 @@
-import express, { Router, Request, Response } from "express";
-import { authenticate } from "../middlewares/auth.middleware.js";
-import UserModel from "../models/MongoDB/user.model.mongoDB.js";
-import { IUser } from "../interfaces/user.interfaces.js";
-import mongoose, { HydratedDocument } from "mongoose";
+const express = require("express");
+const UserModel = require("../models/MongoDB/user.model.mongoDB");
+const mongoose = require("mongoose");
+const authenticate = require("../middlewares/auth.middleware");
+
+import { Router, Request, Response } from "express";
+import { IUser } from "../interfaces/user.interfaces";
+import { HydratedDocument } from "mongoose";
 
 const userRoute: Router = express.Router();
-
+console.log(typeof authenticate);
 userRoute.get(
   "/",
   authenticate,
@@ -139,4 +142,5 @@ userRoute.delete(
     }
   }
 );
-export default userRoute;
+
+module.exports = userRoute;
