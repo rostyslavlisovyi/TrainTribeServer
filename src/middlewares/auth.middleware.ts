@@ -6,4 +6,4 @@ const authenticate = auth({
   tokenSigningAlg: "RS256"
 });
 
-module.exports =  authenticate;
+module.exports = authenticate;

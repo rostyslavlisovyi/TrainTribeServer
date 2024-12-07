@@ -1,7 +1,7 @@
 const express = require("express");
 const SportsModel = require("../models/MongoDB/sport.model.mongoDB");
 
-import { Request, Response, Router} from "express";
+import { Request, Response, Router } from "express";
 import { HydratedDocument } from "mongoose";
 import { ISportMongoDB } from "../interfaces/sport.interfaces";
 

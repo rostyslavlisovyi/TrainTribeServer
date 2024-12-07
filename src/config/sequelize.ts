@@ -12,13 +12,12 @@ export const sequelize = new Sequelize(
   {
     host: process.env.MYSQL_DB_HOST || "localhost",
     dialect: "mysql",
-    logging: processingMode === "development"? console.log : false,
+    logging: processingMode === "development" ? console.log : false,
     pool: {
-        max: 10,
-        min: 0,
-        acquire: 30000,
-        idle: 10000,
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
     }
   }
 );
-

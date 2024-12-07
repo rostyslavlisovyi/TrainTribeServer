@@ -2,7 +2,6 @@ const express = require("express");
 const sportsRoutes = require("./sport.route");
 const userRoutes = require("./user.routes");
 
-
 const router = express.Router({ mergeParams: true });
 
 router.use("/sport", sportsRoutes);

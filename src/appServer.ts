@@ -8,11 +8,14 @@ const cors = require("cors");
 
 import { Express } from "express";
 
-
 dotenv.config();
 
 // Environment Variables Validation
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE", "JWT_SECRET"] as const;
+const REQUIRED_ENV_VARS: string[] = [
+  "SERVER_PORT",
+  "DB_TYPE",
+  "JWT_SECRET"
+] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(`Environment variable ${varName} is not defined.`);
@@ -49,7 +52,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
 // Register Shutdown Hooks
 ["SIGINT", "SIGTERM"].forEach((signal) =>
-    process.on(signal, () => gracefulShutdown(signal))
+  process.on(signal, () => gracefulShutdown(signal))
 );
 
 // Start Server
