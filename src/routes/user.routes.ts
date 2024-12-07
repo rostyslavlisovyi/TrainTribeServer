@@ -1,32 +1,15 @@
 const express = require("express");
 const UserModel = require("../models/MongoDB/user.model.mongoDB");
-const mongoose = require("mongoose");
 const authenticate = require("../middlewares/auth.middleware");
+const validationId = require("../utils/validationObjectId").validationId;
+const handleError = require("../utils/handleError").handleError;
 
 import { Router, Request, Response } from "express";
 import { IUser } from "../interfaces/user.interfaces";
-import { HydratedDocument } from "mongoose";
+import { HydratedDocument} from "mongoose";
 
 const userRoute: Router = express.Router();
 
-// Helper function to validate MongoDB ObjectId
-const validationId = (id: string, res: Response): boolean => {
-  if (!mongoose.isValidObjectId(id)) {
-    res.status(400).json({ message: "INVALID ID FORMAT" });
-    return false;
-  }
-  return true;
-};
-
-// Centralized error handler
-const handleError = (
-  res: Response,
-  error: unknown,
-  message = "INTERNAL SERVER ERROR"
-): void => {
-  console.error(error);
-  res.status(500).json({ message });
-};
 // GET: Retrieve user by ID
 userRoute.get(
   "/",
@@ -37,7 +20,6 @@ userRoute.get(
       if (!validationId(_id, res)) {
         return;
       }
-
       const existingUser = await UserModel.findById(_id);
       if (!existingUser) {
         res.status(404).json({ message: "USER NOT FOUND" });
