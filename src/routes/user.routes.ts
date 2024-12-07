@@ -8,17 +8,36 @@ import { IUser } from "../interfaces/user.interfaces";
 import { HydratedDocument } from "mongoose";
 
 const userRoute: Router = express.Router();
-console.log(typeof authenticate);
+
+// Helper function to validate MongoDB ObjectId
+const validationId = (id: string, res: Response): boolean => {
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400).json({ message: "INVALID ID FORMAT" });
+    return false;
+  }
+  return true;
+};
+
+// Centralized error handler
+const handleError = (
+  res: Response,
+  error: unknown,
+  message = "INTERNAL SERVER ERROR"
+): void => {
+  console.error(error);
+  res.status(500).json({ message });
+};
+// GET: Retrieve user by ID
 userRoute.get(
   "/",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { _id } = req.body;
-      if (!mongoose.isValidObjectId(_id)) {
-        res.status(400).json({ message: "Invalid ID format" });
+      if (!validationId(_id, res)) {
         return;
       }
+
       const existingUser = await UserModel.findById(_id);
       if (!existingUser) {
         res.status(404).json({ message: "USER NOT FOUND" });
@@ -27,12 +46,11 @@ userRoute.get(
       res.status(200).json({ user: existingUser });
       return;
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+      handleError(res, error);
     }
   }
 );
-
+// POST: Create new user
 userRoute.post(
   "/",
   authenticate,
@@ -73,60 +91,58 @@ userRoute.post(
       const savedUser: IUser = await newUser.save();
       res.status(201).json({ user: savedUser });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+      handleError(res, error);
     }
   }
 );
-
+// PUT: Update user by ID
 userRoute.put(
   "/",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
     try {
-        const { _id } = req.body;
-        if (!mongoose.isValidObjectId(_id)) {
-          res.status(400).json({ message: "INVALID ID FORMAT" });
-          return;
-        }
-        const updates = Object.keys(req.body).reduce(
-          (acc, key) => {
-            acc[key] = req.body[key];
-            return acc;
-          },
-          {} as Record<string, any>
-        );
-
-        if (Object.keys(updates).length === 0) {
-          res.status(400).json({ message: "NO FIELDS PROVIDED FOR UPDATE" });
-          return;
-        }
-
-        const updatedUser = await UserModel.findByIdAndUpdate(_id, updates, {
-          new: true,
-          runValidators: true
-        });
-        if (!updatedUser) {
-          res.status(404).json({ message: "USER NOT FOUND" });
-          return;
-        }
-        res.status(200).json({ user: updatedUser });
+      const { _id } = req.body;
+      if (!validationId(_id, res)) {
         return;
+      }
+
+      const updates = Object.keys(req.body).reduce(
+        (acc, key) => {
+          acc[key] = req.body[key];
+          return acc;
+        },
+        {} as Record<string, any>
+      );
+
+      if (Object.keys(updates).length === 0) {
+        res.status(400).json({ message: "NO FIELDS PROVIDED FOR UPDATE" });
+        return;
+      }
+
+      const updatedUser = await UserModel.findByIdAndUpdate(_id, updates, {
+        new: true,
+        runValidators: true
+      });
+      if (!updatedUser) {
+        res.status(404).json({ message: "USER NOT FOUND" });
+        return;
+      }
+      res.status(200).json({ user: updatedUser });
+      return;
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+      handleError(res, error);
     }
   }
 );
 
+// DELETE: Delete user by ID
 userRoute.delete(
   "/",
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { _id } = req.body;
-      if (!mongoose.isValidObjectId(_id)) {
-        res.status(400).json({ message: "INVALID ID FORMAT" });
+      if (!validationId(_id, res)) {
         return;
       }
       const deletedUser = await UserModel.findByIdAndDelete(_id);
@@ -137,8 +153,7 @@ userRoute.delete(
       res.status(200).json({ message: "USER DELETED" });
       return;
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR", error });
+      handleError(res, error);
     }
   }
 );
