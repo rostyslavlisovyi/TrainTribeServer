@@ -5,6 +5,7 @@ import connectDB from "./config/database.js";
 import sequelize from "./config/sequelize.js";
 import syncMock from "./config/syncMock.js";
 import router from "./routes/index.js";
+import { setupSwagger } from "./config/swagger.js";
 
 dotenv.config();
 
@@ -34,6 +35,9 @@ appServer.use(express.urlencoded({ extended: true }));
 
 // Routes
 appServer.use("/api", router);
+
+// Swagger
+setupSwagger(appServer);
 
 // Graceful Shutdown
 async function gracefulShutdown(signal: string): Promise<void> {
