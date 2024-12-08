@@ -1,4 +1,4 @@
-import { Document, ObjectId } from "mongoose";
+import { Document, HydratedDocument, ObjectId } from "mongoose";
 export interface IUser extends Document {
   email: string;
   username?: string;
@@ -12,8 +12,10 @@ export interface IUser extends Document {
   training_join?: ObjectId[];
 }
 
-export interface IUserMongoDB extends IUser, Document {
-  _id: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// export interface IUserMongoDB extends IUser, Document {
+//   _id: ObjectId;
+//   createdAt: Date;
+//   updatedAt: Date;
+// }
+
+export type UserDocument = HydratedDocument<IUser>;

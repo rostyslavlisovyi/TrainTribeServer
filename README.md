@@ -48,7 +48,7 @@ Before installing and running the server, make sure the following tools are inst
    DB_TYPE=mongoDB
 
    AUTH0_AUDIENCE='your auth0 audience'
-   
+
    AUTH0_DOMAIN='your auth0 domain'
 
     MONGO_DB_URI='your mongo db uri'
