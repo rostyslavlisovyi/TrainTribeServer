@@ -1,14 +1,12 @@
-import {Response} from "express";
+import { Response } from "express";
 
 const handleError = (
-    res: Response,
-    error: unknown,
-    message = "INTERNAL SERVER ERROR"
+  res: Response,
+  error: unknown,
+  message = "INTERNAL SERVER ERROR"
 ): void => {
-    console.error(error);
-    res.status(500).json({ message });
+  console.error(error);
+  res.status(500).json({ message });
 };
 
-module.exports = {
-    handleError,
-};
+export default handleError;

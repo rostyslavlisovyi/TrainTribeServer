@@ -1,4 +1,4 @@
-const { auth } = require("express-oauth2-jwt-bearer");
+import { auth } from "express-oauth2-jwt-bearer";
 
 const authenticate = auth({
   audience: process.env.AUTH0_AUDIENCE,
@@ -6,4 +6,4 @@ const authenticate = auth({
   tokenSigningAlg: "RS256"
 });
 
-module.exports = authenticate;
+export default authenticate;

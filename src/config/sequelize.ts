@@ -5,7 +5,7 @@ dotenv.config();
 
 const processingMode = process.env.NODE_ENV;
 
-export const sequelize = new Sequelize(
+const sequelize = new Sequelize(
   process.env.MYSQL_DB_NAME ?? "",
   process.env.MYSQL_DB_USER ?? "",
   process.env.MYSQL_DB_PASSWORD ?? "",
@@ -21,3 +21,5 @@ export const sequelize = new Sequelize(
     }
   }
 );
+
+export default sequelize;

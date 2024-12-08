@@ -1,28 +1,10 @@
-const express = require("express");
-const SportsModel = require("../models/MongoDB/sport.model.mongoDB");
-
-import { Request, Response, Router } from "express";
-import { HydratedDocument } from "mongoose";
-import { ISportMongoDB } from "../interfaces/sport.interfaces";
+import express from "express";
+import { Router } from "express";
+import { GetSportById } from "../controllers/sport.controller.js";
 
 const sportRoute: Router = express.Router({ mergeParams: true });
 
-sportRoute.get("/", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sportsArray: HydratedDocument<ISportMongoDB>[] =
-      await SportsModel.find();
+// GER: Get all sports
+sportRoute.get("/", GetSportById);
 
-    if (sportsArray.length === 0) {
-      console.log("No sports found");
-      res.status(404).json({ message: "No sports found" });
-      return;
-    }
-
-    res.json(sportsArray);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-module.exports = sportRoute;
+export default sportRoute;

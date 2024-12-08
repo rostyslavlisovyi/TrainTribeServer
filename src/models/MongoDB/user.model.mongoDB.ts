@@ -1,5 +1,5 @@
-import mongoose, { Schema } from "mongoose";
-import { IUser } from "../../interfaces/user.interfaces";
+import mongoose, { Model, Schema } from "mongoose";
+import { IUser } from "../../interfaces/user.interfaces.js";
 
 const UserSchema: Schema = new Schema(
   {
@@ -19,6 +19,6 @@ const UserSchema: Schema = new Schema(
   }
 );
 
-const UserModel = mongoose.model<IUser>("User", UserSchema);
+const UserModel: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
 
-module.exports = UserModel;
+export default UserModel;
