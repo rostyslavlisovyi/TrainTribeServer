@@ -87,7 +87,7 @@ export const UpdateUser = async (
       {} as Record<string, any>
     );
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length <= 1) {
       res.status(400).json({ message: "NO FIELDS PROVIDED FOR UPDATE" });
       return;
     }
