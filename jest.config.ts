@@ -1,20 +1,30 @@
-import type {Config} from 'jest';
+import type { Config } from "jest";
 
 const config: Config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  preset: "ts-jest",
+  testEnvironment: "node",
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    "^.+\\.tsx?$": [
+        "ts-jest",
+      {
+        useESM: true,
+        isolatedModules: true,
+      },
+    ],
   },
-  moduleFileExtensions: ['ts', 'js', 'json'],
-  testMatch: ['**/*.test.ts'],
+  moduleFileExtensions: ["ts", "js", "json"],
+  moduleNameMapper: {
+    '^#ansi-styles$': 'ansi-styles/index.js',
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
+  testMatch: ["**/*.test.ts"],
   globals: {
-    'ts-jest': {
-      isolatedModules: true,
-    },
+    "ts-jest": {
+      isolatedModules: true
+    }
   },
   clearMocks: true,
-  coverageProvider: "v8",
 };
+
 
 export default config;
