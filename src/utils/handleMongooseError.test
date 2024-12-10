@@ -1,0 +1,52 @@
+import handleMongooseError from "../utils/handleMongooseError.ts";
+import mongoose from "mongoose";
+import chalk from "chalk";
+
+describe("handleMongooseError", () => {
+    let consoleSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+        consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("should handle ValidationError", () => {
+        const error = new mongoose.Error.ValidationError();
+        error.errors = {
+            field1: { path: "field1", message: "Field is required" } as any,
+        };
+
+        handleMongooseError(error);
+
+        expect(consoleSpy).toHaveBeenCalledWith(chalk.red("Validation Error:", error.errors));
+        expect(consoleSpy).toHaveBeenCalledWith(chalk.red("Field: field1, Message: Field is required"));
+    });
+
+    it("should handle CastError", () => {
+        const error = new mongoose.Error.CastError("ObjectId", "invalid-id", "field1");
+
+        handleMongooseError(error);
+
+        expect(consoleSpy).toHaveBeenCalledWith(chalk.red("Cast Error: Invalid ID format"));
+    });
+
+    it("should handle Duplicate Key Error", () => {
+        const error = new mongoose.mongo.MongoServerError({ code: 11000 });
+        error.keyValue = { email: "test@example.com" };
+
+        handleMongooseError(error);
+
+        expect(consoleSpy).toHaveBeenCalledWith(chalk.red("Duplicate Key Error:", error.keyValue));
+    });
+
+    it("should handle General Error", () => {
+        const error = new Error("Some general error");
+
+        handleMongooseError(error);
+
+        expect(consoleSpy).toHaveBeenCalledWith(chalk.red("General Error:", error.message));
+    });
+});

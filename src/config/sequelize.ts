@@ -3,13 +3,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const sequelize = new Sequelize(
+const processingMode = process.env.NODE_ENV;
+
+const sequelize = new Sequelize(
   process.env.MYSQL_DB_NAME ?? "",
   process.env.MYSQL_DB_USER ?? "",
   process.env.MYSQL_DB_PASSWORD ?? "",
   {
-    host: process.env.MYSQL_DB_HOST ?? "localhost",
+    host: process.env.MYSQL_DB_HOST || "localhost",
     dialect: "mysql",
-    logging: false
+    logging: processingMode === "development" ? console.log : false,
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   }
 );
+
+export default sequelize;

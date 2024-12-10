@@ -1,142 +1,355 @@
-import express, { Router, Request, Response } from "express";
-import { authenticate } from "../middlewares/auth.middleware.js";
-import UserModel from "../models/MongoDB/user.model.mongoDB.js";
-import { IUser } from "../interfaces/user.interfaces.js";
-import mongoose, { HydratedDocument } from "mongoose";
+import { Router } from "express";
+import {
+  GetUserById,
+  CreateUser,
+  UpdateUser,
+  DeleteUser
+} from "../controllers/user.controller.js";
+import express from "express";
+import authenticate from "../middlewares/auth.middleware.js";
 
 const userRoute: Router = express.Router();
 
-userRoute.get(
-  "/",
-  authenticate,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { _id } = req.body;
-      if (!mongoose.isValidObjectId(_id)) {
-        res.status(400).json({ message: "Invalid ID format" });
-        return;
-      }
-      const existingUser = await UserModel.findById(_id);
-      if (!existingUser) {
-        res.status(404).json({ message: "USER NOT FOUND" });
-        return;
-      }
-      res.status(200).json({ user: existingUser });
-      return;
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    }
-  }
-);
+// GET: Get user by ID
+/**
+ * @swagger
+ * /user:
+ *   get:
+ *     summary: Get user by ID
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 description: The unique identifier of the user
+ *                 example: 67543795b67ad667d26e3bdc
+ *     responses:
+ *       200:
+ *         description: A user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid ID format
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+userRoute.get("/", authenticate, GetUserById);
 
-userRoute.post(
-  "/",
-  authenticate,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const {
-        email,
-        username,
-        first_name,
-        last_name,
-        image_url,
-        latitude,
-        longitude,
-        sport
-      } = req.body as IUser;
-      if (!email) {
-        res.status(400).json({ message: "EMAIL IS REQUIRED" });
-        return;
-      }
-      const existingUser: HydratedDocument<IUser> | null =
-        await UserModel.findOne().where("email").equals(email);
-      if (existingUser) {
-        res
-          .status(409)
-          .json({ message: "USER WITH THIS EMAIL ALREADY EXISTS" });
-        return;
-      }
-      const newUser: IUser = new UserModel({
-        email: email,
-        username: username || "",
-        first_name: first_name || "",
-        last_name: last_name || "",
-        image_url: image_url || "",
-        latitude: latitude || 0,
-        longitude: longitude || 0,
-        sport: sport || []
-      });
-      const savedUser: IUser = await newUser.save();
-      res.status(201).json({ user: savedUser });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    }
-  }
-);
+// POST: Create new user
+/**
+ * @swagger
+ * /user:
+ *   post:
+ *     summary: Create new user
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - sport
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: The email of the user
+ *                 example: test@test
+ *               username:
+ *                 type: string
+ *                 description: The username of the user
+ *                 example: test
+ *               first_name:
+ *                 type: string
+ *                 description: The first name of the user
+ *                 example: test
+ *               last_name:
+ *                 type: string
+ *                 description: The last name of the user
+ *                 example: test
+ *               image_url:
+ *                 type: string
+ *                 description: The image URL
+ *                 example: https://test.com/test.jpg
+ *               latitude:
+ *                 type: number
+ *                 description: The latitude of the user
+ *                 example: 0
+ *               longitude:
+ *                 type: number
+ *                 description: The longitude of the user
+ *                 example: 0
+ *               sport:
+ *                 type: array
+ *                 description: The sports of the user
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: The unique identifier of the sport
+ *                       example: 67543795b67ad667d26e3bdc
+ *                     name:
+ *                       type: string
+ *                       description: The name of the sport
+ *                       example: test
+ *     responses:
+ *       200:
+ *         description: A user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid ID format
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+userRoute.post("/", authenticate, CreateUser);
 
-userRoute.put(
-  "/",
-  authenticate,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { _id } = req.body;
-        if (!mongoose.isValidObjectId(_id)) {
-          res.status(400).json({ message: "INVALID ID FORMAT" });
-          return;
-        }
-        const updates = Object.keys(req.body).reduce(
-          (acc, key) => {
-            acc[key] = req.body[key];
-            return acc;
-          },
-          {} as Record<string, any>
-        );
+// PUT: Update user by ID
+/**
+ * @swagger
+ * /user:
+ *   put:
+ *     summary: Update user by ID
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - _id
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 description: The unique identifier of the user
+ *                 example: 5f7f5f4b7f6c8a2b3c8b4f7f
+ *               email:
+ *                 type: string
+ *                 description: The email of the user
+ *                 example: test@test
+ *               username:
+ *                 type: string
+ *                 description: The username of the user
+ *                 example: test
+ *               first_name:
+ *                 type: string
+ *                 description: The first name of the user
+ *                 example: test
+ *               last_name:
+ *                 type: string
+ *                 description: The last name of the user
+ *                 example: test
+ *               image_url:
+ *                 type: string
+ *                 description: The image URL
+ *                 example: https://test.com/test.jpg
+ *               latitude:
+ *                 type: number
+ *                 description: The latitude of the user
+ *                 example: 0
+ *               longitude:
+ *                 type: number
+ *                 description: The longitude of the user
+ *                 example: 0
+ *               sport:
+ *                 type: array
+ *                 description: The sports of the user
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: The unique identifier of the sport
+ *                       example: 67543795b67ad667d26e3bdc
+ *                     name:
+ *                       type: string
+ *                       description: The name of the sport
+ *                       example: test
+ *     responses:
+ *       200:
+ *         description: A user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid ID format
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+userRoute.put("/", authenticate, UpdateUser);
 
-        if (Object.keys(updates).length === 0) {
-          res.status(400).json({ message: "NO FIELDS PROVIDED FOR UPDATE" });
-          return;
-        }
+// DELETE: Delete user by ID
+/**
+ * @swagger
+ * /user:
+ *   delete:
+ *     summary: Delete user by ID
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 description: The unique identifier of the user
+ *                 example: 67543795b67ad667d26e3bdc
+ *     responses:
+ *       200:
+ *         description: A user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User deleted
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid ID format
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+userRoute.delete("/", authenticate, DeleteUser);
 
-        const updatedUser = await UserModel.findByIdAndUpdate(_id, updates, {
-          new: true,
-          runValidators: true
-        });
-        if (!updatedUser) {
-          res.status(404).json({ message: "USER NOT FOUND" });
-          return;
-        }
-        res.status(200).json({ user: updatedUser });
-        return;
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    }
-  }
-);
-
-userRoute.delete(
-  "/",
-  authenticate,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { _id } = req.body;
-      if (!mongoose.isValidObjectId(_id)) {
-        res.status(400).json({ message: "Invalid ID format" });
-        return;
-      }
-      const deletedUser = await UserModel.findByIdAndDelete(_id);
-      if (!deletedUser) {
-        res.status(404).json({ message: "USER NOT FOUND" });
-        return;
-      }
-      res.status(200).json({ message: "USER DELETED" });
-      return;
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "INTERNAL SERVER ERROR", error });
-    }
-  }
-);
 export default userRoute;
