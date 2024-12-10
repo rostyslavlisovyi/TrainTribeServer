@@ -3,6 +3,8 @@ import { HydratedDocument } from "mongoose";
 
 import { ISportMongoDB } from "../interfaces/sport.interfaces.js";
 import SportsModel from "../models/MongoDB/sport.model.mongoDB.js";
+import chalk from "chalk";
+import handleError from "../utils/handleError.js";
 
 export const GetSportById = async (
   req: Request,
@@ -13,14 +15,13 @@ export const GetSportById = async (
       await SportsModel.find();
 
     if (sportsArray.length === 0) {
-      console.log("No sports found");
+      console.error(chalk.red("No sports found"));
       res.status(404).json({ message: "No sports found" });
       return;
     }
 
     res.json(sportsArray);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    handleError(res, error);
   }
 };

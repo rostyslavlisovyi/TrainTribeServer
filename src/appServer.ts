@@ -6,6 +6,7 @@ import sequelize from "./config/sequelize.js";
 import syncMock from "./config/syncMock.js";
 import router from "./routes/index.js";
 import { setupSwagger } from "./config/swagger.js";
+import chalk from "chalk";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const REQUIRED_ENV_VARS: string[] = [
 ] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
-    console.error(`Environment variable ${varName} is not defined.`);
+    console.error(chalk.red(`Environment variable ${varName} is not defined.`));
     process.exit(1);
   }
 });
@@ -41,13 +42,13 @@ setupSwagger(appServer);
 
 // Graceful Shutdown
 async function gracefulShutdown(signal: string): Promise<void> {
-  console.log(`Received ${signal}. Gracefully shutting down...`);
+  console.info(`Received ${signal}. Gracefully shutting down...`);
   try {
     await sequelize.close();
-    console.log("Database connection closed.");
+    console.info("Database connection closed.");
     process.exit(0);
   } catch (error) {
-    console.error("Error during shutdown: ", error);
+    console.error(chalk.red("Error during shutdown: ", error));
     process.exit(1);
   }
 }
@@ -65,11 +66,13 @@ async function startServer(): Promise<void> {
 
     // Sync mock data
     await syncMock();
-    console.log("Mock data synced successfully.");
+    console.info(chalk.green("Mock data synced successfully."));
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {
-      console.log(`Server is running on http://localhost:${SERVER_PORT}`);
+      console.info(
+        chalk.green(`Server is running on http://localhost:${SERVER_PORT}`)
+      );
     });
   } catch (error) {
     console.error("Error connecting to database: ", error);
