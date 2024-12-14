@@ -5,17 +5,17 @@ const config: Config = {
   testEnvironment: "node",
   transform: {
     "^.+\\.tsx?$": [
-        "ts-jest",
+      "ts-jest",
       {
         useESM: true,
-        isolatedModules: true,
-      },
-    ],
+        isolatedModules: true
+      }
+    ]
   },
   moduleFileExtensions: ["ts", "js", "json"],
   moduleNameMapper: {
-    '^#ansi-styles$': 'ansi-styles/index.js',
-    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^#ansi-styles$": "ansi-styles/index.js",
+    "^(\\.{1,2}/.*)\\.js$": "$1"
   },
   testMatch: ["**/*.test.ts"],
   globals: {
@@ -23,8 +23,7 @@ const config: Config = {
       isolatedModules: true
     }
   },
-  clearMocks: true,
+  clearMocks: true
 };
-
 
 export default config;

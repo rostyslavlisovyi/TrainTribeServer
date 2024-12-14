@@ -17,7 +17,7 @@
     },
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "forceConsistentCasingInFileNames": true,
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["src/**/*", "env.d.ts"],
   "exclude": ["node_modules"]

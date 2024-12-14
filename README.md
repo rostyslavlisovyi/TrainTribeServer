@@ -67,7 +67,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 ## Project Structure
 
 | Directory / File                    | Description                                        |
-|-------------------------------------|----------------------------------------------------|
+| ----------------------------------- | -------------------------------------------------- |
 | `src/`                              | Main code directory                                |
 | ├── `config/`                       | Configuration files (e.g., database, environment)  |
 | │ └── `database.ts`                 | Database connection configuration                  |
@@ -93,8 +93,8 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ │ └── `training.model.mongoDB.ts` | MongoDB model for training entities                |
 | │ │ └── `user.model.mongoDB.ts`     | MongoDB model for user entities                    |
 | │ └── `mySql/`                      | MySQL models for application                       |
-| │   └── `user.model.mySql.ts`       | MySQL model for user entities                      |
-| │   └── `training.ts`               | MySQL model for training entities                  |
+| │ └── `user.model.mySql.ts`         | MySQL model for user entities                      |
+| │ └── `training.ts`                 | MySQL model for training entities                  |
 | ├── `routes/`                       | API route definitions                              |
 | │ └── `index.ts`                    | Main router combining all routes                   |
 | │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
@@ -137,7 +137,7 @@ The server provides the following API endpoints:
 ### **User**
 
 | Method | Endpoint    | Description                                  |
-|--------| ----------- | -------------------------------------------- |
+| ------ | ----------- | -------------------------------------------- |
 | GET    | `/api/user` | Fetch user data                              |
 | PUT    | `/api/user` | Update user by Token (ID extracted from JWT) |
 | POST   | `/api/user` | Update user by Token (ID extracted from JWT) |
@@ -145,10 +145,9 @@ The server provides the following API endpoints:
 
 ### **Upload**
 
-| Method | Endpoint      | Description                                  |
-|--------|---------------|----------------------------------------------|
-| POST   | `/api/upload` | Upload images                                |
-
+| Method | Endpoint      | Description   |
+| ------ | ------------- | ------------- |
+| POST   | `/api/upload` | Upload images |
 
 ## Models
 
