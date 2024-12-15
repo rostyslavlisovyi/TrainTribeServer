@@ -11,7 +11,15 @@ export const GetUserById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { _id } = req.body;
+    const { _id, ...rest } = req.body;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY _id IS ALLOWED" });
+      return;
+    }
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
     if (!validationId(_id, res)) {
       return;
     }
@@ -32,6 +40,25 @@ export const CreateUser = async (
   res: Response
 ): Promise<void> => {
   try {
+    const allowedFields = [
+      "email",
+      "username",
+      "first_name",
+      "last_name",
+      "image_url",
+      "latitude",
+      "longitude",
+      "sport"
+    ];
+    const extraFields: string[] = Object.keys(req.body).filter(
+      (key: string) => !allowedFields.includes(key)
+    );
+    if (extraFields.length > 0) {
+      res.status(400).json({
+        message: `ONLY ALLOWED FIELDS ARE ACCEPTED: ${allowedFields.join(", ")}`
+      });
+      return;
+    }
     const {
       email,
       username,
@@ -75,10 +102,13 @@ export const UpdateUser = async (
 ): Promise<void> => {
   try {
     const { _id } = req.body;
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
     if (!validationId(_id, res)) {
       return;
     }
-
     const updates = Object.keys(req.body).reduce(
       (acc, key) => {
         acc[key] = req.body[key];
@@ -112,7 +142,15 @@ export const DeleteUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { _id } = req.body;
+    const { _id, ...rest } = req.body;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY _id IS ALLOWED" });
+      return;
+    }
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
     if (!validationId(_id, res)) {
       return;
     }
