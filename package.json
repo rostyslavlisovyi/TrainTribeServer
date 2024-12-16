@@ -4,7 +4,6 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=.env --watch src/appServer.ts",
     "start": "node dist/appServer.js",
     "dev": "nodemon",
     "build": "tsc",

@@ -13,8 +13,7 @@ dotenv.config();
 // Environment Variables Validation
 const REQUIRED_ENV_VARS: string[] = [
   "SERVER_PORT",
-  "DB_TYPE",
-  "JWT_SECRET"
+  "DB_TYPE"
 ] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
@@ -35,6 +34,10 @@ appServer.use(cors());
 appServer.use(express.urlencoded({ extended: true }));
 
 // Routes
+appServer.get("/", (_req, res) => {
+  res.send("TrainTribe API");
+});
+
 appServer.use("/api", router);
 
 // Swagger
