@@ -30,7 +30,16 @@ const appServer: Express = express();
 
 //Middlewares
 appServer.use(express.json());
-appServer.use(cors());
+
+const corsOptions = {
+  origin: process.env.APP_URL,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
+};
+
+appServer.use(cors(corsOptions));
+
+appServer.options("*", cors(corsOptions));
+
 appServer.use(express.urlencoded({ extended: true }));
 
 // Routes
