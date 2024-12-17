@@ -1,6 +1,9 @@
 import express from "express";
 import { Router } from "express";
-import { UploadFile, handleUploadError } from "../controllers/upload.controller.js";
+import {
+  UploadFile,
+  handleUploadError
+} from "../controllers/upload.controller.js";
 import upload from "../middlewares/upload.middleware.js";
 import authenticate from "../middlewares/auth.middleware.js";
 
@@ -97,11 +100,11 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  *                   example: INTERNAL SERVER ERROR
  */
 uploadRoute.post(
-    "/",
-    authenticate,
-    upload.single("image"),
-    handleUploadError,
-    UploadFile
+  "/",
+  authenticate,
+  upload.single("image"),
+  handleUploadError,
+  UploadFile
 );
 
 export default uploadRoute;

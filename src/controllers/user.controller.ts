@@ -114,7 +114,7 @@ export const UpdateUser = async (
         acc[key] = req.body[key];
         return acc;
       },
-      {} as Record<string, any>
+      {} as Record<string, unknown>
     );
 
     if (Object.keys(updates).length <= 1) {

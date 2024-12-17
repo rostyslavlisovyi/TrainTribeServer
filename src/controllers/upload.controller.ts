@@ -1,10 +1,13 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import chalk from "chalk";
 import multer from "multer";
 import validateFileContent from "../utils/validateFileContent.js";
 import path from "path";
 import fs from "fs/promises";
-export const UploadFile = async (req: Request, res: Response): Promise<void> => {
+export const UploadFile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ message: "NO FILE UPLOADED" });
@@ -26,8 +29,12 @@ export const UploadFile = async (req: Request, res: Response): Promise<void> => 
     console.info(chalk.green(`File ${fileName} uploaded successfully`));
     res.status(200).json({
       message: "FILE UPLOADED SUCCESSFULLY",
-        file: {
-            filename: fileName, path: filePath, mimetype: req.file.mimetype, size: req.file.size}
+      file: {
+        filename: fileName,
+        path: filePath,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      }
     });
   } catch (error) {
     console.error(chalk.red(error));
@@ -37,10 +44,10 @@ export const UploadFile = async (req: Request, res: Response): Promise<void> => 
 };
 
 export const handleUploadError = (
-    error: any,
-    req: Request,
-    res: Response,
-    next: Function
+  error: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
 ): void => {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
@@ -48,10 +55,9 @@ export const handleUploadError = (
     } else {
       res.status(400).json({ message: error.message });
     }
-  } else if (error) {
+  } else if (error instanceof Error) {
     res.status(400).json({ message: error.message });
   } else {
     next();
   }
 };
-
