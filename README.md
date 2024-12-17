@@ -48,7 +48,7 @@ Before installing and running the server, make sure the following tools are inst
    DB_TYPE=mongoDB
 
    AUTH0_AUDIENCE='your auth0 audience'
-   
+
    AUTH0_DOMAIN='your auth0 domain'
 
     MONGO_DB_URI='your mongo db uri'
@@ -72,13 +72,19 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | ├── `config/`                       | Configuration files (e.g., database, environment)  |
 | │ └── `database.ts`                 | Database connection configuration                  |
 | │ └── `sequelize.ts`                | Connect to MySql DB                                |
+| │ └── `swagger.ts`                  | Swagger/OpenAPI documentation configuration        |
 | │ └── `syncMock.ts`                 | Connect do MongoDB and sync collections with Mock  |
-| ├── `interfaces/`                   | Controllers for handling requests                  |
+| ├── `controllers/`                  | Controllers for handling requests                  |
+| │ └── `sport.controller.ts`         | Logic for handling sport-related API requests      |
+| │ └── `upload.controller.ts`        | Logic for handling file uploads                    |
+| │ └── `user.controller.ts`          | Logic for handling user-related API requests       |
+| ├── `interfaces/`                   | TypeScript interfaces for strict type definitions  |
 | │ └── `sport.interfaces.ts`         | Define TypeScript interfaces for sport entities    |
 | │ └── `training.interfaces.ts`      | Define TypeScript interfaces for training entities |
 | │ └── `user.interfaces.ts`          | Define TypeScript interfaces for user entities     |
 | ├── `middleware/`                   | Middleware functions                               |
 | │ └── `auth.middleware.ts`          | Middleware for handling user authentication        |
+| │ └── `upload.middleware.ts`        | Middleware for                                     |
 | ├── `mock/`                         | Mock data for development and testing              |
 | │ └── `sportsMock.mock.ts`          | Mock data for sports-related entities              |
 | ├── `models/`                       | Database structure definitions (Models)            |
@@ -93,17 +99,25 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `index.ts`                    | Main router combining all routes                   |
 | │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
 | │ └── `training.routes.ts`          | Routes for training-related endpoints              |
+| │ └── `upload.routes.ts`            | Routes for                                         |
 | │ └── `sport.routes.ts`             | Routes for sport-related endpoints                 |
 | ├── `types/`                        | Global TypeScript type definitions                 |
 | │ └── `env.d.ts`                    | Type definitions for environment variables         |
 | │ └── `express.d.ts`                | Extended Express types for TypeScript              |
 | ├── `utils/`                        | Utility and helper functions                       |
+| │ └── `handleError.ts`              | General error handling utility                     |
+| │ └── `handleMongooseError.ts`      | Utility for handling MongoDB-specific errors       |
+| │ └── `handleSequalizeError.ts`     | Utility for handling Sequelize-specific errors     |
+| │ └── `validationObjectId.ts`       | Utility for validating MongoDB ObjectIDs           |
 | └── `appServer.ts`                  | Main server initialization logic                   |
+| `uploads/`                          | Uploads directory                                  |
 | `.eslintrc.json`                    | ESLint configuration                               |
 | `.prettierrc`                       | Prettier configuration                             |
 | `.gitignore`                        | Git ignore file                                    |
 | `package.json`                      | Node.js dependencies file                          |
 | `README.md`                         | Project documentation                              |
+| `jest.config.ts`                    | Jest configuration file for testing setup          |
+| `nodemon.json`                      | Nodemon configuration file for automatic restarts  |
 
 ## Technologies
 
@@ -114,17 +128,11 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 - **JWT**
 - **Dotenv**
 - **nanoid**
+- **JESt**
 
 ## API Endpoints
 
 The server provides the following API endpoints:
-
-### **Authentication**
-
-| Method | Endpoint           | Description                |
-| ------ | ------------------ | -------------------------- |
-| POST   | `/api/auth/signUp` | Register a new user        |
-| POST   | `/api/auth/signIn` | Log in as an existing user |
 
 ### **User**
 
@@ -132,7 +140,14 @@ The server provides the following API endpoints:
 | ------ | ----------- | -------------------------------------------- |
 | GET    | `/api/user` | Fetch user data                              |
 | PUT    | `/api/user` | Update user by Token (ID extracted from JWT) |
+| POST   | `/api/user` | Update user by Token (ID extracted from JWT) |
 | DELETE | `/api/user` | Delete user by Token (ID extracted from JWT) |
+
+### **Upload**
+
+| Method | Endpoint      | Description   |
+| ------ | ------------- | ------------- |
+| POST   | `/api/upload` | Upload images |
 
 ## Models
 
@@ -146,7 +161,6 @@ The server provides the following API endpoints:
 | `last_name`        | `String`     | No       | No     | User's last name.                                                             |
 | `email`            | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
 | `sports`           | `[ObjectId]` | Yes      | No     | Array of references to the `Sport` collection, representing user preferences. |
-| `password_hashed`  | `String`     | Yes      | No     | Hashed password for authentication.                                           |
 | `image_url`        | `String`     | No       | No     | URL to the user's profile picture.                                            |
 | `latitude`         | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
 | `longitude`        | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
