@@ -1,6 +1,7 @@
 import express from "express";
 import { Router } from "express";
 import { GetSportById } from "../controllers/sport.controller.js";
+import authenticate from "../middlewares/auth.middleware.js";
 
 const sportRoute: Router = express.Router({ mergeParams: true });
 
@@ -42,6 +43,6 @@ const sportRoute: Router = express.Router({ mergeParams: true });
  *                    type: string
  *                    example: Internal server error
  */
-sportRoute.get("/", GetSportById);
+sportRoute.get("/", authenticate, GetSportById);
 
 export default sportRoute;

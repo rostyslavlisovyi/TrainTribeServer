@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-
+import mysql2 from 'mysql2';
 dotenv.config();
 
 const processingMode = process.env.NODE_ENV;
@@ -12,6 +12,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.MYSQL_DB_HOST || "localhost",
     dialect: "mysql",
+    dialectModule: mysql2,
     logging: processingMode === "development" ? console.log : false,
     pool: {
       max: 10,

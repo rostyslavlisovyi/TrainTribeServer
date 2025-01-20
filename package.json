@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "start": "node dist/appServer.js",
     "dev": "nodemon",
     "start": "node dist/appServer.js",
     "build": "tsc",

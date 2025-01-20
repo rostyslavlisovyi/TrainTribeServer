@@ -402,3 +402,4 @@ env.d.ts
 # prettier configuration file
 .prettierrc
 .prettierignore
+.vercel

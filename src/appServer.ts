@@ -13,8 +13,7 @@ dotenv.config();
 // Environment Variables Validation
 const REQUIRED_ENV_VARS: string[] = [
   "SERVER_PORT",
-  "DB_TYPE",
-  "JWT_SECRET"
+  "DB_TYPE"
 ] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
@@ -31,10 +30,23 @@ const appServer: Express = express();
 
 //Middlewares
 appServer.use(express.json());
-appServer.use(cors());
+
+const corsOptions = {
+  origin: process.env.APP_URL,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
+};
+
+appServer.use(cors(corsOptions));
+
+appServer.options("*", cors(corsOptions));
+
 appServer.use(express.urlencoded({ extended: true }));
 
 // Routes
+appServer.get("/", (_req, res) => {
+  res.send("TrainTribe API");
+});
+
 appServer.use("/api", router);
 
 // Swagger
