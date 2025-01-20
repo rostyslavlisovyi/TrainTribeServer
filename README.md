@@ -173,7 +173,10 @@ The server provides the following API endpoints:
 | `longitude`          | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
 | `completed_trainings`| `Number`     | Yes      | No     | Number of trainings the user has completed.                                   |
 | `social_number`      | `String`     | Yes      | No     | User's social number.                                                         |
-| `athlete_bio`        | `String`     | No       | No     | User's biography or description.                                              |
+| `athlete_bio`        | `String`     | No       | No     | User's athletic biography and background information.                         |
+| `auth_id`           | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
+| `last_onbording_step`| `Boolean`    | Yes      | No     | Indicates if user is on the last onboarding step.                            |
+| `has_complyted_onboarding`| `Boolean`| Yes     | No     | Indicates if user has completed the onboarding process.                       |
 | `training_created`   | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
 | `training_join`      | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
 | `createdAt`          | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
