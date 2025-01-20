@@ -13,6 +13,9 @@ export interface IUser extends Document {
   athlete_bio?: string;
   training_created?: ObjectId[];
   training_join?: ObjectId[];
+  auth_id: string;
+  last_onbording_step: boolean;
+  has_complyted_onboarding: boolean;
 }
 
 export type UserDocument = HydratedDocument<IUser>;
