@@ -8,14 +8,11 @@ export interface IUser extends Document {
   latitude?: number;
   longitude?: number;
   sport?: ObjectId[];
+  completed_trainings: number;
+  social_number: string;
+  athlete_bio?: string;
   training_created?: ObjectId[];
   training_join?: ObjectId[];
 }
-
-// export interface IUserMongoDB extends IUser, Document {
-//   _id: ObjectId;
-//   createdAt: Date;
-//   updatedAt: Date;
-// }
 
 export type UserDocument = HydratedDocument<IUser>;

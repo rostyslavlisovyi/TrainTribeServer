@@ -48,7 +48,10 @@ export const CreateUser = async (
       "image_url",
       "latitude",
       "longitude",
-      "sport"
+      "sport",
+      "completed_trainings",
+      "social_number",
+      "athlete_bio"
     ];
     const extraFields: string[] = Object.keys(req.body).filter(
       (key: string) => !allowedFields.includes(key)
@@ -67,7 +70,10 @@ export const CreateUser = async (
       image_url,
       latitude,
       longitude,
-      sport
+      sport,
+      completed_trainings,
+      social_number,
+      athlete_bio
     } = req.body as IUser;
     if (!email) {
       res.status(400).json({ message: "EMAIL IS REQUIRED" });
@@ -87,7 +93,10 @@ export const CreateUser = async (
       image_url: image_url || "",
       latitude: latitude || 0,
       longitude: longitude || 0,
-      sport: sport || []
+      sport: sport || [],
+      completed_trainings: completed_trainings || 0,
+      social_number: social_number || "",
+      athlete_bio: athlete_bio || ""
     });
     const savedUser: IUser = await newUser.save();
     res.status(201).json({ user: savedUser });
