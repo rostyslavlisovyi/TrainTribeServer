@@ -2,7 +2,9 @@
 
 ## Description
 
-is a server-side REST API designed to handle requests from the client side, managing users and training events. The application is built on `Node.js` using the `Express` framework and a `MySQL` database.
+TrainTribeServer is a server-side REST API designed to handle requests from the client side, managing users and training events. The application is built on `Node.js` using the `Express` framework and supports both `MongoDB` and `MySQL` databases.
+
+This project includes **Swagger** documentation, which provides an interactive user interface for exploring and testing API endpoints. It simplifies understanding and debugging the API for developers and external teams.
 
 ## Functionality
 
@@ -58,6 +60,11 @@ Before installing and running the server, make sure the following tools are inst
    ```bash
    npm run build
    npm start
+   ```
+5. **View API Documentation**:
+   After starting the server, you can access the API documentation powered by **Swagger** at the following URL:
+   ```plaintext
+   http://localhost:<PORT>/api-docs
    ```
 
 ## Architecture
