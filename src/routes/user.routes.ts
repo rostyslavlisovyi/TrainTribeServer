@@ -3,7 +3,8 @@ import {
   GetUserById,
   CreateUser,
   UpdateUser,
-  DeleteUser
+  DeleteUser,
+  GetUserByAuthId
 } from "../controllers/user.controller.js";
 import express from "express";
 import authenticate from "../middlewares/auth.middleware.js";
@@ -96,6 +97,9 @@ const userRoute: Router = express.Router();
  *                   example: INTERNAL SERVER ERROR
  */
 userRoute.get("/", authenticate, GetUserById);
+
+//@TODO: add swagger documentation
+userRoute.get("/by-auth-id", authenticate, GetUserByAuthId);
 
 // POST: Create new user
 /**

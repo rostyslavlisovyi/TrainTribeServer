@@ -11,7 +11,7 @@ export const GetUserById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { _id, ...rest } = req.body;
+    const { _id, ...rest } = req.query;
     if (Object.keys(rest).length > 0) {
       res.status(400).json({ message: "ONLY _id IS ALLOWED" });
       return;
@@ -20,10 +20,37 @@ export const GetUserById = async (
       res.status(400).json({ message: "ID IS REQUIRED" });
       return;
     }
-    if (!validationId(_id, res)) {
+    if (!validationId(_id as string, res)) {
       return;
     }
     const existingUser = await UserModel.findById(_id);
+    if (!existingUser) {
+      res.status(404).json({ message: "USER NOT FOUND" });
+      return;
+    }
+    res.status(200).json({ user: existingUser });
+    return;
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+export const GetUserByAuthId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { auth_id, ...rest } = req.query;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY auth_id IS ALLOWED" });
+      return;
+    }
+    if (!auth_id) {
+      res.status(400).json({ message: "auth_id IS REQUIRED" });
+      return;
+    }
+
+    const existingUser = await UserModel.findOne({ auth_id });
     if (!existingUser) {
       res.status(404).json({ message: "USER NOT FOUND" });
       return;
@@ -54,7 +81,7 @@ export const CreateUser = async (
       "athlete_bio",
       "auth_id",
       "last_onbording_step",
-      "has_complyted_onboarding"
+      "has_completed_onboarding"
     ];
     const extraFields: string[] = Object.keys(req.body).filter(
       (key: string) => !allowedFields.includes(key)
@@ -79,7 +106,7 @@ export const CreateUser = async (
       athlete_bio,
       auth_id,
       last_onbording_step,
-      has_complyted_onboarding
+      has_completed_onboarding
     } = req.body as IUser;
     if (!email) {
       res.status(400).json({ message: "EMAIL IS REQUIRED" });
@@ -104,8 +131,8 @@ export const CreateUser = async (
       social_number: social_number || "",
       athlete_bio: athlete_bio || "",
       auth_id: auth_id || "",
-      last_onbording_step: last_onbording_step || false,
-      has_complyted_onboarding: has_complyted_onboarding || false
+      last_onbording_step: last_onbording_step || "",
+      has_completed_onboarding: has_completed_onboarding || false
     });
     const savedUser: IUser = await newUser.save();
     res.status(201).json({ user: savedUser });
