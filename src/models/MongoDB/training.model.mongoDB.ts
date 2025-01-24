@@ -11,7 +11,7 @@ interface ITraining extends Document {
   participants: Types.ObjectId[];
 }
 
-const TrainingSchema: Schema<ITraining> = new Schema(
+const TrainingSchema = new Schema<ITraining>(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },

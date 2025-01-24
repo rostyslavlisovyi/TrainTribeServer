@@ -11,8 +11,14 @@ const UserSchema: Schema = new Schema(
     latitude: { type: Number, required: false },
     longitude: { type: Number, required: false },
     sports: [{ type: Schema.Types.ObjectId, ref: "Sport", required: true }],
+    completed_trainings: { type: Number, default: 0 },
+    social_number: { type: String, required: true },
+    athlete_bio: { type: String, required: false },
     training_created: [{ type: Schema.Types.ObjectId, ref: "Training" }],
-    training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }]
+    training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }],
+    auth_id: { type: String, required: true, unique: true },
+    last_onbording_step: { type: Boolean, require: true },
+    has_complyted_onboarding: { type: Boolean, require: true }
   },
   {
     timestamps: true

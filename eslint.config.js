@@ -1,10 +1,47 @@
+import js from "@eslint/js";
 import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-import pluginReact from "eslint-plugin-react";
+import tslint from "typescript-eslint";
+import eslintReact from "eslint-plugin-react";
+import prettierPlugin from "eslint-plugin-prettier";
+import eslintConfigPrettier from "eslint-plugin-prettier";
 
-export default [
+/** @type {import('eslint').Linter.FlatConfig[]} */
+export default tslint.config(
+  js.configs.recommended,
+  ...tslint.configs.strict,
+  ...tslint.configs.stylistic,
   {
+    plugins: {
+      "@typescript-eslint": tslint.plugin,
+      react: eslintReact,
+      prettier: prettierPlugin
+    }
+  },
+  {
+    ignores: [
+      "node_modules",
+      "dist",
+      "build",
+      "coverage",
+      "public",
+      "eslint.config.js",
+      "jest.config.ts"
+    ]
+  },
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        ...globals.es2024
+      },
+      parserOptions: {
+        project: ["tsconfig.json"]
+      }
+    }
+  },
+  {
+    files: ["**/*.{js,ts,jsx,tsx}"],
     rules: {
       "require-jsdoc": "off",
       "valid-jsdoc": "off",
@@ -20,32 +57,19 @@ export default [
       curly: ["error", "multi-line"],
       eqeqeq: ["error", "always"],
       "comma-dangle": ["error", "never"],
-      "max-len": ["error", { code: 80 }],
+      "max-len": [
+        "error",
+        {
+          code: 80,
+          ignoreUrls: true,
+          ignoreComments: true,
+          ignoreTrailingComments: true
+        }
+      ],
       "no-trailing-spaces": "error",
       "no-multiple-empty-lines": ["error", { max: 1 }],
-      "no-console": "off",
       "arrow-parens": ["error", "always"],
-      "react/jsx-first-prop-new-line": ["error", "multiline"],
-      "react/jsx-max-props-per-line": ["error", { maximum: 3 }],
-      "react/jsx-closing-bracket-location": ["error", "line-aligned"]
+      "prettier/prettier": "error"
     }
-  },
-  { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
-  {
-    languageOptions: {
-      globals: globals.browser,
-      parser: tseslint.parser,
-      sourceType: "module"
-    }
-  },
-  {
-    settings: {
-      react: {
-        version: "detect"
-      }
-    }
-  },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended
-];
+  }
+);
