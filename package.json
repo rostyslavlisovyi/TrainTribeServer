@@ -4,7 +4,6 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "node dist/appServer.js",
     "dev": "nodemon",
     "start": "node dist/appServer.js",
     "build": "tsc",
@@ -61,8 +60,5 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1"
-  },
-  "overrides": {
-    "eslint": "9.12.0"
   }
 }
