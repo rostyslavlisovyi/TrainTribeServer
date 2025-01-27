@@ -6,7 +6,7 @@ import handleSequelizeError from "./handleSequelizeError.js";
 import { Response } from "express";
 import { DBType } from "../config/database.js";
 
-const dbType: DBType = process.env.DB_TYPE as DBType;
+const dbType = process.env.DB_TYPE as DBType;
 const handleError = (
   res: Response,
   error: unknown,
