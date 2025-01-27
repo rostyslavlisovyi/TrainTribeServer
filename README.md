@@ -176,7 +176,8 @@ The server provides the following API endpoints:
 | `athlete_bio`        | `String`     | No       | No     | User's athletic biography and background information.                         |
 | `auth_id`           | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
 | `last_onbording_step`| `Boolean`    | Yes      | No     | Indicates if user is on the last onboarding step.                            |
-| `has_complyted_onboarding`| `Boolean`| Yes     | No     | Indicates if user has completed the onboarding process.                       |
+| `has_complyted_onboarding`| `Boolean`| Yes      | No     | Indicates if user has completed onboarding.                                  |
+| `privacy_settings`   | `Boolean`    | No       | No     | User's privacy preference. Default is false.                                  |
 | `training_created`   | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
 | `training_join`      | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
 | `createdAt`          | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |

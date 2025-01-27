@@ -16,6 +16,7 @@ export interface IUser extends Document {
   auth_id: string;
   last_onbording_step: boolean;
   has_complyted_onboarding: boolean;
+  privacy_settings: boolean;
 }
 
 export type UserDocument = HydratedDocument<IUser>;
