@@ -81,7 +81,8 @@ export const CreateUser = async (
       "athlete_bio",
       "auth_id",
       "last_onbording_step",
-      "has_completed_onboarding"
+      "has_completed_onboarding",
+      "privacy_settings"
     ];
     const extraFields: string[] = Object.keys(req.body).filter(
       (key: string) => !allowedFields.includes(key)
@@ -106,7 +107,8 @@ export const CreateUser = async (
       athlete_bio,
       auth_id,
       last_onbording_step,
-      has_completed_onboarding
+      has_completed_onboarding,
+      privacy_settings
     } = req.body as IUser;
     if (!email) {
       res.status(400).json({ message: "EMAIL IS REQUIRED" });
@@ -132,7 +134,8 @@ export const CreateUser = async (
       athlete_bio: athlete_bio || "",
       auth_id: auth_id || "",
       last_onbording_step: last_onbording_step || "",
-      has_completed_onboarding: has_completed_onboarding || false
+      has_complyted_onboarding: has_completed_onboarding || false,
+      privacy_settings: privacy_settings || false
     });
     const savedUser: IUser = await newUser.save();
     res.status(201).json({ user: savedUser });

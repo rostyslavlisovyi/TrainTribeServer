@@ -160,27 +160,28 @@ The server provides the following API endpoints:
 
 ### User
 
-| Field                      | Type         | Required | Unique | Description                                                                   |
-| -------------------------- | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
-| `_id`                      | `String`     | Yes      | Yes    | User's id.                                                                    |
-| `username`                 | `String`     | No       | No     | User's display name.                                                          |
-| `first_name`               | `String`     | No       | No     | User's first name.                                                            |
-| `last_name`                | `String`     | No       | No     | User's last name.                                                             |
-| `email`                    | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
-| `sports`                   | `[ObjectId]` | Yes      | No     | Array of references to the `Sport` collection, representing user preferences. |
-| `image_url`                | `String`     | No       | No     | URL to the user's profile picture.                                            |
-| `latitude`                 | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
-| `longitude`                | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
-| `completed_trainings`      | `Number`     | Yes      | No     | Number of trainings the user has completed.                                   |
-| `social_number`            | `String`     | Yes      | No     | User's social number.                                                         |
-| `athlete_bio`              | `String`     | No       | No     | User's athletic biography and background information.                         |
-| `auth_id`                  | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
-| `last_onbording_step`      | `Boolean`    | Yes      | No     | Indicates if user is on the last onboarding step.                             |
-| `has_completed_onboarding` | `Boolean`    | Yes      | No     | Indicates if user has completed the onboarding process.                       |
-| `training_created`         | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
-| `training_join`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
-| `createdAt`                | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
-| `updatedAt`                | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
+| Field                | Type         | Required | Unique | Description                                                                   |
+| -------------------- | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
+| `_id`                | `String`     | Yes      | Yes    | User's id.                                                                    |
+| `username`           | `String`     | No       | No     | User's display name.                                                          |
+| `first_name`         | `String`     | No       | No     | User's first name.                                                            |
+| `last_name`          | `String`     | No       | No     | User's last name.                                                             |
+| `email`              | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
+| `sports`             | `[ObjectId]` | Yes      | No     | Array of references to the `Sport` collection, representing user preferences. |
+| `image_url`          | `String`     | No       | No     | URL to the user's profile picture.                                            |
+| `latitude`           | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
+| `longitude`          | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
+| `completed_trainings`| `Number`     | No      | No     | Number of trainings the user has completed.                                   |
+| `social_number`      | `String`     | No      | No     | User's social number.                                                         |
+| `athlete_bio`        | `String`     | No       | No     | User's athletic biography and background information.                         |
+| `auth_id`           | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
+| `last_onbording_step`| `String`    | No      | No     | Indicates the last completed onboarding step.                           |
+| `has_completed_onboarding`| `Boolean`| Yes      | No     | Indicates if user has completed onboarding.                                  |
+| `privacy_settings`   | `Boolean`    | No       | No     | User's privacy preference. Default is false.                                  |
+| `training_created`   | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
+| `training_join`      | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
+| `createdAt`          | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
+| `updatedAt`          | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
 
 ### Training Model
 

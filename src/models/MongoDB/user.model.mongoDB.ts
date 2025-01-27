@@ -18,7 +18,8 @@ const UserSchema: Schema = new Schema(
     training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }],
     auth_id: { type: String, required: true, unique: true },
     last_onbording_step: { type: String, require: false },
-    has_completed_onboarding: { type: Boolean, require: true }
+    has_completed_onboarding: { type: Boolean, require: true },
+    privacy_settings: { type: Boolean, default: false }
   },
   {
     timestamps: true
