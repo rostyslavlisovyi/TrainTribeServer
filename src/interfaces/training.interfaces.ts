@@ -1,4 +1,4 @@
-import { Document, ObjectId } from "mongoose";
+import { Document } from "mongoose";
 export interface ITraining extends Document {
   title: string;
   sport: string;

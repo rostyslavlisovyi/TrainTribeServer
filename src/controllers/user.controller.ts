@@ -11,11 +11,46 @@ export const GetUserById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { _id } = req.body;
-    if (!validationId(_id, res)) {
+    const { _id, ...rest } = req.query;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY _id IS ALLOWED" });
+      return;
+    }
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
+    if (!validationId(_id as string, res)) {
       return;
     }
     const existingUser = await UserModel.findById(_id);
+    if (!existingUser) {
+      res.status(404).json({ message: "USER NOT FOUND" });
+      return;
+    }
+    res.status(200).json({ user: existingUser });
+    return;
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+export const GetUserByAuthId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { auth_id, ...rest } = req.query;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY auth_id IS ALLOWED" });
+      return;
+    }
+    if (!auth_id) {
+      res.status(400).json({ message: "auth_id IS REQUIRED" });
+      return;
+    }
+
+    const existingUser = await UserModel.findOne({ auth_id });
     if (!existingUser) {
       res.status(404).json({ message: "USER NOT FOUND" });
       return;
@@ -32,6 +67,32 @@ export const CreateUser = async (
   res: Response
 ): Promise<void> => {
   try {
+    const allowedFields = [
+      "email",
+      "username",
+      "first_name",
+      "last_name",
+      "image_url",
+      "latitude",
+      "longitude",
+      "sport",
+      "completed_trainings",
+      "social_number",
+      "athlete_bio",
+      "auth_id",
+      "last_onbording_step",
+      "has_completed_onboarding",
+      "privacy_settings"
+    ];
+    const extraFields: string[] = Object.keys(req.body).filter(
+      (key: string) => !allowedFields.includes(key)
+    );
+    if (extraFields.length > 0) {
+      res.status(400).json({
+        message: `ONLY ALLOWED FIELDS ARE ACCEPTED: ${allowedFields.join(", ")}`
+      });
+      return;
+    }
     const {
       email,
       username,
@@ -40,7 +101,14 @@ export const CreateUser = async (
       image_url,
       latitude,
       longitude,
-      sport
+      sport,
+      completed_trainings,
+      social_number,
+      athlete_bio,
+      auth_id,
+      last_onbording_step,
+      has_completed_onboarding,
+      privacy_settings
     } = req.body as IUser;
     if (!email) {
       res.status(400).json({ message: "EMAIL IS REQUIRED" });
@@ -60,7 +128,14 @@ export const CreateUser = async (
       image_url: image_url || "",
       latitude: latitude || 0,
       longitude: longitude || 0,
-      sport: sport || []
+      sport: sport || [],
+      completed_trainings: completed_trainings || 0,
+      social_number: social_number || "",
+      athlete_bio: athlete_bio || "",
+      auth_id: auth_id || "",
+      last_onbording_step: last_onbording_step || "",
+      has_complyted_onboarding: has_completed_onboarding || false,
+      privacy_settings: privacy_settings || false
     });
     const savedUser: IUser = await newUser.save();
     res.status(201).json({ user: savedUser });
@@ -75,16 +150,19 @@ export const UpdateUser = async (
 ): Promise<void> => {
   try {
     const { _id } = req.body;
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
     if (!validationId(_id, res)) {
       return;
     }
-
     const updates = Object.keys(req.body).reduce(
       (acc, key) => {
         acc[key] = req.body[key];
         return acc;
       },
-      {} as Record<string, any>
+      {} as Record<string, unknown>
     );
 
     if (Object.keys(updates).length <= 1) {
@@ -112,7 +190,15 @@ export const DeleteUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { _id } = req.body;
+    const { _id, ...rest } = req.body;
+    if (Object.keys(rest).length > 0) {
+      res.status(400).json({ message: "ONLY _id IS ALLOWED" });
+      return;
+    }
+    if (!_id) {
+      res.status(400).json({ message: "ID IS REQUIRED" });
+      return;
+    }
     if (!validationId(_id, res)) {
       return;
     }
