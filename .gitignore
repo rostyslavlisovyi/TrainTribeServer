@@ -398,7 +398,9 @@ dist/
 .idea/
 # environment file
 .env
-env.d.ts
+.env.local
+.env.*.local
+
 # prettier configuration file
 .prettierrc
 .prettierignore
