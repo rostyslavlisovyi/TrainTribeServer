@@ -11,10 +11,7 @@ import chalk from "chalk";
 dotenv.config();
 
 // Environment Variables Validation
-const REQUIRED_ENV_VARS: string[] = [
-  "SERVER_PORT",
-  "DB_TYPE"
-] as const;
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE"] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(chalk.red(`Environment variable ${varName} is not defined.`));
