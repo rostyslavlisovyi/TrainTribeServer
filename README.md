@@ -76,49 +76,49 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File                    | Description                                        |
-| ----------------------------------- | -------------------------------------------------- |
-| `src/`                              | Main code directory                                |
-| ├── `config/`                       | Configuration files (e.g., database, environment)  |
-| │ └── `database.ts`                 | Database connection configuration                  |
-| │ └── `swagger.ts`                  | Swagger/OpenAPI documentation configuration        |
-| ├── `controllers/`                  | Controllers for handling requests                  |
-| │ └── `city.controller.ts`          | Logic for handling city-related API requests       |
-| │ └── `upload.controller.ts`        | Logic for handling file uploads                    |
-| │ └── `user.controller.ts`          | Logic for handling user-related API requests       |
-| ├── `interfaces/`                   | TypeScript interfaces for strict type definitions  |
-| │ └── `training.interfaces.ts`      | Define TypeScript interfaces for training entities |
-| │ └── `user.interfaces.ts`          | Define TypeScript interfaces for user entities     |
-| ├── `middleware/`                   | Middleware functions                               |
-| │ └── `auth.middleware.ts`          | Middleware for handling user authentication        |
-| │ └── `upload.middleware.ts`        | Middleware for handling file uploads               |
-| ├── `models/`                       | Database structure definitions (Models)            |
-| │ └── `MongoDB/`                    | MongoDB models for application                     |
-| │ │ └── `training.model.ts` | MongoDB model for training entities                |
-| │ │ └── `user.model.ts`     | MongoDB model for user entities                    |
-| ├── `routes/`                       | API route definitions                              |
-| │ └── `city.route.ts`               | Routes for city-related endpoints                  |
-| │ └── `index.ts`                    | Main router combining all routes                   |
-| │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
-| │ └── `training.routes.ts`          | Routes for training-related endpoints              |
-| │ └── `upload.routes.ts`            | Routes for file upload endpoints                   |
-| ├── `types/`                        | Global TypeScript type definitions                 |
-| │ └── `enums.ts`                    | Enums for type-safe constants (e.g., sports types) |
-| ├── `utils/`                        | Utility and helper functions                       |
-| │ └── `handleError.ts`              | General error handling utility                     |
-| │ └── `handleMongooseError.ts`      | Utility for handling MongoDB-specific errors       |
-| │ └── `validationObjectId.ts`       | Utility for validating MongoDB ObjectIDs           |
-| └── `appServer.ts`                  | Main server initialization logic                   |
-| `uploads/`                          | Uploads directory                                  |
-| `.eslintrc.json`                    | ESLint configuration                               |
-| `.prettierrc`                       | Prettier configuration                             |
-| `.gitignore`                        | Git ignore file                                    |
-| `package.json`                      | Node.js dependencies file                          |
-| `README.md`                         | Project documentation                              |
-| `jest.config.ts`                    | Jest configuration file for testing setup          |
-| `nodemon.json`                      | Nodemon configuration file for automatic restarts  |
-| `.env.exemple`                      | Example environment variables configuration file   |
-| `vercel.json`                       | Vercel deployment configuration                    |
+| Directory / File               | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
+| `src/`                         | Main code directory                                |
+| ├── `config/`                  | Configuration files (e.g., database, environment)  |
+| │ └── `database.ts`            | Database connection configuration                  |
+| │ └── `swagger.ts`             | Swagger/OpenAPI documentation configuration        |
+| ├── `controllers/`             | Controllers for handling requests                  |
+| │ └── `city.controller.ts`     | Logic for handling city-related API requests       |
+| │ └── `upload.controller.ts`   | Logic for handling file uploads                    |
+| │ └── `user.controller.ts`     | Logic for handling user-related API requests       |
+| ├── `interfaces/`              | TypeScript interfaces for strict type definitions  |
+| │ └── `training.interfaces.ts` | Define TypeScript interfaces for training entities |
+| │ └── `user.interfaces.ts`     | Define TypeScript interfaces for user entities     |
+| ├── `middleware/`              | Middleware functions                               |
+| │ └── `auth.middleware.ts`     | Middleware for handling user authentication        |
+| │ └── `upload.middleware.ts`   | Middleware for handling file uploads               |
+| ├── `models/`                  | Database structure definitions (Models)            |
+| │ └── `MongoDB/`               | MongoDB models for application                     |
+| │ │ └── `training.model.ts`    | MongoDB model for training entities                |
+| │ │ └── `user.model.ts`        | MongoDB model for user entities                    |
+| ├── `routes/`                  | API route definitions                              |
+| │ └── `city.route.ts`          | Routes for city-related endpoints                  |
+| │ └── `index.ts`               | Main router combining all routes                   |
+| │ └── `user.routes.ts`         | Routes for user-related endpoints                  |
+| │ └── `training.routes.ts`     | Routes for training-related endpoints              |
+| │ └── `upload.routes.ts`       | Routes for file upload endpoints                   |
+| ├── `types/`                   | Global TypeScript type definitions                 |
+| │ └── `enums.ts`               | Enums for type-safe constants (e.g., sports types) |
+| ├── `utils/`                   | Utility and helper functions                       |
+| │ └── `handleError.ts`         | General error handling utility                     |
+| │ └── `handleMongooseError.ts` | Utility for handling MongoDB-specific errors       |
+| │ └── `validationObjectId.ts`  | Utility for validating MongoDB ObjectIDs           |
+| └── `appServer.ts`             | Main server initialization logic                   |
+| `uploads/`                     | Uploads directory                                  |
+| `.eslintrc.json`               | ESLint configuration                               |
+| `.prettierrc`                  | Prettier configuration                             |
+| `.gitignore`                   | Git ignore file                                    |
+| `package.json`                 | Node.js dependencies file                          |
+| `README.md`                    | Project documentation                              |
+| `jest.config.ts`               | Jest configuration file for testing setup          |
+| `nodemon.json`                 | Nodemon configuration file for automatic restarts  |
+| `.env.exemple`                 | Example environment variables configuration file   |
+| `vercel.json`                  | Vercel deployment configuration                    |
 
 ## Technologies
 
@@ -146,11 +146,11 @@ The server provides the following API endpoints:
 
 ### **City**
 
-| Method | Endpoint        | Description           |
-| ------ | --------------- | --------------------- |
-| GET    | `/api/city`     | Get all cities        |
-| GET    | `/api/city/id`  | Get city by ID        |
-| GET    | `/api/city/name`| Get city by name      |
+| Method | Endpoint         | Description      |
+| ------ | ---------------- | ---------------- |
+| GET    | `/api/city`      | Get all cities   |
+| GET    | `/api/city/id`   | Get city by ID   |
+| GET    | `/api/city/name` | Get city by name |
 
 ### **Upload**
 
@@ -186,17 +186,17 @@ The server provides the following API endpoints:
 
 ### City
 
-| Field       | Type     | Required | Unique | Description                                      |
-| ----------- | -------- | -------- | ------ | ------------------------------------------------ |
-| `_id`       | `String` | Yes      | Yes    | City's id.                                       |
-| `id`        | `Number` | Yes      | No     | City's numeric identifier.                       |
-| `name`      | `String` | No       | No     | Name of the city.                                |
-| `latitude`  | `Number` | No       | No     | Geographical latitude of the city's location.    |
-| `longitude` | `Number` | No       | No     | Geographical longitude of the city's location.   |
-| `province`  | `String` | No       | No     | Province or state where the city is located.     |
-| `population`| `Number` | No       | No     | Population of the city.                          |
-| `createdAt` | `Date`   | Auto     | No     | Timestamp when the city document was created.    |
-| `updatedAt` | `Date`   | Auto     | No     | Timestamp when the user document was last updated|
+| Field        | Type     | Required | Unique | Description                                       |
+| ------------ | -------- | -------- | ------ | ------------------------------------------------- |
+| `_id`        | `String` | Yes      | Yes    | City's id.                                        |
+| `id`         | `Number` | Yes      | No     | City's numeric identifier.                        |
+| `name`       | `String` | No       | No     | Name of the city.                                 |
+| `latitude`   | `Number` | No       | No     | Geographical latitude of the city's location.     |
+| `longitude`  | `Number` | No       | No     | Geographical longitude of the city's location.    |
+| `province`   | `String` | No       | No     | Province or state where the city is located.      |
+| `population` | `Number` | No       | No     | Population of the city.                           |
+| `createdAt`  | `Date`   | Auto     | No     | Timestamp when the city document was created.     |
+| `updatedAt`  | `Date`   | Auto     | No     | Timestamp when the user document was last updated |
 
 ### Training Model
 
