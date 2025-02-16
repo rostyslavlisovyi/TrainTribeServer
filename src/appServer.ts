@@ -2,8 +2,6 @@ import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
-import sequelize from "./config/sequelize.js";
-import syncMock from "./config/syncMock.js";
 import router from "./routes/index.js";
 import { setupSwagger } from "./config/swagger.js";
 import chalk from "chalk";
@@ -11,7 +9,7 @@ import chalk from "chalk";
 dotenv.config();
 
 // Environment Variables Validation
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE"] as const;
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "MONGODB_URI"] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(chalk.red(`Environment variable ${varName} is not defined.`));
@@ -53,7 +51,6 @@ setupSwagger(appServer);
 async function gracefulShutdown(signal: string): Promise<void> {
   console.info(`Received ${signal}. Gracefully shutting down...`);
   try {
-    await sequelize.close();
     console.info("Database connection closed.");
     process.exit(0);
   } catch (error) {
@@ -72,10 +69,6 @@ async function startServer(): Promise<void> {
   try {
     // Connect to database
     await connectDB();
-
-    // Sync mock data
-    await syncMock();
-    console.info(chalk.green("Mock data synced successfully."));
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {
