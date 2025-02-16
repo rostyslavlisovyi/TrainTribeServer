@@ -38,9 +38,12 @@ appServer.options("*", cors(corsOptions));
 
 appServer.use(express.urlencoded({ extended: true }));
 
+// Serve static files from the public directory
+appServer.use(express.static("public"));
+
 // Routes
 appServer.get("/", (_req, res) => {
-  res.send("TrainTribe API");
+  res.sendFile("index.html", { root: "./public" });
 });
 
 appServer.use("/api", router);
