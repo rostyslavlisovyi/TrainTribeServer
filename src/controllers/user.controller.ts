@@ -75,7 +75,7 @@ export const CreateUser = async (
       "image_url",
       "latitude",
       "longitude",
-      "sport",
+      "sports",
       "completed_trainings",
       "social_number",
       "athlete_bio",
@@ -101,7 +101,7 @@ export const CreateUser = async (
       image_url,
       latitude,
       longitude,
-      sport,
+      sports,
       completed_trainings,
       social_number,
       athlete_bio,
@@ -128,13 +128,13 @@ export const CreateUser = async (
       image_url: image_url || "",
       latitude: latitude || 0,
       longitude: longitude || 0,
-      sport: sport || [],
+      sports: sports || [],
       completed_trainings: completed_trainings || 0,
       social_number: social_number || "",
       athlete_bio: athlete_bio || "",
       auth_id: auth_id || "",
       last_onbording_step: last_onbording_step || "",
-      has_complyted_onboarding: has_completed_onboarding || false,
+      has_completed_onboarding: has_completed_onboarding || false,
       privacy_settings: privacy_settings || false
     });
     const savedUser: IUser = await newUser.save();
