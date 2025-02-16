@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { HydratedDocument } from "mongoose";
-
 import { IUser } from "../interfaces/user.interfaces.js";
-import UserModel from "../models/MongoDB/user.model.mongoDB.js";
+import UserModel from "../models/MongoDB/user.model.js";
 import validationId from "../utils/validationObjectId.js";
 import handleError from "../utils/handleError.js";
 
@@ -73,14 +72,13 @@ export const CreateUser = async (
       "first_name",
       "last_name",
       "image_url",
-      "latitude",
-      "longitude",
+      "city",
       "sports",
       "completed_trainings",
       "social_number",
       "athlete_bio",
       "auth_id",
-      "last_onbording_step",
+      "last_onboarding_step",
       "has_completed_onboarding",
       "privacy_settings"
     ];
@@ -99,14 +97,13 @@ export const CreateUser = async (
       first_name,
       last_name,
       image_url,
-      latitude,
-      longitude,
+      city,
       sports,
       completed_trainings,
       social_number,
       athlete_bio,
       auth_id,
-      last_onbording_step,
+      last_onboarding_step,
       has_completed_onboarding,
       privacy_settings
     } = req.body as IUser;
@@ -126,14 +123,13 @@ export const CreateUser = async (
       first_name: first_name || "",
       last_name: last_name || "",
       image_url: image_url || "",
-      latitude: latitude || 0,
-      longitude: longitude || 0,
+      city: city || "",
       sports: sports || [],
       completed_trainings: completed_trainings || 0,
       social_number: social_number || "",
       athlete_bio: athlete_bio || "",
       auth_id: auth_id || "",
-      last_onbording_step: last_onbording_step || "",
+      last_onboarding_step: last_onboarding_step || "",
       has_completed_onboarding: has_completed_onboarding || false,
       privacy_settings: privacy_settings || false
     });

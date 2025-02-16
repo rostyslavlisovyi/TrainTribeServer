@@ -6,8 +6,7 @@ export interface IUser extends Document {
   first_name?: string;
   last_name?: string;
   image_url?: string;
-  latitude?: number;
-  longitude?: number;
+  city: ObjectId;
   sports?: SportsEnum[];
   completed_trainings?: number;
   social_number?: string;
@@ -15,7 +14,7 @@ export interface IUser extends Document {
   training_created?: ObjectId[];
   training_join?: ObjectId[];
   auth_id: string;
-  last_onbording_step: string;
+  last_onboarding_step: string;
   has_completed_onboarding: boolean;
   privacy_settings: boolean;
 }

@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
 import router from "./routes/index.js";
+import syncMock from "./config/syncMock.js";
 import { setupSwagger } from "./config/swagger.js";
 import chalk from "chalk";
 
@@ -69,6 +70,10 @@ async function startServer(): Promise<void> {
   try {
     // Connect to database
     await connectDB();
+
+    // Sync mock data
+    await syncMock();
+    console.info(chalk.green("Mock data synced successfully."));
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {
