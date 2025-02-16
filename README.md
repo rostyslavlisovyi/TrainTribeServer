@@ -83,6 +83,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `database.ts`                 | Database connection configuration                  |
 | │ └── `swagger.ts`                  | Swagger/OpenAPI documentation configuration        |
 | ├── `controllers/`                  | Controllers for handling requests                  |
+| │ └── `city.controller.ts`          | Logic for handling city-related API requests       |
 | │ └── `upload.controller.ts`        | Logic for handling file uploads                    |
 | │ └── `user.controller.ts`          | Logic for handling user-related API requests       |
 | ├── `interfaces/`                   | TypeScript interfaces for strict type definitions  |
@@ -93,13 +94,14 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `upload.middleware.ts`        | Middleware for handling file uploads               |
 | ├── `models/`                       | Database structure definitions (Models)            |
 | │ └── `MongoDB/`                    | MongoDB models for application                     |
-| │ │ └── `training.model.mongoDB.ts` | MongoDB model for training entities                |
-| │ │ └── `user.model.mongoDB.ts`     | MongoDB model for user entities                    |
+| │ │ └── `training.model.ts` | MongoDB model for training entities                |
+| │ │ └── `user.model.ts`     | MongoDB model for user entities                    |
 | ├── `routes/`                       | API route definitions                              |
+| │ └── `city.route.ts`               | Routes for city-related endpoints                  |
 | │ └── `index.ts`                    | Main router combining all routes                   |
 | │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
 | │ └── `training.routes.ts`          | Routes for training-related endpoints              |
-| │ └── `upload.routes.ts`            | Routes for                                         |
+| │ └── `upload.routes.ts`            | Routes for file upload endpoints                   |
 | ├── `types/`                        | Global TypeScript type definitions                 |
 | │ └── `enums.ts`                    | Enums for type-safe constants (e.g., sports types) |
 | ├── `utils/`                        | Utility and helper functions                       |
@@ -142,6 +144,14 @@ The server provides the following API endpoints:
 | POST   | `/api/user` | Update user by Token (ID extracted from JWT) |
 | DELETE | `/api/user` | Delete user by Token (ID extracted from JWT) |
 
+### **City**
+
+| Method | Endpoint        | Description           |
+| ------ | --------------- | --------------------- |
+| GET    | `/api/city`     | Get all cities        |
+| GET    | `/api/city/id`  | Get city by ID        |
+| GET    | `/api/city/name`| Get city by name      |
+
 ### **Upload**
 
 | Method | Endpoint      | Description   |
@@ -152,32 +162,43 @@ The server provides the following API endpoints:
 
 ### User
 
-| Field                      | Type         | Required | Unique | Description                                                                   |
-| -------------------------- | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
-| `_id`                      | `String`     | Yes      | Yes    | User's id.                                                                    |
-| `username`                 | `String`     | No       | No     | User's display name.                                                          |
-| `first_name`               | `String`     | No       | No     | User's first name.                                                            |
-| `last_name`                | `String`     | No       | No     | User's last name.                                                             |
-| `email`                    | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
-| `sports`                   | `String[]`   | Yes      | No     | Array of sports types from SportsEnum (e.g., running, cycling, swimming)      |
-| `image_url`                | `String`     | No       | No     | URL to the user's profile picture.                                            |
-| `latitude`                 | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
-| `longitude`                | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
-| `completed_trainings`      | `Number`     | No       | No     | Number of trainings the user has completed.                                   |
-| `social_number`            | `String`     | No       | No     | User's social number.                                                         |
-| `athlete_bio`              | `String`     | No       | No     | User's athletic biography and background information.                         |
-| `auth_id`                  | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
-| `last_onbording_step`      | `String`     | No       | No     | Indicates the last completed onboarding step.                                 |
-| `has_completed_onboarding` | `Boolean`    | Yes      | No     | Indicates if user has completed onboarding.                                   |
-| `privacy_settings`         | `Boolean`    | No       | No     | User's privacy preference. Default is false.                                  |
-| `training_created`         | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
-| `training_join`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
-| `createdAt`                | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
-| `updatedAt`                | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
+| Field                      | Type         | Required | Unique | Description                                                              |
+| -------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------ |
+| `_id`                      | `String`     | Yes      | Yes    | User's id.                                                               |
+| `username`                 | `String`     | No       | No     | User's display name.                                                     |
+| `first_name`               | `String`     | No       | No     | User's first name.                                                       |
+| `last_name`                | `String`     | No       | No     | User's last name.                                                        |
+| `email`                    | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).        |
+| `sports`                   | `String[]`   | Yes      | No     | Array of sports types from SportsEnum (e.g., running, cycling, swimming) |
+| `image_url`                | `String`     | No       | No     | URL to the user's profile picture.                                       |
+| `city`                     | `ObjectId`   | No       | No     | Reference to the user's city.                                            |
+| `completed_trainings`      | `Number`     | No       | No     | Number of trainings the user has completed.                              |
+| `social_number`            | `String`     | No       | No     | User's social number.                                                    |
+| `athlete_bio`              | `String`     | No       | No     | User's athletic biography and background information.                    |
+| `auth_id`                  | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                         |
+| `last_onboarding_step`     | `String`     | No       | No     | Indicates the last completed onboarding step.                            |
+| `has_completed_onboarding` | `Boolean`    | Yes      | No     | Indicates if user has completed onboarding.                              |
+| `privacy_settings`         | `Boolean`    | No       | No     | User's privacy preference. Default is false.                             |
+| `training_created`         | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.        |
+| `training_join`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.         |
+| `createdAt`                | `Date`       | Auto     | No     | Timestamp when the user document was created.                            |
+| `updatedAt`                | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                       |
+
+### City
+
+| Field       | Type     | Required | Unique | Description                                      |
+| ----------- | -------- | -------- | ------ | ------------------------------------------------ |
+| `_id`       | `String` | Yes      | Yes    | City's id.                                       |
+| `id`        | `Number` | Yes      | No     | City's numeric identifier.                       |
+| `name`      | `String` | No       | No     | Name of the city.                                |
+| `latitude`  | `Number` | No       | No     | Geographical latitude of the city's location.    |
+| `longitude` | `Number` | No       | No     | Geographical longitude of the city's location.   |
+| `province`  | `String` | No       | No     | Province or state where the city is located.     |
+| `population`| `Number` | No       | No     | Population of the city.                          |
+| `createdAt` | `Date`   | Auto     | No     | Timestamp when the city document was created.    |
+| `updatedAt` | `Date`   | Auto     | No     | Timestamp when the user document was last updated|
 
 ### Training Model
-
-The `Training` model represents training events created by users in the system.
 
 | **Field**      | **Type**     | **Required** | **Description**                                                                              |
 | -------------- | ------------ | ------------ | -------------------------------------------------------------------------------------------- |
