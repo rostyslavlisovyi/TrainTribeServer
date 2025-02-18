@@ -1,5 +1,5 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
-import { SportsEnum } from "../types/enums.js";
+import { SportsEnum, TrainingGoalEnum, TrainingLevelEnum } from "../types";
 export interface IUser extends Document {
   email: string;
   username?: string;
@@ -9,6 +9,8 @@ export interface IUser extends Document {
   image_url?: string;
   city: ObjectId;
   sports?: SportsEnum[];
+  training_level?: TrainingLevelEnum;
+  training_goal?: TrainingGoalEnum[];
   completed_trainings?: number;
   social_number?: string;
   athlete_bio?: string;

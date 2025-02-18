@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Document, FilterQuery } from "mongoose";
 import { BaseService } from "../services/base.service.ts";
-import handleError from "../utils/handleError.ts";
+import { handleError } from "../utils/handleError.ts";
 
 export abstract class BaseController<T extends Document> {
   protected service: BaseService<T>;
@@ -25,18 +25,12 @@ export abstract class BaseController<T extends Document> {
       res.json(result);
     } catch (error) {
       handleError(res, error);
-      res.status(500).json({ error: (error as Error).message });
     }
   }
 
   async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        pageNum = "1",
-        pageSize = "10",
-        populate,
-        ...filters
-      } = req.query;
+      const { pageNum = "1", pageSize = "10", populate, ...filters } = req.body;
       const result = await this.service.getAll({
         pageNum: parseInt(pageNum as string, 10),
         pageSize: parseInt(pageSize as string, 10),
@@ -46,7 +40,6 @@ export abstract class BaseController<T extends Document> {
       res.json(result);
     } catch (error) {
       handleError(res, error);
-      res.status(500).json({ error: (error as Error).message });
     }
   }
 
@@ -56,7 +49,6 @@ export abstract class BaseController<T extends Document> {
       res.status(201).json(result);
     } catch (error) {
       handleError(res, error);
-      res.status(400).json({ error: (error as Error).message });
     }
   }
 
@@ -76,7 +68,6 @@ export abstract class BaseController<T extends Document> {
       res.json(result);
     } catch (error) {
       handleError(res, error);
-      res.status(400).json({ error: (error as Error).message });
     }
   }
 
@@ -91,7 +82,6 @@ export abstract class BaseController<T extends Document> {
       res.status(204).send();
     } catch (error) {
       handleError(res, error);
-      res.status(500).json({ error: (error as Error).message });
     }
   }
 }

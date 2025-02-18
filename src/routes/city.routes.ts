@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { CityController } from "../controllers/city.controller.js";
+import { CityController } from "../controllers/city.controller.ts";
 import express from "express";
 import container from "../container.ts";
 
@@ -7,7 +7,7 @@ const cityRoute: Router = express.Router();
 
 const cityController = container.resolve<CityController>("cityController");
 
-cityRoute.get("/", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/", (req, res) => cityController.getAll(req, res));
 
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 

@@ -1,4 +1,4 @@
-import { IUser } from "../interfaces/user.interfaces.ts";
+import { IUser } from "../interfaces/user.interface.ts";
 import UserModel from "../models/MongoDB/user.model.ts";
 import { BaseService } from "./base.service.ts";
 
