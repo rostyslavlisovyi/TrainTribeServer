@@ -5,6 +5,7 @@ export interface IUser extends Document {
   username?: string;
   first_name?: string;
   last_name?: string;
+  date_of_birth?: Date;
   image_url?: string;
   city: ObjectId;
   sports?: SportsEnum[];

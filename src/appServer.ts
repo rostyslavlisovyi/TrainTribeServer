@@ -6,6 +6,8 @@ import router from "./routes/index.js";
 import syncMock from "./config/syncMock.js";
 import { setupSwagger } from "./config/swagger.js";
 import chalk from "chalk";
+import { scopePerRequest } from "awilix-express";
+import container from "./container.ts";
 
 dotenv.config();
 
@@ -23,6 +25,7 @@ const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
 
 // Initialize Express App
 const appServer: Express = express();
+appServer.use(scopePerRequest(container));
 
 //Middlewares
 appServer.use(express.json());

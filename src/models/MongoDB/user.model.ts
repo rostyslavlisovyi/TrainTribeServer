@@ -9,6 +9,7 @@ const UserSchema: Schema = new Schema(
     first_name: { type: String },
     last_name: { type: String },
     image_url: { type: String, required: false },
+    date_of_birth: { type: Date, required: false },
     city: { type: Schema.Types.ObjectId, ref: "City", required: false },
     sports: [
       {

@@ -1,21 +1,14 @@
 import { Router } from "express";
-import {
-  GetUserById,
-  CreateUser,
-  UpdateUser,
-  DeleteUser,
-  GetUserByAuthId
-} from "../controllers/user.controller.js";
+import { UserController } from "../controllers/user.controller.js";
 import express from "express";
 import authenticate from "../middlewares/auth.middleware.js";
-import {
-  handleValidationErrors,
-  validateUserData
-} from "../middlewares/validation.middleware.js";
+import container from "../container.ts";
 
 const userRoute: Router = express.Router();
 
-// GET: Get user by ID
+const userController = container.resolve<UserController>("userController");
+
+// GET: Get user by Auth ID
 /**
  * @swagger
  * /user:
@@ -96,10 +89,9 @@ const userRoute: Router = express.Router();
  *                   type: string
  *                   example: INTERNAL SERVER ERROR
  */
-userRoute.get("/", authenticate, GetUserById);
-
-//@TODO: add swagger documentation
-userRoute.get("/by-auth-id", authenticate, GetUserByAuthId);
+userRoute.get("/by-auth-id/:auth_id", authenticate, (req, res) =>
+  userController.getByAuthId(req, res)
+);
 
 // POST: Create new user
 /**
@@ -242,9 +234,9 @@ userRoute.get("/by-auth-id", authenticate, GetUserByAuthId);
 userRoute.post(
   "/",
   authenticate,
-  validateUserData,
-  handleValidationErrors,
-  CreateUser
+  (req, res) => userController.create(req, res)
+  // validateUserData,
+  // handleValidationErrors
 );
 /**
  * @swagger
@@ -409,12 +401,11 @@ userRoute.post(
  *                   example: INTERNAL SERVER ERROR
  */
 userRoute.put(
-  "/",
+  "/:id",
   authenticate,
-
-  validateUserData,
-  handleValidationErrors,
-  UpdateUser
+  (req, res) => userController.update(req, res)
+  // validateUserData,
+  // handleValidationErrors,
 );
 
 /**
@@ -518,6 +509,8 @@ userRoute.put(
  *                   type: string
  *                   example: INTERNAL SERVER ERROR
  */
-userRoute.delete("/", authenticate, DeleteUser);
+userRoute.delete("/:id", authenticate, (req, res) =>
+  userController.delete(req, res)
+);
 
 export default userRoute;
