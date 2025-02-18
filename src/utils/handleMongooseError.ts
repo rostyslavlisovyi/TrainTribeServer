@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import chalk from "chalk";
 
-const handleMongooseError = (error: unknown): void => {
+export const handleMongooseError = (error: unknown): void => {
   if (error instanceof mongoose.Error.ValidationError) {
     console.error(chalk.red("Validation Error:", error.errors));
     Object.values(error.errors).forEach((err) => {
@@ -18,5 +18,3 @@ const handleMongooseError = (error: unknown): void => {
     console.error(chalk.red("General Error:", error.message));
   }
 };
-
-export default handleMongooseError;

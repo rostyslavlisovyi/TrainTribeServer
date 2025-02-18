@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+ALLOWED_BRANCHES="develop main staging"
+
+if echo "$ALLOWED_BRANCHES" | grep -wq "$BRANCH"; then
+  echo "⚡ Running build after merge on branch: $BRANCH..."
+  npm run build
+  BUILD_EXIT_CODE=$?
+
+  if [ $BUILD_EXIT_CODE -ne 0 ]; then
+    echo "❌ Build failed after merge!"
+    exit 1
+  fi
+
+  git add dist/*
+
+  echo "✅ Build succeeded after merge."
+else
+  echo "🚀 Skipping build for branch: $BRANCH"
+fi
+
+exit 0

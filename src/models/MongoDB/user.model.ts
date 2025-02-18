@@ -1,6 +1,10 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { IUser } from "../../interfaces/user.interfaces.js";
-import { SportsEnum } from "../../types/enums.js";
+import { IUser } from "../../interfaces/user.interface.ts";
+import {
+  SportsEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum
+} from "../../types/enums.ts";
 
 const UserSchema: Schema = new Schema(
   {
@@ -9,13 +13,22 @@ const UserSchema: Schema = new Schema(
     first_name: { type: String },
     last_name: { type: String },
     image_url: { type: String, required: false },
+    date_of_birth: { type: Date, required: false },
     city: { type: Schema.Types.ObjectId, ref: "City", required: false },
     sports: [
       {
         type: String,
-        enum: Object.values(SportsEnum),
-        required: true,
-        default: SportsEnum.RUNNING
+        enum: Object.values(SportsEnum)
+      }
+    ],
+    training_level: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    training_goal: [
+      {
+        type: String,
+        enum: Object.values(TrainingGoalEnum)
       }
     ],
     completed_trainings: { type: Number, default: 0 },
@@ -25,7 +38,7 @@ const UserSchema: Schema = new Schema(
     training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }],
     auth_id: { type: String, required: true },
     last_onboarding_step: { type: String, required: false },
-    has_completed_onboarding: { type: Boolean, required: true },
+    has_completed_onboarding: { type: Boolean, required: false },
     privacy_settings: { type: Boolean, default: false }
   },
   {
