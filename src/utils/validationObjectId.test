@@ -1,4 +1,4 @@
-import validationId from "../utils/validationObjectId.ts";
+import validationId from "../utils/validationObjectId.js";
 import mongoose from "mongoose";
 
 describe("validationId function", () => {

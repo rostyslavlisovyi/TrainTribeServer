@@ -1,10 +1,10 @@
 import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectDB from "./config/database.js";
-import router from "./routes/index.js";
-import syncMock from "./config/syncMock.js";
-import { setupSwagger } from "./config/swagger.js";
+import connectDB from "./config/database.ts";
+import router from "./routes/index.ts";
+import syncMock from "./config/syncMock.ts";
+import { setupSwagger } from "./config/swagger.ts";
 import chalk from "chalk";
 import { scopePerRequest } from "awilix-express";
 import container from "./container.ts";

@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { UserController } from "../controllers/user.controller.js";
+import { UserController } from "../controllers/user.controller.ts";
 import express from "express";
-import authenticate from "../middlewares/auth.middleware.js";
+import { authenticate } from "../middlewares/auth.middleware.ts";
 import container from "../container.ts";
 import { handleValidationErrors } from "../middlewares/validation.middleware.ts";
 import {

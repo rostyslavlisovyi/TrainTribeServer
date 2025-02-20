@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { IUser } from "../interfaces/user.interfaces.js";
-import handleError from "../utils/handleError.js";
+import { IUser } from "../interfaces/user.interface.ts";
+import { handleError } from "../utils/handleError.ts";
 import { BaseController } from "./base.controller.ts";
 import { UserService } from "services/user.service.ts";
 
@@ -27,7 +27,6 @@ export class UserController extends BaseController<IUser> {
       res.json(result);
     } catch (error) {
       handleError(res, error);
-      res.status(500).json({ error: (error as Error).message });
     }
   }
 }

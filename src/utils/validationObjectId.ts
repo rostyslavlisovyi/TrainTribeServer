@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Response } from "express";
-const validationId = (id: string, res: Response): boolean => {
+export const validationId = (id: string, res: Response): boolean => {
   if (!mongoose.isValidObjectId(id)) {
     res.status(422).json({
       message: "UNPROCESSABLE ENTITY",
@@ -10,5 +10,3 @@ const validationId = (id: string, res: Response): boolean => {
   }
   return true;
 };
-
-export default validationId;

@@ -1,4 +1,580 @@
-export const citysMock = [
+// src/appServer.ts
+import express5 from "express";
+import cors from "cors";
+import dotenv2 from "dotenv";
+
+// src/config/database.ts
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import chalk from "chalk";
+dotenv.config();
+var connectDB = async () => {
+  try {
+    console.log("Connecting to MongoDB database...");
+    const mongoURI = process.env.MONGODB_URI;
+    await mongoose.connect(mongoURI ?? "");
+    console.log(chalk.green("Connected to MongoDB database."));
+  } catch (error) {
+    console.error(chalk.red("Error connection to database", error));
+    process.exit(1);
+  }
+};
+var database_default = connectDB;
+
+// src/routes/index.ts
+import express4 from "express";
+
+// src/routes/user.routes.ts
+import express from "express";
+
+// src/middlewares/auth.middleware.ts
+import { auth } from "express-oauth2-jwt-bearer";
+var authenticate = auth({
+  audience: process.env.OAUTH_AUDIENCE,
+  issuerBaseURL: process.env.OAUTH_DOMAIN,
+  tokenSigningAlg: "RS256"
+});
+
+// src/models/MongoDB/city.model.ts
+import mongoose2, { Schema } from "mongoose";
+var CitySchema = new Schema(
+  {
+    id: { type: Number, required: true },
+    name: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    province: { type: String },
+    population: { type: Number }
+  },
+  {
+    timestamps: true
+  }
+);
+var CityModel = mongoose2.model("City", CitySchema);
+var city_model_default = CityModel;
+
+// src/services/base.service.ts
+var BaseService = class {
+  model;
+  constructor(model) {
+    this.model = model;
+  }
+  async get({
+    id,
+    populateFields
+  }) {
+    let query = this.model.findById(id);
+    if (populateFields) {
+      query = query.populate(populateFields);
+    }
+    return { data: await query };
+  }
+  async getAll({
+    pageNum = 1,
+    pageSize = 10,
+    populateFields,
+    filters = {}
+  }) {
+    const skips = pageSize * (pageNum - 1);
+    const totalItems = await this.model.countDocuments(filters);
+    const totalPages = Math.ceil(totalItems / pageSize);
+    let query = this.model.find(filters).skip(skips).limit(pageSize);
+    if (populateFields) {
+      query = query.populate(populateFields);
+    }
+    const data = await query;
+    return {
+      data,
+      totalItems,
+      totalPages,
+      currentPage: pageNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1
+    };
+  }
+  async create(entity) {
+    return await this.model.create(entity);
+  }
+  async update({
+    id,
+    entity,
+    populateFields
+  }) {
+    let query = this.model.findByIdAndUpdate(id, entity, {
+      new: true
+    });
+    if (populateFields) {
+      query = query.populate(populateFields);
+    }
+    return { data: await query };
+  }
+  async delete(id) {
+    const deleted = await this.model.findByIdAndDelete(id);
+    return { data: !!deleted };
+  }
+};
+
+// src/services/city.service.ts
+var CityService = class extends BaseService {
+  now = Date.now();
+  constructor() {
+    super(city_model_default);
+  }
+};
+
+// src/container.ts
+import { asClass, createContainer, InjectionMode } from "awilix";
+
+// src/utils/handleError.ts
+import chalk3 from "chalk";
+
+// src/utils/handleMongooseError.ts
+import mongoose3 from "mongoose";
+import chalk2 from "chalk";
+var handleMongooseError = (error) => {
+  if (error instanceof mongoose3.Error.ValidationError) {
+    console.error(chalk2.red("Validation Error:", error.errors));
+    Object.values(error.errors).forEach((err) => {
+      console.error(chalk2.red(`Field: ${err.path}, Message: ${err.message}`));
+    });
+  } else if (error instanceof mongoose3.Error.CastError) {
+    console.error(chalk2.red("Cast Error: Invalid ID format"));
+  } else if (error instanceof mongoose3.mongo.MongoServerError && error.code === 11e3) {
+    console.error(chalk2.red("Duplicate Key Error:", error.keyValue));
+  } else if (error instanceof Error) {
+    console.error(chalk2.red("General Error:", error.message));
+  }
+};
+
+// src/utils/handleError.ts
+var handleError = (res, error, message = "INTERNAL SERVER ERROR") => {
+  handleMongooseError(error);
+  console.error(chalk3.red(`${message}`, error));
+  res.status(500).json({ message });
+};
+
+// src/controllers/base.controller.ts
+var BaseController = class {
+  service;
+  constructor(service) {
+    this.service = service;
+  }
+  async get(req, res) {
+    try {
+      const { id } = req.params;
+      const { populate } = req.query;
+      const result = await this.service.get({
+        id,
+        populateFields: populate
+      });
+      if (!result) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async getAll(req, res) {
+    try {
+      const { pageNum = "1", pageSize = "10", populate, ...filters } = req.body;
+      const result = await this.service.getAll({
+        pageNum: parseInt(pageNum, 10),
+        pageSize: parseInt(pageSize, 10),
+        populateFields: populate,
+        filters
+      });
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async create(req, res) {
+    try {
+      const result = await this.service.create(req.body);
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const { populate } = req.query;
+      const result = await this.service.update({
+        id,
+        entity: req.body,
+        populateFields: populate
+      });
+      if (!result) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+      const deleted = await this.service.delete(id);
+      if (!deleted) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/controllers/city.controller.ts
+var CityController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(cityService) {
+    super(cityService);
+  }
+};
+
+// src/models/MongoDB/user.model.ts
+import mongoose4, { Schema as Schema2 } from "mongoose";
+
+// src/types/enums.ts
+var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
+  SportsEnum2["SWIMMING"] = "SWIMMING";
+  SportsEnum2["CYCLING"] = "CYCLING";
+  SportsEnum2["RUNNING"] = "RUNNING";
+  SportsEnum2["WALKING"] = "WALKING";
+  SportsEnum2["TRIATHLON"] = "TRIATHLON";
+  return SportsEnum2;
+})(SportsEnum || {});
+var TrainingLevelEnum = /* @__PURE__ */ ((TrainingLevelEnum2) => {
+  TrainingLevelEnum2["BEGINNER"] = "BEGINNER";
+  TrainingLevelEnum2["INTERMEDIATE"] = "INTERMEDIATE";
+  TrainingLevelEnum2["ADVANCED"] = "ADVANCED";
+  return TrainingLevelEnum2;
+})(TrainingLevelEnum || {});
+var TrainingGoalEnum = /* @__PURE__ */ ((TrainingGoalEnum2) => {
+  TrainingGoalEnum2["RACE"] = "RACE";
+  TrainingGoalEnum2["LOSE_WEIGHT"] = "LOSE_WEIGHT";
+  TrainingGoalEnum2["STAY_FIT"] = "STAY_FIT";
+  TrainingGoalEnum2["HAVE_FUN"] = "HAVE_FUN";
+  TrainingGoalEnum2["OTHER"] = "OTHER";
+  return TrainingGoalEnum2;
+})(TrainingGoalEnum || {});
+
+// src/models/MongoDB/user.model.ts
+var UserSchema = new Schema2(
+  {
+    email: { type: String, required: true, unique: true },
+    username: { type: String },
+    first_name: { type: String },
+    last_name: { type: String },
+    image_url: { type: String, required: false },
+    date_of_birth: { type: Date, required: false },
+    city: { type: Schema2.Types.ObjectId, ref: "City", required: false },
+    sports: [
+      {
+        type: String,
+        enum: Object.values(SportsEnum)
+      }
+    ],
+    training_level: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    training_goal: [
+      {
+        type: String,
+        enum: Object.values(TrainingGoalEnum)
+      }
+    ],
+    completed_trainings: { type: Number, default: 0 },
+    social_number: { type: String, required: false },
+    athlete_bio: { type: String, required: false },
+    training_created: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
+    training_join: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
+    auth_id: { type: String, required: true },
+    last_onboarding_step: { type: String, required: false },
+    has_completed_onboarding: { type: Boolean, required: false },
+    privacy_settings: { type: Boolean, default: false }
+  },
+  {
+    timestamps: true
+  }
+);
+var UserModel = mongoose4.model("User", UserSchema);
+var user_model_default = UserModel;
+
+// src/services/user.service.ts
+var UserService = class extends BaseService {
+  constructor() {
+    super(user_model_default);
+  }
+};
+
+// src/controllers/user.controller.ts
+var UserController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(userService) {
+    super(userService);
+  }
+  async getByAuthId(req, res) {
+    try {
+      const { auth_id } = req.params;
+      const { populate } = req.query;
+      const query = this.service.model.findOne({ auth_id });
+      if (populate) {
+        query.populate(populate);
+      }
+      const result = await query;
+      if (!result) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/container.ts
+var container = createContainer({
+  injectionMode: InjectionMode.CLASSIC
+});
+container.register({
+  cityService: asClass(CityService),
+  userService: asClass(UserService)
+}).register({
+  cityController: asClass(CityController),
+  userController: asClass(UserController)
+});
+var container_default = container;
+
+// src/middlewares/validation.middleware.ts
+import { validationResult } from "express-validator";
+var handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({
+      errors: errors.array(),
+      message: "INVALID INPUTS TYPE"
+    });
+    return;
+  }
+  next();
+};
+
+// src/validators/user.validator.ts
+import { body } from "express-validator";
+var validateUserCreation = [
+  body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("auth_id").exists({ checkFalsy: true }).withMessage("AUTH_ID IS REQUIRED").isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
+  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
+  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID TRAINING_GOAL VALUE"),
+  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
+  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
+  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
+  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
+  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
+  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
+  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
+  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
+  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
+  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+];
+var validateUserUpdate = [
+  body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
+  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
+  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID TRAINING_GOAL VALUE"),
+  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
+  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
+  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
+  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
+  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
+  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
+  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
+  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
+  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
+  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+];
+
+// src/routes/user.routes.ts
+var userRoute = express.Router();
+var userController = container_default.resolve("userController");
+userRoute.get(
+  "/by-auth-id/:auth_id",
+  authenticate,
+  (req, res) => userController.getByAuthId(req, res)
+);
+userRoute.post(
+  "/",
+  authenticate,
+  validateUserCreation,
+  handleValidationErrors,
+  (req, res) => userController.create(req, res)
+);
+userRoute.put(
+  "/:id",
+  authenticate,
+  validateUserUpdate,
+  handleValidationErrors,
+  (req, res) => userController.update(req, res)
+);
+userRoute.delete(
+  "/:id",
+  authenticate,
+  (req, res) => userController.delete(req, res)
+);
+var user_routes_default = userRoute;
+
+// src/routes/upload.route.ts
+import express2 from "express";
+
+// src/controllers/upload.controller.ts
+import chalk4 from "chalk";
+import multer from "multer";
+
+// src/utils/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+var validateFileContent = async (fileBuffer) => {
+  const fileType = await fileTypeFromBuffer(fileBuffer);
+  return fileType ? fileType.mime.startsWith("image/") : false;
+};
+
+// src/controllers/upload.controller.ts
+import path from "path";
+import fs from "fs/promises";
+var UploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: "NO FILE UPLOADED" });
+      return;
+    }
+    const isValidateFileContent = await validateFileContent(req.file.buffer);
+    if (!isValidateFileContent) {
+      res.status(422).json({ message: "INVALID FILE CONTENT" });
+      return;
+    }
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const fileExtension = path.extname(req.file.originalname);
+    const fileName = `${req.file.fieldname}-${uniqueSuffix}${fileExtension}`;
+    const filePath = path.join("uploads", fileName);
+    await fs.writeFile(filePath, req.file.buffer);
+    console.info(chalk4.green(`File ${fileName} uploaded successfully`));
+    res.status(200).json({
+      message: "FILE UPLOADED SUCCESSFULLY",
+      file: {
+        filename: fileName,
+        path: filePath,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      }
+    });
+  } catch (error) {
+    console.error(chalk4.red(error));
+    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+    return;
+  }
+};
+var handleUploadError = (error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({ message: "FILE TOO LARGE" });
+    } else {
+      res.status(400).json({ message: error.message });
+    }
+  } else if (error instanceof Error) {
+    res.status(400).json({ message: error.message });
+  } else {
+    next();
+  }
+};
+
+// src/middlewares/upload.middleware.ts
+import multer2 from "multer";
+var fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
+  }
+};
+var upload = multer2({
+  storage: multer2.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 2
+    // 2MB file size limit
+  }
+});
+
+// src/routes/upload.route.ts
+var uploadRoute = express2.Router({ mergeParams: true });
+uploadRoute.post(
+  "/",
+  authenticate,
+  upload.single("image"),
+  handleUploadError,
+  UploadFile
+);
+var upload_route_default = uploadRoute;
+
+// src/routes/city.routes.ts
+import express3 from "express";
+var cityRoute = express3.Router();
+var cityController = container_default.resolve("cityController");
+cityRoute.post("/", (req, res) => cityController.getAll(req, res));
+cityRoute.get("/:id", (req, res) => cityController.get(req, res));
+cityRoute.post("/", (req, res) => cityController.create(req, res));
+cityRoute.put("/:id", (req, res) => cityController.update(req, res));
+cityRoute.delete("/:id", (req, res) => cityController.delete(req, res));
+var city_routes_default = cityRoute;
+
+// src/routes/index.ts
+var router = express4.Router({ mergeParams: true });
+router.use("/user", user_routes_default);
+router.use("/upload", upload_route_default);
+router.use("/city", city_routes_default);
+var routes_default = router;
+
+// src/mock/citys.mock.ts
+var citysMock = [
   {
     name: "Abano Terme",
     latitude: 45.3603,
@@ -48,7 +624,7 @@ export const citysMock = [
     id: 1380362156
   },
   {
-    name: "Aci Sant’Antonio",
+    name: "Aci Sant\u2019Antonio",
     latitude: 37.6,
     longitude: 15.1167,
     province: "Sicilia",
@@ -97,7 +673,7 @@ export const citysMock = [
   },
   {
     name: "Adelfia",
-    latitude: 41.0,
+    latitude: 41,
     longitude: 16.8667,
     province: "Puglia",
     population: 16494,
@@ -130,7 +706,7 @@ export const citysMock = [
   {
     name: "Agliana",
     latitude: 43.9,
-    longitude: 11.0,
+    longitude: 11,
     province: "Tuscany",
     population: 17934,
     id: 1380301784
@@ -169,7 +745,7 @@ export const citysMock = [
   },
   {
     name: "Alassio",
-    latitude: 44.0,
+    latitude: 44,
     longitude: 8.1667,
     province: "Liguria",
     population: 10059,
@@ -392,7 +968,7 @@ export const citysMock = [
     id: 1380647730
   },
   {
-    name: "Anzola dell’Emilia",
+    name: "Anzola dell\u2019Emilia",
     latitude: 44.5472,
     longitude: 11.1956,
     province: "Emilia-Romagna",
@@ -403,7 +979,7 @@ export const citysMock = [
     name: "Aosta",
     latitude: 45.7333,
     longitude: 7.3167,
-    province: "Valle d’Aosta",
+    province: "Valle d\u2019Aosta",
     population: 33093,
     id: 1380291310
   },
@@ -600,9 +1176,9 @@ export const citysMock = [
     id: 1380265519
   },
   {
-    name: "Assèmini",
+    name: "Ass\xE8mini",
     latitude: 39.2833,
-    longitude: 9.0,
+    longitude: 9,
     province: "Sardegna",
     population: 25835,
     id: 1380936771
@@ -808,7 +1384,7 @@ export const citysMock = [
     id: 1380227920
   },
   {
-    name: "Barano d’Ischia",
+    name: "Barano d\u2019Ischia",
     latitude: 40.7167,
     longitude: 13.9167,
     province: "Campania",
@@ -1424,7 +2000,7 @@ export const citysMock = [
     id: 1380073256
   },
   {
-    name: "Càbras",
+    name: "C\xE0bras",
     latitude: 39.9333,
     longitude: 8.5333,
     province: "Sardegna",
@@ -1696,7 +2272,7 @@ export const citysMock = [
     id: 1380411144
   },
   {
-    name: "Canicattì",
+    name: "Canicatt\xEC",
     latitude: 37.3667,
     longitude: 13.85,
     province: "Sicilia",
@@ -1712,7 +2288,7 @@ export const citysMock = [
     id: 1380837242
   },
   {
-    name: "Cantù",
+    name: "Cant\xF9",
     latitude: 45.7333,
     longitude: 9.1333,
     province: "Lombardy",
@@ -1752,7 +2328,7 @@ export const citysMock = [
     id: 1380341916
   },
   {
-    name: "Capo d’Orlando",
+    name: "Capo d\u2019Orlando",
     latitude: 38.15,
     longitude: 14.7333,
     province: "Sicilia",
@@ -2001,7 +2577,7 @@ export const citysMock = [
   },
   {
     name: "Casaluce",
-    latitude: 41.0,
+    latitude: 41,
     longitude: 14.2,
     province: "Campania",
     population: 9587,
@@ -2064,7 +2640,7 @@ export const citysMock = [
     id: 1380614087
   },
   {
-    name: "Casièr",
+    name: "Casi\xE8r",
     latitude: 45.65,
     longitude: 12.3,
     province: "Veneto",
@@ -2096,7 +2672,7 @@ export const citysMock = [
     id: 1380542354
   },
   {
-    name: "Cassano d’Adda",
+    name: "Cassano d\u2019Adda",
     latitude: 45.5333,
     longitude: 9.5167,
     province: "Lombardy",
@@ -2112,7 +2688,7 @@ export const citysMock = [
     id: 1380045660
   },
   {
-    name: "Cassina de’ Pecchi",
+    name: "Cassina de\u2019 Pecchi",
     latitude: 45.5167,
     longitude: 9.3667,
     province: "Lombardy",
@@ -2360,7 +2936,7 @@ export const citysMock = [
     id: 1380924390
   },
   {
-    name: "Castelnovo ne’ Monti",
+    name: "Castelnovo ne\u2019 Monti",
     latitude: 44.4333,
     longitude: 10.4,
     province: "Emilia-Romagna",
@@ -2496,7 +3072,7 @@ export const citysMock = [
     id: 1380510857
   },
   {
-    name: "Cava de’ Tirreni",
+    name: "Cava de\u2019 Tirreni",
     latitude: 40.7,
     longitude: 14.7,
     province: "Campania",
@@ -2564,7 +3140,7 @@ export const citysMock = [
     latitude: 41.7667,
     longitude: 12.6167,
     province: "Lazio",
-    population: 12000,
+    population: 12e3,
     id: 1380793499
   },
   {
@@ -2576,7 +3152,7 @@ export const citysMock = [
     id: 1380999506
   },
   {
-    name: "Cefalù",
+    name: "Cefal\xF9",
     latitude: 38.0333,
     longitude: 14.0167,
     province: "Sicilia",
@@ -2645,7 +3221,7 @@ export const citysMock = [
     longitude: 15.9,
     province: "Puglia",
     population: 56978,
-    id: 1380501000
+    id: 1380501e3
   },
   {
     name: "Cermenate",
@@ -2864,7 +3440,7 @@ export const citysMock = [
     id: 1380020077
   },
   {
-    name: "Ciriè",
+    name: "Ciri\xE8",
     latitude: 45.2333,
     longitude: 7.6,
     province: "Piedmont",
@@ -2872,7 +3448,7 @@ export const citysMock = [
     id: 1380920795
   },
   {
-    name: "Cirò Marina",
+    name: "Cir\xF2 Marina",
     latitude: 39.3694,
     longitude: 17.1278,
     province: "Calabria",
@@ -2904,7 +3480,7 @@ export const citysMock = [
     id: 1380418763
   },
   {
-    name: "Città di Castello",
+    name: "Citt\xE0 di Castello",
     latitude: 43.4608,
     longitude: 12.2439,
     province: "Umbria",
@@ -2912,7 +3488,7 @@ export const citysMock = [
     id: 1380983952
   },
   {
-    name: "Città Sant’Angelo",
+    name: "Citt\xE0 Sant\u2019Angelo",
     latitude: 42.5167,
     longitude: 14.05,
     province: "Abruzzo",
@@ -3016,7 +3592,7 @@ export const citysMock = [
     id: 1380582710
   },
   {
-    name: "Colle di Val d’Elsa",
+    name: "Colle di Val d\u2019Elsa",
     latitude: 43.4,
     longitude: 11.1333,
     province: "Tuscany",
@@ -3248,7 +3824,7 @@ export const citysMock = [
     id: 1380437222
   },
   {
-    name: "Cornate d’Adda",
+    name: "Cornate d\u2019Adda",
     latitude: 45.65,
     longitude: 9.4667,
     province: "Lombardy",
@@ -3392,7 +3968,7 @@ export const citysMock = [
     id: 1380488547
   },
   {
-    name: "Cuorgnè",
+    name: "Cuorgn\xE8",
     latitude: 45.3833,
     longitude: 7.65,
     province: "Piedmont",
@@ -3752,7 +4328,7 @@ export const citysMock = [
     id: 1380451196
   },
   {
-    name: "Fiorenzuola d’Arda",
+    name: "Fiorenzuola d\u2019Arda",
     latitude: 44.9333,
     longitude: 9.9,
     province: "Emilia-Romagna",
@@ -3888,7 +4464,7 @@ export const citysMock = [
     id: 1380644792
   },
   {
-    name: "Forlì",
+    name: "Forl\xEC",
     latitude: 44.2333,
     longitude: 12.05,
     province: "Emilia-Romagna",
@@ -4072,7 +4648,7 @@ export const citysMock = [
     id: 1380865769
   },
   {
-    name: "Gambolò",
+    name: "Gambol\xF2",
     latitude: 45.25,
     longitude: 8.8667,
     province: "Lombardy",
@@ -4320,7 +4896,7 @@ export const citysMock = [
     id: 1380407016
   },
   {
-    name: "Granarolo del l’Emilia",
+    name: "Granarolo del l\u2019Emilia",
     latitude: 44.55,
     longitude: 11.45,
     province: "Emilia-Romagna",
@@ -4344,8 +4920,8 @@ export const citysMock = [
     id: 1380574933
   },
   {
-    name: "Gricignano d’Aversa",
-    latitude: 41.0,
+    name: "Gricignano d\u2019Aversa",
+    latitude: 41,
     longitude: 14.1833,
     province: "Campania",
     population: 12690,
@@ -4608,7 +5184,7 @@ export const citysMock = [
     id: 1380635779
   },
   {
-    name: "L’Aquila",
+    name: "L\u2019Aquila",
     latitude: 42.35,
     longitude: 13.4,
     province: "Abruzzo",
@@ -4824,7 +5400,7 @@ export const citysMock = [
     id: 1380237634
   },
   {
-    name: "Leinì",
+    name: "Lein\xEC",
     latitude: 45.1833,
     longitude: 7.7167,
     province: "Piedmont",
@@ -4858,7 +5434,7 @@ export const citysMock = [
   {
     name: "Lentini",
     latitude: 37.2833,
-    longitude: 15.0,
+    longitude: 15,
     province: "Sicilia",
     population: 21646,
     id: 1380237919
@@ -4877,7 +5453,7 @@ export const citysMock = [
     longitude: 18.1333,
     province: "Puglia",
     population: 8688,
-    id: 1380982000
+    id: 1380982e3
   },
   {
     name: "Lerici",
@@ -5065,7 +5641,7 @@ export const citysMock = [
   },
   {
     name: "Luino",
-    latitude: 46.0,
+    latitude: 46,
     longitude: 8.75,
     province: "Lombardy",
     population: 14128,
@@ -5074,7 +5650,7 @@ export const citysMock = [
   {
     name: "Lurate Caccivio",
     latitude: 45.7667,
-    longitude: 9.0,
+    longitude: 9,
     province: "Lombardy",
     population: 9675,
     id: 1380759371
@@ -5400,7 +5976,7 @@ export const citysMock = [
     id: 1380571044
   },
   {
-    name: "Maserà di Padova",
+    name: "Maser\xE0 di Padova",
     latitude: 45.3167,
     longitude: 11.8667,
     province: "Veneto",
@@ -5545,7 +6121,7 @@ export const citysMock = [
   },
   {
     name: "Melfi",
-    latitude: 41.0,
+    latitude: 41,
     longitude: 15.65,
     province: "Basilicata",
     population: 17092,
@@ -5754,7 +6330,7 @@ export const citysMock = [
   {
     name: "Misterbianco",
     latitude: 37.5167,
-    longitude: 15.0,
+    longitude: 15,
     province: "Sicilia",
     population: 49017,
     id: 1380615462
@@ -5817,7 +6393,7 @@ export const citysMock = [
   },
   {
     name: "Moncalieri",
-    latitude: 45.0,
+    latitude: 45,
     longitude: 7.6833,
     province: "Piedmont",
     population: 56117,
@@ -5832,7 +6408,7 @@ export const citysMock = [
     id: 1380664340
   },
   {
-    name: "Mondovì",
+    name: "Mondov\xEC",
     latitude: 44.3889,
     longitude: 7.8181,
     province: "Piedmont",
@@ -5976,7 +6552,7 @@ export const citysMock = [
     id: 1380861572
   },
   {
-    name: "Monte Sant’Angelo",
+    name: "Monte Sant\u2019Angelo",
     latitude: 41.7,
     longitude: 15.9667,
     province: "Puglia",
@@ -6040,7 +6616,7 @@ export const citysMock = [
     id: 1380379185
   },
   {
-    name: "Monteforte d’Alpone",
+    name: "Monteforte d\u2019Alpone",
     latitude: 45.4167,
     longitude: 11.2833,
     province: "Veneto",
@@ -6120,7 +6696,7 @@ export const citysMock = [
     id: 1380529718
   },
   {
-    name: "Monteroni d’Arbia",
+    name: "Monteroni d\u2019Arbia",
     latitude: 43.2333,
     longitude: 11.4167,
     province: "Tuscany",
@@ -6208,7 +6784,7 @@ export const citysMock = [
     id: 1380952094
   },
   {
-    name: "Montopoli in Val d’Arno",
+    name: "Montopoli in Val d\u2019Arno",
     latitude: 43.6667,
     longitude: 10.75,
     province: "Tuscany",
@@ -6256,7 +6832,7 @@ export const citysMock = [
     id: 1380404772
   },
   {
-    name: "Mosciano Sant’Angelo",
+    name: "Mosciano Sant\u2019Angelo",
     latitude: 42.75,
     longitude: 13.8833,
     province: "Abruzzo",
@@ -6272,7 +6848,7 @@ export const citysMock = [
     id: 1380977215
   },
   {
-    name: "Motta Sant’Anastasia",
+    name: "Motta Sant\u2019Anastasia",
     latitude: 37.5,
     longitude: 14.9667,
     province: "Sicilia",
@@ -6296,7 +6872,7 @@ export const citysMock = [
     id: 1380014514
   },
   {
-    name: "Múggia",
+    name: "M\xFAggia",
     latitude: 45.6,
     longitude: 13.7667,
     province: "Friuli Venezia Giulia",
@@ -6304,7 +6880,7 @@ export const citysMock = [
     id: 1380254049
   },
   {
-    name: "Muggiò",
+    name: "Muggi\xF2",
     latitude: 45.6,
     longitude: 9.2333,
     province: "Lombardy",
@@ -6344,7 +6920,7 @@ export const citysMock = [
     id: 1380646673
   },
   {
-    name: "Nardò",
+    name: "Nard\xF2",
     latitude: 40.1797,
     longitude: 18.0333,
     province: "Puglia",
@@ -6404,12 +6980,12 @@ export const citysMock = [
     latitude: 38.9833,
     longitude: 16.3167,
     province: "Calabria",
-    population: 40000,
+    population: 4e4,
     id: 1380906035
   },
   {
     name: "Nichelino",
-    latitude: 45.0,
+    latitude: 45,
     longitude: 7.65,
     province: "Piedmont",
     population: 46244,
@@ -6657,7 +7233,7 @@ export const citysMock = [
   },
   {
     name: "Orbassano",
-    latitude: 45.0,
+    latitude: 45,
     longitude: 7.5333,
     province: "Piedmont",
     population: 23061,
@@ -6770,7 +7346,7 @@ export const citysMock = [
   {
     name: "Ozieri",
     latitude: 40.5833,
-    longitude: 9.0,
+    longitude: 9,
     province: "Sardegna",
     population: 9836,
     id: 1380060538
@@ -6856,7 +7432,7 @@ export const citysMock = [
     id: 1380751637
   },
   {
-    name: "Pallazzolo sull’Oglio",
+    name: "Pallazzolo sull\u2019Oglio",
     latitude: 45.6,
     longitude: 9.8833,
     province: "Lombardy",
@@ -7329,7 +7905,7 @@ export const citysMock = [
   },
   {
     name: "Polignano a Mare",
-    latitude: 41.0,
+    latitude: 41,
     longitude: 17.2167,
     province: "Puglia",
     population: 17531,
@@ -7352,7 +7928,7 @@ export const citysMock = [
     id: 1380470415
   },
   {
-    name: "Pomigliano d’Arco",
+    name: "Pomigliano d\u2019Arco",
     latitude: 40.9167,
     longitude: 14.4,
     province: "Campania",
@@ -7488,7 +8064,7 @@ export const citysMock = [
     id: 1380690749
   },
   {
-    name: "Porto Sant’Elpidio",
+    name: "Porto Sant\u2019Elpidio",
     latitude: 43.2667,
     longitude: 13.75,
     province: "Marche",
@@ -7648,7 +8224,7 @@ export const citysMock = [
     id: 1380744286
   },
   {
-    name: "Quartu Sant’Elena",
+    name: "Quartu Sant\u2019Elena",
     latitude: 39.2333,
     longitude: 9.1833,
     province: "Sardegna",
@@ -7857,7 +8433,7 @@ export const citysMock = [
   },
   {
     name: "Riccione Marina",
-    latitude: 44.0,
+    latitude: 44,
     longitude: 12.65,
     province: "Emilia-Romagna",
     population: 34400,
@@ -7888,7 +8464,7 @@ export const citysMock = [
     id: 1380240196
   },
   {
-    name: "Rignano sull’Arno",
+    name: "Rignano sull\u2019Arno",
     latitude: 43.7237,
     longitude: 11.4507,
     province: "Tuscany",
@@ -7977,7 +8553,7 @@ export const citysMock = [
   },
   {
     name: "Roccastrada",
-    latitude: 43.0,
+    latitude: 43,
     longitude: 11.1667,
     province: "Tuscany",
     population: 8747,
@@ -8024,7 +8600,7 @@ export const citysMock = [
     id: 1380970887
   },
   {
-    name: "Rosà",
+    name: "Ros\xE0",
     latitude: 45.7167,
     longitude: 11.7667,
     province: "Veneto",
@@ -8208,7 +8784,7 @@ export const citysMock = [
     id: 1380863448
   },
   {
-    name: "Salò",
+    name: "Sal\xF2",
     latitude: 45.6083,
     longitude: 10.5167,
     province: "Lombardy",
@@ -8296,7 +8872,7 @@ export const citysMock = [
     id: 1380153894
   },
   {
-    name: "San Donà di Piave",
+    name: "San Don\xE0 di Piave",
     latitude: 45.6333,
     longitude: 12.5667,
     province: "Veneto",
@@ -8673,7 +9249,7 @@ export const citysMock = [
   },
   {
     name: "Sannicandro di Bari",
-    latitude: 41.0,
+    latitude: 41,
     longitude: 16.8,
     province: "Puglia",
     population: 9604,
@@ -8696,7 +9272,7 @@ export const citysMock = [
     id: 1380207996
   },
   {
-    name: "Sant’Agata de’ Goti",
+    name: "Sant\u2019Agata de\u2019 Goti",
     latitude: 41.0833,
     longitude: 14.5,
     province: "Campania",
@@ -8704,7 +9280,7 @@ export const citysMock = [
     id: 1380379201
   },
   {
-    name: "Sant’Agata di Militello",
+    name: "Sant\u2019Agata di Militello",
     latitude: 38.0667,
     longitude: 14.6333,
     province: "Sicilia",
@@ -8712,7 +9288,7 @@ export const citysMock = [
     id: 1380653240
   },
   {
-    name: "Sant’Agnello",
+    name: "Sant\u2019Agnello",
     latitude: 40.6333,
     longitude: 14.4,
     province: "Campania",
@@ -8720,7 +9296,7 @@ export const citysMock = [
     id: 1380337324
   },
   {
-    name: "Sant’Ambrogio di Valpolicella",
+    name: "Sant\u2019Ambrogio di Valpolicella",
     latitude: 45.5167,
     longitude: 10.8333,
     province: "Veneto",
@@ -8728,7 +9304,7 @@ export const citysMock = [
     id: 1380918977
   },
   {
-    name: "Sant’Anastasia",
+    name: "Sant\u2019Anastasia",
     latitude: 40.8667,
     longitude: 14.4,
     province: "Campania",
@@ -8736,7 +9312,7 @@ export const citysMock = [
     id: 1380460463
   },
   {
-    name: "Sant’Angelo in Lizzola",
+    name: "Sant\u2019Angelo in Lizzola",
     latitude: 43.8333,
     longitude: 12.8,
     province: "Marche",
@@ -8744,7 +9320,7 @@ export const citysMock = [
     id: 1380223974
   },
   {
-    name: "Sant’Angelo Lodigiano",
+    name: "Sant\u2019Angelo Lodigiano",
     latitude: 45.2333,
     longitude: 9.4,
     province: "Lombardy",
@@ -8752,7 +9328,7 @@ export const citysMock = [
     id: 1380951177
   },
   {
-    name: "Sant’Antimo",
+    name: "Sant\u2019Antimo",
     latitude: 40.95,
     longitude: 14.2333,
     province: "Campania",
@@ -8760,7 +9336,7 @@ export const citysMock = [
     id: 1380853307
   },
   {
-    name: "Sant’Antìoco",
+    name: "Sant\u2019Ant\xECoco",
     latitude: 39.035,
     longitude: 8.4125,
     province: "Sardegna",
@@ -8768,7 +9344,7 @@ export const citysMock = [
     id: 1380700326
   },
   {
-    name: "Sant’Antonio Abate",
+    name: "Sant\u2019Antonio Abate",
     latitude: 40.7333,
     longitude: 14.55,
     province: "Campania",
@@ -8776,7 +9352,7 @@ export const citysMock = [
     id: 1380518961
   },
   {
-    name: "Sant’Arcangelo di Romagna",
+    name: "Sant\u2019Arcangelo di Romagna",
     latitude: 44.0667,
     longitude: 12.45,
     province: "Emilia-Romagna",
@@ -8784,7 +9360,7 @@ export const citysMock = [
     id: 1380993276
   },
   {
-    name: "Sant’Arpino",
+    name: "Sant\u2019Arpino",
     latitude: 40.9575,
     longitude: 14.2492,
     province: "Campania",
@@ -8792,7 +9368,7 @@ export const citysMock = [
     id: 1380239503
   },
   {
-    name: "Sant’Egidio alla Vibrata",
+    name: "Sant\u2019Egidio alla Vibrata",
     latitude: 42.8333,
     longitude: 13.7167,
     province: "Abruzzo",
@@ -8800,7 +9376,7 @@ export const citysMock = [
     id: 1380419333
   },
   {
-    name: "Sant’Elpidio a Mare",
+    name: "Sant\u2019Elpidio a Mare",
     latitude: 43.2333,
     longitude: 13.6833,
     province: "Marche",
@@ -8808,7 +9384,7 @@ export const citysMock = [
     id: 1380442467
   },
   {
-    name: "Sant’Eufemia Lamezia",
+    name: "Sant\u2019Eufemia Lamezia",
     latitude: 38.9667,
     longitude: 16.3,
     province: "Calabria",
@@ -8816,7 +9392,7 @@ export const citysMock = [
     id: 1380645219
   },
   {
-    name: "Sant’Ilario d’Enza",
+    name: "Sant\u2019Ilario d\u2019Enza",
     latitude: 44.7667,
     longitude: 10.45,
     province: "Emilia-Romagna",
@@ -8832,7 +9408,7 @@ export const citysMock = [
     id: 1380471228
   },
   {
-    name: "Santa Croce sull’ Arno",
+    name: "Santa Croce sull\u2019 Arno",
     latitude: 43.7167,
     longitude: 10.7833,
     province: "Tuscany",
@@ -8844,7 +9420,7 @@ export const citysMock = [
     latitude: 38.0833,
     longitude: 13.5333,
     province: "Sicilia",
-    population: 11000,
+    population: 11e3,
     id: 1380531539
   },
   {
@@ -9104,7 +9680,7 @@ export const citysMock = [
     id: 1380710947
   },
   {
-    name: "Scorzè",
+    name: "Scorz\xE8",
     latitude: 45.5719,
     longitude: 12.1089,
     province: "Veneto",
@@ -9177,7 +9753,7 @@ export const citysMock = [
   },
   {
     name: "Seravezza",
-    latitude: 44.0,
+    latitude: 44,
     longitude: 10.2333,
     province: "Tuscany",
     population: 12364,
@@ -9368,7 +9944,7 @@ export const citysMock = [
     id: 1380249101
   },
   {
-    name: "Sìnnai",
+    name: "S\xECnnai",
     latitude: 39.3,
     longitude: 9.2,
     province: "Sardegna",
@@ -9633,7 +10209,7 @@ export const citysMock = [
   },
   {
     name: "Suzzara",
-    latitude: 45.0,
+    latitude: 45,
     longitude: 10.75,
     province: "Lombardy",
     population: 20979,
@@ -9769,7 +10345,7 @@ export const citysMock = [
   },
   {
     name: "Termoli",
-    latitude: 42.0,
+    latitude: 42,
     longitude: 14.9833,
     province: "Molise",
     population: 32235,
@@ -9928,7 +10504,7 @@ export const citysMock = [
     id: 1380825558
   },
   {
-    name: "Tortolì",
+    name: "Tortol\xEC",
     latitude: 39.9333,
     longitude: 9.65,
     province: "Sardegna",
@@ -9953,7 +10529,7 @@ export const citysMock = [
   },
   {
     name: "Trabia",
-    latitude: 38.0,
+    latitude: 38,
     longitude: 13.65,
     province: "Sicilia",
     population: 10561,
@@ -10104,7 +10680,7 @@ export const citysMock = [
     id: 1380981105
   },
   {
-    name: "Trezzo sull’Adda",
+    name: "Trezzo sull\u2019Adda",
     latitude: 45.6,
     longitude: 9.5167,
     province: "Lombardy",
@@ -10314,13 +10890,13 @@ export const citysMock = [
   {
     name: "Vanzago",
     latitude: 45.5333,
-    longitude: 9.0,
+    longitude: 9,
     province: "Lombardy",
     population: 9325,
     id: 1380790144
   },
   {
-    name: "Vaprio d’Adda",
+    name: "Vaprio d\u2019Adda",
     latitude: 45.5833,
     longitude: 9.5333,
     province: "Lombardy",
@@ -10594,7 +11170,7 @@ export const citysMock = [
   {
     name: "Vignola",
     latitude: 44.4667,
-    longitude: 11.0,
+    longitude: 11,
     province: "Emilia-Romagna",
     population: 25814,
     id: 1380248860
@@ -10840,3 +11416,199 @@ export const citysMock = [
     id: 1380463262
   }
 ];
+
+// src/config/syncMock.ts
+import chalk5 from "chalk";
+var syncMock = async () => {
+  try {
+    console.log(chalk5.yellow("Checking if mock data..."));
+    const existingCitys = await city_model_default.find();
+    if (existingCitys.length === citysMock.length) {
+      console.log(chalk5.green("Data is match, no need to insert mock data."));
+      return;
+    }
+    console.warn(chalk5.yellow("Data isn't match, inserting mock data..."));
+    await city_model_default.deleteMany();
+    console.info(chalk5.yellow("Deleted all data."));
+    await city_model_default.insertMany(citysMock);
+    console.log(chalk5.green("Mock data inserted."));
+  } catch (error) {
+    console.error(chalk5.red("Error inserting mock data", error));
+    process.exit(1);
+  }
+};
+var syncMock_default = syncMock;
+
+// src/config/swagger.ts
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+var swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "TrainTribeApi Documentation",
+      version: "1.0.0",
+      description: "API Documentation for TrainTribeApi"
+    },
+    servers: [
+      {
+        url: "http://localhost:666"
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT"
+        }
+      },
+      schemas: {
+        Sport: {
+          type: "object",
+          required: ["name"],
+          properties: {
+            id: {
+              type: "string",
+              description: "The unique identifier of the sport"
+            },
+            name: {
+              type: "string",
+              description: "The name of the sport"
+            }
+          }
+        },
+        User: {
+          type: "object",
+          required: ["email", "sports"],
+          properties: {
+            _id: {
+              type: "string",
+              description: "The unique identifier of the user"
+            },
+            email: {
+              type: "string",
+              description: "The email of the user"
+            },
+            username: {
+              type: "string",
+              description: "The username of the user"
+            },
+            first_name: {
+              type: "string",
+              description: "The first name of the user"
+            },
+            last_name: {
+              type: "string",
+              description: "The last name of the user"
+            },
+            image_url: {
+              type: "string",
+              description: "The image URL"
+            },
+            latitude: {
+              type: "number",
+              description: "The latitude of the user"
+            },
+            longitude: {
+              type: "number",
+              description: "The longitude of the user"
+            },
+            sports: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/Sport"
+              }
+            },
+            training_created: {
+              type: "array",
+              items: {
+                type: "string"
+              }
+            },
+            training_join: {
+              type: "array",
+              items: {
+                type: "string"
+              }
+            },
+            createdAt: {
+              type: "string",
+              description: "The date the user was created"
+            },
+            updatedAt: {
+              type: "string",
+              description: "The date the user was last updated"
+            }
+          }
+        }
+      }
+    }
+  },
+  apis: ["./src/routes/*.js"]
+};
+var swaggerSpec = swaggerJSDoc(swaggerOptions);
+var setupSwagger = (app) => {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+};
+
+// src/appServer.ts
+import chalk6 from "chalk";
+import { scopePerRequest } from "awilix-express";
+dotenv2.config();
+var REQUIRED_ENV_VARS = ["SERVER_PORT", "MONGODB_URI"];
+REQUIRED_ENV_VARS.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(chalk6.red(`Environment variable ${varName} is not defined.`));
+    process.exit(1);
+  }
+});
+var SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "666", 10);
+var appServer = express5();
+appServer.use(scopePerRequest(container_default));
+appServer.use(express5.json());
+var corsOptions = {
+  origin: process.env.APP_URL,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
+};
+appServer.use(cors(corsOptions));
+appServer.options("*", cors(corsOptions));
+appServer.use(express5.urlencoded({ extended: true }));
+appServer.use(express5.static("public"));
+appServer.get("/", (_req, res) => {
+  res.sendFile("index.html", { root: "./public" });
+});
+appServer.use("/api", routes_default);
+setupSwagger(appServer);
+async function gracefulShutdown(signal) {
+  console.info(`Received ${signal}. Gracefully shutting down...`);
+  try {
+    console.info("Database connection closed.");
+    process.exit(0);
+  } catch (error) {
+    console.error(chalk6.red("Error during shutdown: ", error));
+    process.exit(1);
+  }
+}
+["SIGINT", "SIGTERM"].forEach(
+  (signal) => process.on(signal, () => gracefulShutdown(signal))
+);
+async function startServer() {
+  try {
+    await database_default();
+    await syncMock_default();
+    console.info(chalk6.green("Mock data synced successfully."));
+    appServer.listen(SERVER_PORT, () => {
+      console.info(
+        chalk6.green(`Server is running on http://localhost:${SERVER_PORT}`)
+      );
+    });
+  } catch (error) {
+    console.error("Error connecting to database: ", error);
+    process.exit(1);
+  }
+}
+startServer().catch((error) => {
+  console.error("Failed to start the server:", error);
+  process.exit(1);
+});

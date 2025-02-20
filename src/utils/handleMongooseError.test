@@ -1,4 +1,4 @@
-import handleMongooseError from "../utils/handleMongooseError.ts";
+import handleMongooseError from "../utils/handleMongooseError.js";
 import mongoose from "mongoose";
 import chalk from "chalk";
 

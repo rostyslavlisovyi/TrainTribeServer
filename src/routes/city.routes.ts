@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { CityController } from "../controllers/city.controller.js";
+import { CityController } from "../controllers/city.controller.ts";
 import express from "express";
 import container from "../container.ts";
 

@@ -1,10 +1,10 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { IUser } from "../../interfaces/user.interfaces.js";
+import { IUser } from "../../interfaces/user.interface.ts";
 import {
   SportsEnum,
   TrainingGoalEnum,
   TrainingLevelEnum
-} from "../../types/enums.js";
+} from "../../types/enums.ts";
 
 const UserSchema: Schema = new Schema(
   {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import chalk from "chalk";
 import multer from "multer";
-import validateFileContent from "../utils/validateFileContent.js";
+import { validateFileContent } from "../utils/validateFileContent.ts";
 import path from "path";
 import fs from "fs/promises";
 export const UploadFile = async (
