@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import chalk from "chalk";
-import { Error } from "sequelize";
 
 const handleMongooseError = (error: unknown): void => {
   if (error instanceof mongoose.Error.ValidationError) {

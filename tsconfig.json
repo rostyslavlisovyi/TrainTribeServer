@@ -20,6 +20,11 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
+  "ts-node": {
+    "experimentalSpecifierResolution": "node",
+    "transpileOnly": true,
+    "esm": true
+  },
   "include": ["src/**/*", "env.d.ts"],
   "exclude": ["node_modules"]
 }

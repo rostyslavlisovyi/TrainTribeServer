@@ -1,20 +1,27 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
+import {
+  SportsEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum
+} from "../types/enums.js";
 export interface IUser extends Document {
   email: string;
   username?: string;
   first_name?: string;
   last_name?: string;
+  date_of_birth?: Date;
   image_url?: string;
-  latitude?: number;
-  longitude?: number;
-  sport?: ObjectId[];
+  city: ObjectId;
+  sports?: SportsEnum[];
+  training_level?: TrainingLevelEnum;
+  training_goal?: TrainingGoalEnum[];
   completed_trainings?: number;
   social_number?: string;
   athlete_bio?: string;
   training_created?: ObjectId[];
   training_join?: ObjectId[];
   auth_id: string;
-  last_onbording_step: string;
+  last_onboarding_step: string;
   has_completed_onboarding: boolean;
   privacy_settings: boolean;
 }

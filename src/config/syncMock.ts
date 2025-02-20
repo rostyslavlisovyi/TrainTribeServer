@@ -1,23 +1,23 @@
-import { sportsMock } from "../mocks/sports.mock.js";
-import Sport from "../models/MongoDB/sport.model.mongoDB.js";
+import { citysMock } from "../mock/citys.mock.ts";
+import CityModel from "../models/MongoDB/city.model.ts";
 import chalk from "chalk";
 const syncMock = async (): Promise<void> => {
   try {
     console.log(chalk.yellow("Checking if mock data..."));
-    const existingSports = await Sport.find();
+    const existingCitys = await CityModel.find();
 
-    if (existingSports.length === sportsMock.length) {
+    if (existingCitys.length === citysMock.length) {
       console.log(chalk.green("Data is match, no need to insert mock data."));
       return;
     }
 
     console.warn(chalk.yellow("Data isn't match, inserting mock data..."));
 
-    await Sport.deleteMany();
+    await CityModel.deleteMany();
 
     console.info(chalk.yellow("Deleted all data."));
 
-    await Sport.insertMany(sportsMock);
+    await CityModel.insertMany(citysMock);
     console.log(chalk.green("Mock data inserted."));
   } catch (error) {
     console.error(chalk.red("Error inserting mock data", error));

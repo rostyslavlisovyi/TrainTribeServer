@@ -2,16 +2,17 @@ import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
-import sequelize from "./config/sequelize.js";
-import syncMock from "./config/syncMock.js";
 import router from "./routes/index.js";
+import syncMock from "./config/syncMock.js";
 import { setupSwagger } from "./config/swagger.js";
 import chalk from "chalk";
+import { scopePerRequest } from "awilix-express";
+import container from "./container.ts";
 
 dotenv.config();
 
 // Environment Variables Validation
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "DB_TYPE"] as const;
+const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "MONGODB_URI"] as const;
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(chalk.red(`Environment variable ${varName} is not defined.`));
@@ -24,6 +25,7 @@ const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
 
 // Initialize Express App
 const appServer: Express = express();
+appServer.use(scopePerRequest(container));
 
 //Middlewares
 appServer.use(express.json());
@@ -39,9 +41,12 @@ appServer.options("*", cors(corsOptions));
 
 appServer.use(express.urlencoded({ extended: true }));
 
+// Serve static files from the public directory
+appServer.use(express.static("public"));
+
 // Routes
 appServer.get("/", (_req, res) => {
-  res.send("TrainTribe API");
+  res.sendFile("index.html", { root: "./public" });
 });
 
 appServer.use("/api", router);
@@ -53,7 +58,6 @@ setupSwagger(appServer);
 async function gracefulShutdown(signal: string): Promise<void> {
   console.info(`Received ${signal}. Gracefully shutting down...`);
   try {
-    await sequelize.close();
     console.info("Database connection closed.");
     process.exit(0);
   } catch (error) {

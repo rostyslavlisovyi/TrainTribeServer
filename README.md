@@ -53,16 +53,19 @@ Before installing and running the server, make sure the following tools are inst
 
    OAUTH_DOMAIN='your auth0 domain'
 
-    MONGO_DB_URI='your mongo db uri'
+    MONGODB_URI='your mongo db uri'
    ```
 
 4. **Run the Server**:
+
    ```bash
    npm run build
    npm start
    ```
+
 5. **View API Documentation**:
    After starting the server, you can access the API documentation powered by **Swagger** at the following URL:
+
    ```plaintext
    http://localhost:<PORT>/api-docs
    ```
@@ -73,58 +76,49 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File                    | Description                                        |
-| ----------------------------------- | -------------------------------------------------- |
-| `src/`                              | Main code directory                                |
-| ├── `config/`                       | Configuration files (e.g., database, environment)  |
-| │ └── `database.ts`                 | Database connection configuration                  |
-| │ └── `sequelize.ts`                | Connect to MySql DB                                |
-| │ └── `swagger.ts`                  | Swagger/OpenAPI documentation configuration        |
-| │ └── `syncMock.ts`                 | Connect do MongoDB and sync collections with Mock  |
-| ├── `controllers/`                  | Controllers for handling requests                  |
-| │ └── `sport.controller.ts`         | Logic for handling sport-related API requests      |
-| │ └── `upload.controller.ts`        | Logic for handling file uploads                    |
-| │ └── `user.controller.ts`          | Logic for handling user-related API requests       |
-| ├── `interfaces/`                   | TypeScript interfaces for strict type definitions  |
-| │ └── `sport.interfaces.ts`         | Define TypeScript interfaces for sport entities    |
-| │ └── `training.interfaces.ts`      | Define TypeScript interfaces for training entities |
-| │ └── `user.interfaces.ts`          | Define TypeScript interfaces for user entities     |
-| ├── `middleware/`                   | Middleware functions                               |
-| │ └── `auth.middleware.ts`          | Middleware for handling user authentication        |
-| │ └── `upload.middleware.ts`        | Middleware for                                     |
-| ├── `mock/`                         | Mock data for development and testing              |
-| │ └── `sportsMock.mock.ts`          | Mock data for sports-related entities              |
-| ├── `models/`                       | Database structure definitions (Models)            |
-| │ └── `MongoDB/`                    | MongoDB models for application                     |
-| │ │ └── `sport.model.mongoDB.ts`    | MongoDB model for sports entities                  |
-| │ │ └── `training.model.mongoDB.ts` | MongoDB model for training entities                |
-| │ │ └── `user.model.mongoDB.ts`     | MongoDB model for user entities                    |
-| │ └── `mySql/`                      | MySQL models for application                       |
-| │ └── `user.model.mySql.ts`         | MySQL model for user entities                      |
-| │ └── `training.ts`                 | MySQL model for training entities                  |
-| ├── `routes/`                       | API route definitions                              |
-| │ └── `index.ts`                    | Main router combining all routes                   |
-| │ └── `user.routes.ts`              | Routes for user-related endpoints                  |
-| │ └── `training.routes.ts`          | Routes for training-related endpoints              |
-| │ └── `upload.routes.ts`            | Routes for                                         |
-| │ └── `sport.routes.ts`             | Routes for sport-related endpoints                 |
-| ├── `types/`                        | Global TypeScript type definitions                 |
-| │ └── `env.d.ts`                    | Type definitions for environment variables         |
-| │ └── `express.d.ts`                | Extended Express types for TypeScript              |
-| ├── `utils/`                        | Utility and helper functions                       |
-| │ └── `handleError.ts`              | General error handling utility                     |
-| │ └── `handleMongooseError.ts`      | Utility for handling MongoDB-specific errors       |
-| │ └── `handleSequalizeError.ts`     | Utility for handling Sequelize-specific errors     |
-| │ └── `validationObjectId.ts`       | Utility for validating MongoDB ObjectIDs           |
-| └── `appServer.ts`                  | Main server initialization logic                   |
-| `uploads/`                          | Uploads directory                                  |
-| `.eslintrc.json`                    | ESLint configuration                               |
-| `.prettierrc`                       | Prettier configuration                             |
-| `.gitignore`                        | Git ignore file                                    |
-| `package.json`                      | Node.js dependencies file                          |
-| `README.md`                         | Project documentation                              |
-| `jest.config.ts`                    | Jest configuration file for testing setup          |
-| `nodemon.json`                      | Nodemon configuration file for automatic restarts  |
+| Directory / File               | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
+| `src/`                         | Main code directory                                |
+| ├── `config/`                  | Configuration files (e.g., database, environment)  |
+| │ └── `database.ts`            | Database connection configuration                  |
+| │ └── `swagger.ts`             | Swagger/OpenAPI documentation configuration        |
+| ├── `controllers/`             | Controllers for handling requests                  |
+| │ └── `city.controller.ts`     | Logic for handling city-related API requests       |
+| │ └── `upload.controller.ts`   | Logic for handling file uploads                    |
+| │ └── `user.controller.ts`     | Logic for handling user-related API requests       |
+| ├── `interfaces/`              | TypeScript interfaces for strict type definitions  |
+| │ └── `training.interfaces.ts` | Define TypeScript interfaces for training entities |
+| │ └── `user.interfaces.ts`     | Define TypeScript interfaces for user entities     |
+| ├── `middleware/`              | Middleware functions                               |
+| │ └── `auth.middleware.ts`     | Middleware for handling user authentication        |
+| │ └── `upload.middleware.ts`   | Middleware for handling file uploads               |
+| ├── `models/`                  | Database structure definitions (Models)            |
+| │ └── `MongoDB/`               | MongoDB models for application                     |
+| │ │ └── `training.model.ts`    | MongoDB model for training entities                |
+| │ │ └── `user.model.ts`        | MongoDB model for user entities                    |
+| ├── `routes/`                  | API route definitions                              |
+| │ └── `city.route.ts`          | Routes for city-related endpoints                  |
+| │ └── `index.ts`               | Main router combining all routes                   |
+| │ └── `user.routes.ts`         | Routes for user-related endpoints                  |
+| │ └── `training.routes.ts`     | Routes for training-related endpoints              |
+| │ └── `upload.routes.ts`       | Routes for file upload endpoints                   |
+| ├── `types/`                   | Global TypeScript type definitions                 |
+| │ └── `enums.ts`               | Enums for type-safe constants (e.g., sports types) |
+| ├── `utils/`                   | Utility and helper functions                       |
+| │ └── `handleError.ts`         | General error handling utility                     |
+| │ └── `handleMongooseError.ts` | Utility for handling MongoDB-specific errors       |
+| │ └── `validationObjectId.ts`  | Utility for validating MongoDB ObjectIDs           |
+| └── `appServer.ts`             | Main server initialization logic                   |
+| `uploads/`                     | Uploads directory                                  |
+| `.eslintrc.json`               | ESLint configuration                               |
+| `.prettierrc`                  | Prettier configuration                             |
+| `.gitignore`                   | Git ignore file                                    |
+| `package.json`                 | Node.js dependencies file                          |
+| `README.md`                    | Project documentation                              |
+| `jest.config.ts`               | Jest configuration file for testing setup          |
+| `nodemon.json`                 | Nodemon configuration file for automatic restarts  |
+| `.env.exemple`                 | Example environment variables configuration file   |
+| `vercel.json`                  | Vercel deployment configuration                    |
 
 ## Technologies
 
@@ -150,6 +144,14 @@ The server provides the following API endpoints:
 | POST   | `/api/user` | Update user by Token (ID extracted from JWT) |
 | DELETE | `/api/user` | Delete user by Token (ID extracted from JWT) |
 
+### **City**
+
+| Method | Endpoint         | Description      |
+| ------ | ---------------- | ---------------- |
+| GET    | `/api/city`      | Get all cities   |
+| GET    | `/api/city/id`   | Get city by ID   |
+| GET    | `/api/city/name` | Get city by name |
+
 ### **Upload**
 
 | Method | Endpoint      | Description   |
@@ -160,32 +162,43 @@ The server provides the following API endpoints:
 
 ### User
 
-| Field                | Type         | Required | Unique | Description                                                                   |
-| -------------------- | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
-| `_id`                | `String`     | Yes      | Yes    | User's id.                                                                    |
-| `username`           | `String`     | No       | No     | User's display name.                                                          |
-| `first_name`         | `String`     | No       | No     | User's first name.                                                            |
-| `last_name`          | `String`     | No       | No     | User's last name.                                                             |
-| `email`              | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
-| `sports`             | `[ObjectId]` | Yes      | No     | Array of references to the `Sport` collection, representing user preferences. |
-| `image_url`          | `String`     | No       | No     | URL to the user's profile picture.                                            |
-| `latitude`           | `Number`     | No       | No     | Geographical latitude of the user's location.                                 |
-| `longitude`          | `Number`     | No       | No     | Geographical longitude of the user's location.                                |
-| `completed_trainings`| `Number`     | No      | No     | Number of trainings the user has completed.                                   |
-| `social_number`      | `String`     | No      | No     | User's social number.                                                         |
-| `athlete_bio`        | `String`     | No       | No     | User's athletic biography and background information.                         |
-| `auth_id`           | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
-| `last_onbording_step`| `String`    | No      | No     | Indicates the last completed onboarding step.                           |
-| `has_completed_onboarding`| `Boolean`| Yes      | No     | Indicates if user has completed onboarding.                                  |
-| `privacy_settings`   | `Boolean`    | No       | No     | User's privacy preference. Default is false.                                  |
-| `training_created`   | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
-| `training_join`      | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
-| `createdAt`          | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
-| `updatedAt`          | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
+| Field                      | Type         | Required | Unique | Description                                                              |
+| -------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------ |
+| `_id`                      | `String`     | Yes      | Yes    | User's id.                                                               |
+| `username`                 | `String`     | No       | No     | User's display name.                                                     |
+| `first_name`               | `String`     | No       | No     | User's first name.                                                       |
+| `last_name`                | `String`     | No       | No     | User's last name.                                                        |
+| `email`                    | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).        |
+| `sports`                   | `String[]`   | Yes      | No     | Array of sports types from SportsEnum (e.g., running, cycling, swimming) |
+| `image_url`                | `String`     | No       | No     | URL to the user's profile picture.                                       |
+| `city`                     | `ObjectId`   | No       | No     | Reference to the user's city.                                            |
+| `completed_trainings`      | `Number`     | No       | No     | Number of trainings the user has completed.                              |
+| `social_number`            | `String`     | No       | No     | User's social number.                                                    |
+| `athlete_bio`              | `String`     | No       | No     | User's athletic biography and background information.                    |
+| `auth_id`                  | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                         |
+| `last_onboarding_step`     | `String`     | No       | No     | Indicates the last completed onboarding step.                            |
+| `has_completed_onboarding` | `Boolean`    | Yes      | No     | Indicates if user has completed onboarding.                              |
+| `privacy_settings`         | `Boolean`    | No       | No     | User's privacy preference. Default is false.                             |
+| `training_created`         | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.        |
+| `training_join`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.         |
+| `createdAt`                | `Date`       | Auto     | No     | Timestamp when the user document was created.                            |
+| `updatedAt`                | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                       |
+
+### City
+
+| Field        | Type     | Required | Unique | Description                                       |
+| ------------ | -------- | -------- | ------ | ------------------------------------------------- |
+| `_id`        | `String` | Yes      | Yes    | City's id.                                        |
+| `id`         | `Number` | Yes      | No     | City's numeric identifier.                        |
+| `name`       | `String` | No       | No     | Name of the city.                                 |
+| `latitude`   | `Number` | No       | No     | Geographical latitude of the city's location.     |
+| `longitude`  | `Number` | No       | No     | Geographical longitude of the city's location.    |
+| `province`   | `String` | No       | No     | Province or state where the city is located.      |
+| `population` | `Number` | No       | No     | Population of the city.                           |
+| `createdAt`  | `Date`   | Auto     | No     | Timestamp when the city document was created.     |
+| `updatedAt`  | `Date`   | Auto     | No     | Timestamp when the user document was last updated |
 
 ### Training Model
-
-The `Training` model represents training events created by users in the system.
 
 | **Field**      | **Type**     | **Required** | **Description**                                                                              |
 | -------------- | ------------ | ------------ | -------------------------------------------------------------------------------------------- |
@@ -200,34 +213,4 @@ The `Training` model represents training events created by users in the system.
 | `createdAt`    | `Date`       | Auto         | The timestamp when the training document was created.                                        |
 | `updatedAt`    | `Date`       | Auto         | The timestamp when the training document was last updated.                                   |
 
-### Sport Model
-
-The `Sport` model represents various sports that can be associated with users or training events in the system.
-
-| **Field** | **Type** | **Required** | **Description**                        |
-| --------- | -------- | ------------ | -------------------------------------- |
-| `_id`     | `String` | Yes          | The name of the sport. Must be unique. |
-| `name`    | `String` | Yes          | The name of the sport. Must be unique. |
-
 ---
-
-[//]: # "4. **Create new MySQL Database**:"
-[//]: # "   1. Open new terminal and run `mysql -u root -p` to log in to MySQL."
-[//]: # "   2. Create a new database by running the following command:"
-[//]: # "      ```sql"
-[//]: # "      CREATE DATABASE db_name;"
-[//]: # "      ```"
-[//]: # "   3. Verify that the database was created by running:"
-[//]: # "      ```sql"
-[//]: # "      SHOW DATABASES;"
-[//]: # "      ```"
-[//]: # "   4. Create a new user and grant privileges to the database:"
-[//]: # "      ```sql"
-[//]: # "      CREATE USER 'db_username'@'localhost' IDENTIFIED BY 'db_password';"
-[//]: # "      GRANT ALL PRIVILEGES ON db_name.* TO 'db_username'@'localhost';"
-[//]: # "      FLUSH PRIVILEGES;"
-[//]: # "      ```"
-[//]: # "   5. Use the database by running:"
-[//]: # "      ```sql"
-[//]: # "      USE db_name;"
-[//]: # "      ```"
