@@ -1,6 +1,10 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { IUser } from "../../interfaces/user.interfaces.js";
-import { SportsEnum } from "../../types/enums.js";
+import {
+  SportsEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum
+} from "../../types/enums.js";
 
 const UserSchema: Schema = new Schema(
   {
@@ -14,9 +18,17 @@ const UserSchema: Schema = new Schema(
     sports: [
       {
         type: String,
-        enum: Object.values(SportsEnum),
-        required: true,
-        default: SportsEnum.RUNNING
+        enum: Object.values(SportsEnum)
+      }
+    ],
+    training_level: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    training_goal: [
+      {
+        type: String,
+        enum: Object.values(TrainingGoalEnum)
       }
     ],
     completed_trainings: { type: Number, default: 0 },
@@ -26,7 +38,7 @@ const UserSchema: Schema = new Schema(
     training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }],
     auth_id: { type: String, required: true },
     last_onboarding_step: { type: String, required: false },
-    has_completed_onboarding: { type: Boolean, required: true },
+    has_completed_onboarding: { type: Boolean, required: false },
     privacy_settings: { type: Boolean, default: false }
   },
   {

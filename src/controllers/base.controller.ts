@@ -31,12 +31,7 @@ export abstract class BaseController<T extends Document> {
 
   async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        pageNum = "1",
-        pageSize = "10",
-        populate,
-        ...filters
-      } = req.query;
+      const { pageNum = "1", pageSize = "10", populate, ...filters } = req.body;
       const result = await this.service.getAll({
         pageNum: parseInt(pageNum as string, 10),
         pageSize: parseInt(pageSize as string, 10),

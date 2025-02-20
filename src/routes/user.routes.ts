@@ -3,6 +3,11 @@ import { UserController } from "../controllers/user.controller.js";
 import express from "express";
 import authenticate from "../middlewares/auth.middleware.js";
 import container from "../container.ts";
+import { handleValidationErrors } from "../middlewares/validation.middleware.ts";
+import {
+  validateUserCreation,
+  validateUserUpdate
+} from "../validators/user.validator.ts";
 
 const userRoute: Router = express.Router();
 
@@ -234,10 +239,12 @@ userRoute.get("/by-auth-id/:auth_id", authenticate, (req, res) =>
 userRoute.post(
   "/",
   authenticate,
-  (req, res) => userController.create(req, res)
-  // validateUserData,
-  // handleValidationErrors
+  validateUserCreation,
+  handleValidationErrors,
+  (req: express.Request, res: express.Response) =>
+    userController.create(req, res)
 );
+
 /**
  * @swagger
  * /user:
@@ -403,9 +410,10 @@ userRoute.post(
 userRoute.put(
   "/:id",
   authenticate,
-  (req, res) => userController.update(req, res)
-  // validateUserData,
-  // handleValidationErrors,
+  validateUserUpdate,
+  handleValidationErrors,
+  (req: express.Request, res: express.Response) =>
+    userController.update(req, res)
 );
 
 /**
