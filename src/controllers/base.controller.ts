@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Document, FilterQuery } from "mongoose";
-import { BaseService } from "../services/base.service.ts";
-import { handleError } from "../utils/handleError.ts";
+import { BaseService } from "../services/index.js";
+import { handleError } from "../utils/index.js";
 
 export abstract class BaseController<T extends Document> {
   protected service: BaseService<T>;

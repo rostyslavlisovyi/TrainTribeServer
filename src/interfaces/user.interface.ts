@@ -1,5 +1,9 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
-import { SportsEnum, TrainingGoalEnum, TrainingLevelEnum } from "../types";
+import {
+  SportsEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum
+} from "../types/index.js";
 export interface IUser extends Document {
   email: string;
   username?: string;

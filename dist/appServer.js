@@ -513,7 +513,7 @@ var UploadFile = async (req, res) => {
     return;
   }
 };
-var handleUploadError = (error, req, res, next) => {
+var handleUploadError = (error, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
       res.status(413).json({ message: "FILE TOO LARGE" });

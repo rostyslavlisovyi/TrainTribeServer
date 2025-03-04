@@ -1,5 +1,5 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { IUser } from "../../interfaces/user.interface.ts";
+import { IUser } from "../../interfaces/index.js";
 import {
   SportsEnum,
   TrainingGoalEnum,

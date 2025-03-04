@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { handleMongooseError } from "./handleMongooseError.ts";
+import { handleMongooseError } from "./handleMongooseError.js";
 import { Response } from "express";
 
 export const handleError = (

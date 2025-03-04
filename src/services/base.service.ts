@@ -3,7 +3,7 @@ import { Model, Document, FilterQuery } from "mongoose";
 export abstract class BaseService<T extends Document> {
   model: Model<T>;
 
-  constructor(model: Model<T>) {
+  protected constructor(model: Model<T>) {
     this.model = model;
   }
 
