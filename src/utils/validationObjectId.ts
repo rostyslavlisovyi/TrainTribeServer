@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
-import { Response } from "express";
-export const validationId = (id: string, res: Response): boolean => {
+
+export const validationId = (id: string): {isValid:boolean; message?:string} => {
   if (!mongoose.isValidObjectId(id)) {
-    res.status(422).json({
-      message: "UNPROCESSABLE ENTITY",
-      errors: [{ message: "INVALID _id FORMAT" }]
-    });
-    return false;
+    return {
+      isValid: false,
+      message: "INVALID _id FORMAT"
+    };
   }
-  return true;
+  return { isValid: true };
 };

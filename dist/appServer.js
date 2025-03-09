@@ -35,6 +35,38 @@ var authenticate = auth({
   tokenSigningAlg: "RS256"
 });
 
+// src/middlewares/upload.middleware.ts
+import multer from "multer";
+var fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
+  }
+};
+var upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 2
+    // 2MB file size limit
+  }
+});
+
+// src/middlewares/validation.middleware.ts
+import { validationResult } from "express-validator";
+var handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({
+      errors: errors.array(),
+      message: "INVALID INPUTS TYPE"
+    });
+    return;
+  }
+  next();
+};
+
 // src/models/MongoDB/city.model.ts
 import mongoose2, { Schema } from "mongoose";
 var CitySchema = new Schema(
@@ -365,20 +397,6 @@ container.register({
 });
 var container_default = container;
 
-// src/middlewares/validation.middleware.ts
-import { validationResult } from "express-validator";
-var handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(422).json({
-      errors: errors.array(),
-      message: "INVALID INPUTS TYPE"
-    });
-    return;
-  }
-  next();
-};
-
 // src/validators/user.validator.ts
 import { body } from "express-validator";
 var validateUserCreation = [
@@ -478,7 +496,7 @@ import express2 from "express";
 
 // src/controllers/upload.controller.ts
 import chalk4 from "chalk";
-import multer from "multer";
+import multer2 from "multer";
 import path from "path";
 import fs from "fs/promises";
 var UploadFile = async (req, res) => {
@@ -514,7 +532,7 @@ var UploadFile = async (req, res) => {
   }
 };
 var handleUploadError = (error, res, next) => {
-  if (error instanceof multer.MulterError) {
+  if (error instanceof multer2.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
       res.status(413).json({ message: "FILE TOO LARGE" });
     } else {
@@ -526,24 +544,6 @@ var handleUploadError = (error, res, next) => {
     next();
   }
 };
-
-// src/middlewares/upload.middleware.ts
-import multer2 from "multer";
-var fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
-  }
-};
-var upload = multer2({
-  storage: multer2.memoryStorage(),
-  fileFilter,
-  limits: {
-    fileSize: 1024 * 1024 * 2
-    // 2MB file size limit
-  }
-});
 
 // src/routes/upload.route.ts
 var uploadRoute = express2.Router({ mergeParams: true });
