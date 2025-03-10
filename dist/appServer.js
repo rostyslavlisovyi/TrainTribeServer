@@ -85,18 +85,34 @@ var CitySchema = new Schema(
 var CityModel = mongoose2.model("City", CitySchema);
 var city_model_default = CityModel;
 
-// src/errors/notFoundError.ts
-var NotFoundError = class extends Error {
-  constructor(message = "NOT FOUND") {
+// src/errors/baseError.ts
+var BaseError = class extends Error {
+  statusCode;
+  constructor(message, statusCode) {
     super(message);
+    this.statusCode = statusCode;
+  }
+  toJSON() {
+    return {
+      message: this.message,
+      name: this.name,
+      statusCode: this.statusCode
+    };
+  }
+};
+
+// src/errors/notFoundError.ts
+var NotFoundError = class extends BaseError {
+  constructor(message = "NOT FOUND") {
+    super(message, 404);
     this.name = "NotFoundError";
   }
 };
 
 // src/errors/dataCannotBeEmptyError.ts
-var DataCannotBeEmpty = class extends Error {
+var DataCannotBeEmpty = class extends BaseError {
   constructor(message = "DATA CANNOT BE EMPTY") {
-    super(message);
+    super(message, 400);
     this.name = "DataCannotBeEmptyError";
   }
 };
