@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Document, FilterQuery } from "mongoose";
 import { BaseService } from "../services/index.js";
-import { handleError } from "../utils/index.js";
+import { handleError } from "../errors/index.js";
 
 export abstract class BaseController<T extends Document> {
   protected service: BaseService<T>;
@@ -13,12 +13,14 @@ export abstract class BaseController<T extends Document> {
   async get(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { populate } = req.query;
+
+      const populateFields = req.query.populate as string | string[];
+
       const result = await this.service.get({
         id,
-        populateFields: populate as string | string[]
+        populateFields
       });
-      if (!result) {
+      if (!result.data) {
         res.status(404).json({ message: "Not Found" });
         return;
       }
@@ -30,13 +32,35 @@ export abstract class BaseController<T extends Document> {
 
   async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const { pageNum = "1", pageSize = "10", populate, ...filters } = req.body;
+      const pageNumStr = (req.query.pageNum as string) || "1";
+      const pageSizeStr = (req.query.pageSize as string) || "10";
+
+      const pageNum = parseInt(pageNumStr, 10);
+      const pageSize = parseInt(pageSizeStr, 10);
+
+      if (isNaN(pageNum) || pageNum < 1) {
+        res
+          .status(400)
+          .json({ message: "Invalid pageNum. Must be a positive number." });
+        return;
+      }
+
+      if (isNaN(pageSize) || pageSize < 1) {
+        res
+          .status(400)
+          .json({ message: "Invalid pageSize. Must be a positive number." });
+        return;
+      }
+
+      const { populate, ...filters } = req.query;
+
       const result = await this.service.getAll({
-        pageNum: parseInt(pageNum as string, 10),
-        pageSize: parseInt(pageSize as string, 10),
+        pageNum,
+        pageSize,
         populateFields: populate as string | string[],
-        filters: filters as FilterQuery<T>
+        filters: filters as unknown as FilterQuery<T>
       });
+
       res.json(result);
     } catch (error) {
       handleError(res, error);
@@ -55,16 +79,12 @@ export abstract class BaseController<T extends Document> {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { populate } = req.query;
+      const populateFields = req.query.populate as string | string[];
       const result = await this.service.update({
         id,
         entity: req.body,
-        populateFields: populate as string | string[]
+        populateFields
       });
-      if (!result) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
       res.json(result);
     } catch (error) {
       handleError(res, error);
@@ -74,11 +94,7 @@ export abstract class BaseController<T extends Document> {
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const deleted = await this.service.delete(id);
-      if (!deleted) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
+      await this.service.delete(id);
       res.status(204).send();
     } catch (error) {
       handleError(res, error);
