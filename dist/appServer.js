@@ -85,7 +85,84 @@ var CitySchema = new Schema(
 var CityModel = mongoose2.model("City", CitySchema);
 var city_model_default = CityModel;
 
+// src/errors/notFoundError.ts
+var NotFoundError = class extends Error {
+  constructor(message = "NOT FOUND") {
+    super(message);
+    this.name = "NotFoundError";
+  }
+};
+
+// src/errors/dataCannotBeEmptyError.ts
+var DataCannotBeEmpty = class extends Error {
+  constructor(message = "DATA CANNOT BE EMPTY") {
+    super(message);
+    this.name = "DataCannotBeEmptyError";
+  }
+};
+
+// src/errors/handleError.ts
+import mongoose3 from "mongoose";
+import chalk2 from "chalk";
+function handleError(res, error) {
+  console.error(chalk2.red("Error:", error));
+  if (error instanceof NotFoundError) {
+    res.status(404).json({ message: error.message });
+  } else if (error instanceof DataCannotBeEmpty) {
+    res.status(400).json({ message: error.message });
+  } else if (error instanceof mongoose3.Error.CastError) {
+    if (error.kind === "ObjectId") {
+      res.status(422).json({
+        message: "Invalid ID format",
+        details: "The provided ID is not a valid MongoDB ObjectId"
+      });
+    } else {
+      res.status(400).json({
+        message: "Invalid data format",
+        details: error.message
+      });
+    }
+  } else if (error instanceof Error) {
+    if (error.message.includes("network") || error.message.includes("connection")) {
+      res.status(503).json({
+        message: "Database connection error",
+        details: error.message
+      });
+    } else {
+      res.status(500).json({ message: error.message || "Internal Server Error" });
+    }
+  } else if (error instanceof mongoose3.Error.ValidationError) {
+    res.status(400).json({
+      message: "Validation Error",
+      errors: Object.values(error.errors).map((err) => ({
+        field: err.path,
+        message: err.message
+      }))
+    });
+  } else if (error instanceof mongoose3.mongo.MongoServerError) {
+    if (error.code === 11e3) {
+      res.status(409).json({
+        message: "Duplicate key error",
+        details: error.message
+      });
+    } else if (error.code === 50) {
+      res.status(504).json({
+        message: "Database operation timeout",
+        details: error.message
+      });
+    } else {
+      res.status(500).json({
+        message: "Database error",
+        details: error.message
+      });
+    }
+  } else {
+    res.status(500).json({ message: "An unknown error occurred" });
+  }
+}
+
 // src/services/base.service.ts
+import chalk3 from "chalk";
 var BaseService = class {
   model;
   constructor(model) {
@@ -95,11 +172,17 @@ var BaseService = class {
     id,
     populateFields
   }) {
-    let query = this.model.findById(id);
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      let query = this.model.findById(id);
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const result = await query;
+      return { data: result };
+    } catch (error) {
+      console.error(chalk3.red("Error in get method:"), error);
+      throw error;
     }
-    return { data: await query };
   }
   async getAll({
     pageNum = 1,
@@ -107,42 +190,78 @@ var BaseService = class {
     populateFields,
     filters = {}
   }) {
-    const skips = pageSize * (pageNum - 1);
-    const totalItems = await this.model.countDocuments(filters);
-    const totalPages = Math.ceil(totalItems / pageSize);
-    let query = this.model.find(filters).skip(skips).limit(pageSize);
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      const validPageNum = Math.max(1, pageNum);
+      const validPageSize = Math.max(1, pageSize);
+      const skips = validPageSize * (validPageNum - 1);
+      const totalItems = await this.model.countDocuments(filters);
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
+      let query = this.model.find(filters).skip(skips).limit(pageSize);
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const data = await query;
+      return {
+        data,
+        totalItems,
+        totalPages,
+        currentPage: validPageNum,
+        hasNextPage: validPageNum < totalPages,
+        hasPreviousPage: validPageNum > 1
+      };
+    } catch (error) {
+      console.error(chalk3.red("Error in getAll:"), chalk3.red(error));
+      throw error;
     }
-    const data = await query;
-    return {
-      data,
-      totalItems,
-      totalPages,
-      currentPage: pageNum,
-      hasNextPage: pageNum < totalPages,
-      hasPreviousPage: pageNum > 1
-    };
   }
   async create(entity) {
-    return await this.model.create(entity);
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Entity data cannot be empty");
+      }
+      const newEntity = await this.model.create(entity);
+      return { data: newEntity };
+    } catch (error) {
+      console.error(chalk3.red("Error in create:"), error);
+      throw error;
+    }
   }
   async update({
     id,
     entity,
     populateFields
   }) {
-    let query = this.model.findByIdAndUpdate(id, entity, {
-      new: true
-    });
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Update data cannot be empty");
+      }
+      let query = this.model.findByIdAndUpdate(id, entity, {
+        new: true
+      });
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const updatedData = await query;
+      if (!updatedData) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: updatedData };
+    } catch (error) {
+      console.error(chalk3.red("Error in update:"), error);
+      throw error;
     }
-    return { data: await query };
   }
   async delete(id) {
-    const deleted = await this.model.findByIdAndDelete(id);
-    return { data: !!deleted };
+    try {
+      const deleted = await this.model.findByIdAndDelete(id);
+      if (!deleted) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: !!deleted };
+    } catch (error) {
+      console.error(chalk3.red("Error in delete:"), error);
+      throw error;
+    }
   }
 };
 
@@ -157,44 +276,6 @@ var CityService = class extends BaseService {
 // src/container.ts
 import { asClass, createContainer, InjectionMode } from "awilix";
 
-// src/utils/handleError.ts
-import chalk3 from "chalk";
-
-// src/utils/handleMongooseError.ts
-import mongoose3 from "mongoose";
-import chalk2 from "chalk";
-var handleMongooseError = (error) => {
-  if (error instanceof mongoose3.Error.ValidationError) {
-    console.error(chalk2.red("Validation Error:", error.errors));
-    Object.values(error.errors).forEach((err) => {
-      console.error(chalk2.red(`Field: ${err.path}, Message: ${err.message}`));
-    });
-  } else if (error instanceof mongoose3.Error.CastError) {
-    console.error(chalk2.red("Cast Error: Invalid ID format"));
-  } else if (error instanceof mongoose3.mongo.MongoServerError && error.code === 11e3) {
-    console.error(chalk2.red("Duplicate Key Error:", error.keyValue));
-  } else if (error instanceof Error) {
-    console.error(chalk2.red("General Error:", error.message));
-  }
-};
-
-// src/utils/handleError.ts
-var handleError = (res, error, message = "INTERNAL SERVER ERROR") => {
-  handleMongooseError(error);
-  console.error(chalk3.red(`${message}`, error));
-  res.status(500).json({ message });
-};
-
-// src/utils/validateFileContent.ts
-import { fileTypeFromBuffer } from "file-type";
-var validateFileContent = async (fileBuffer) => {
-  const fileType = await fileTypeFromBuffer(fileBuffer);
-  return fileType ? fileType.mime.startsWith("image/") : false;
-};
-
-// src/utils/validationObjectId.ts
-import mongoose4 from "mongoose";
-
 // src/controllers/base.controller.ts
 var BaseController = class {
   service;
@@ -204,12 +285,12 @@ var BaseController = class {
   async get(req, res) {
     try {
       const { id } = req.params;
-      const { populate } = req.query;
+      const populateFields = req.query.populate;
       const result = await this.service.get({
         id,
-        populateFields: populate
+        populateFields
       });
-      if (!result) {
+      if (!result.data) {
         res.status(404).json({ message: "Not Found" });
         return;
       }
@@ -220,10 +301,22 @@ var BaseController = class {
   }
   async getAll(req, res) {
     try {
-      const { pageNum = "1", pageSize = "10", populate, ...filters } = req.body;
+      const pageNumStr = req.query.pageNum || "1";
+      const pageSizeStr = req.query.pageSize || "10";
+      const pageNum = parseInt(pageNumStr, 10);
+      const pageSize = parseInt(pageSizeStr, 10);
+      if (isNaN(pageNum) || pageNum < 1) {
+        res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
+        return;
+      }
+      if (isNaN(pageSize) || pageSize < 1) {
+        res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
+        return;
+      }
+      const { populate, ...filters } = req.query;
       const result = await this.service.getAll({
-        pageNum: parseInt(pageNum, 10),
-        pageSize: parseInt(pageSize, 10),
+        pageNum,
+        pageSize,
         populateFields: populate,
         filters
       });
@@ -243,16 +336,12 @@ var BaseController = class {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { populate } = req.query;
+      const populateFields = req.query.populate;
       const result = await this.service.update({
         id,
         entity: req.body,
-        populateFields: populate
+        populateFields
       });
-      if (!result) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
       res.json(result);
     } catch (error) {
       handleError(res, error);
@@ -261,11 +350,7 @@ var BaseController = class {
   async delete(req, res) {
     try {
       const { id } = req.params;
-      const deleted = await this.service.delete(id);
-      if (!deleted) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
+      await this.service.delete(id);
       res.status(204).send();
     } catch (error) {
       handleError(res, error);
@@ -282,7 +367,7 @@ var CityController = class extends BaseController {
 };
 
 // src/models/MongoDB/user.model.ts
-import mongoose5, { Schema as Schema2 } from "mongoose";
+import mongoose4, { Schema as Schema2 } from "mongoose";
 
 // src/types/enums.ts
 var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
@@ -348,7 +433,7 @@ var UserSchema = new Schema2(
     timestamps: true
   }
 );
-var UserModel = mongoose5.model("User", UserSchema);
+var UserModel = mongoose4.model("User", UserSchema);
 var user_model_default = UserModel;
 
 // src/services/user.service.ts
@@ -497,6 +582,15 @@ import express2 from "express";
 // src/controllers/upload.controller.ts
 import chalk4 from "chalk";
 import multer2 from "multer";
+
+// src/utils/validators/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+var validateFileContent = async (fileBuffer) => {
+  const fileType = await fileTypeFromBuffer(fileBuffer);
+  return fileType ? fileType.mime.startsWith("image/") : false;
+};
+
+// src/controllers/upload.controller.ts
 import path from "path";
 import fs from "fs/promises";
 var UploadFile = async (req, res) => {
@@ -560,7 +654,7 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/", (req, res) => cityController.getAll(req, res));
+cityRoute.get("/", (req, res) => cityController.getAll(req, res));
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 cityRoute.post("/", (req, res) => cityController.create(req, res));
 cityRoute.put("/:id", (req, res) => cityController.update(req, res));
