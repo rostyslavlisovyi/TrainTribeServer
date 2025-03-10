@@ -3,9 +3,9 @@ import { Router } from "express";
 import {
   UploadFile,
   handleUploadError
-} from "../controllers/upload.controller.ts";
-import { upload } from "../middlewares/upload.middleware.ts";
-import { authenticate } from "../middlewares/auth.middleware.ts";
+} from "../controllers/index.js";
+import { upload } from "../middlewares/index.js";
+import { authenticate } from "../middlewares/index.js";
 
 const uploadRoute: Router = express.Router({ mergeParams: true });
 
