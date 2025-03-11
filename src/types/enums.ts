@@ -20,4 +20,10 @@ export enum TrainingGoalEnum {
   HAVE_FUN = "HAVE_FUN",
   OTHER = "OTHER"
 }
+
+export enum TrainingFrequencyEnum {
+  BEGINNER = "1_2_PER_WEEK",
+  INTERMEDIATE = "3_4_PER_WEEK",
+  ADVANCED = "5_PLUS_PER_WEEK"
+}
 /* eslint-enable no-unused-vars */
