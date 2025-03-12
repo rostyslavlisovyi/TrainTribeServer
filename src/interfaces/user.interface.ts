@@ -5,7 +5,7 @@ import {
   TrainingLevelEnum,
   TrainingFrequencyEnum
 } from "../types/index.js";
-import { ITimeSlot } from "./timeSlot.interface.ts";
+import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document {
   athlete_bio?: string;
   auth_id: string;
@@ -19,16 +19,15 @@ export interface IUser extends Document {
   last_name?: string;
   last_onboarding_step: string;
   privacy_settings: boolean;
-  rangeOfAction: number;
-  social_number?: string;
+  range_of_action: number;
   sports?: SportsEnum[];
   training_created?: ObjectId[];
   training_goal?: TrainingGoalEnum[];
   training_join?: ObjectId[];
   training_level?: TrainingLevelEnum;
-  trainingFrequency: TrainingFrequencyEnum;
-  trainingPartnerPreference: string;
-  trainingTimeSlot: ITimeSlot[];
+  training_frequency: TrainingFrequencyEnum;
+  training_partner_preference: string;
+  training_time_slot: ITimeSlot[];
   username?: string;
 }
 

@@ -27,7 +27,7 @@ export enum TrainingFrequencyEnum {
   ADVANCED = "5_PLUS_PER_WEEK"
 }
 
-export enum DaysOfTheWeek {
+export enum DaysOfTheWeekEnum {
   MONDAY = "MONDAY",
   TUESDAY = "TUESDAY",
   WEDNESDAY = "WEDNESDAY",
@@ -37,7 +37,7 @@ export enum DaysOfTheWeek {
   SUNDAY = "SUNDAY"
 }
 
-export enum TimeSlots {
+export enum TimeSlotsEnum {
   T_06_00 = "06:00",
   T_06_30 = "06:30",
   T_07_00 = "07:00",

@@ -408,42 +408,115 @@ var TrainingGoalEnum = /* @__PURE__ */ ((TrainingGoalEnum2) => {
   TrainingGoalEnum2["OTHER"] = "OTHER";
   return TrainingGoalEnum2;
 })(TrainingGoalEnum || {});
+var TrainingFrequencyEnum = /* @__PURE__ */ ((TrainingFrequencyEnum2) => {
+  TrainingFrequencyEnum2["BEGINNER"] = "1_2_PER_WEEK";
+  TrainingFrequencyEnum2["INTERMEDIATE"] = "3_4_PER_WEEK";
+  TrainingFrequencyEnum2["ADVANCED"] = "5_PLUS_PER_WEEK";
+  return TrainingFrequencyEnum2;
+})(TrainingFrequencyEnum || {});
+var DaysOfTheWeekEnum = /* @__PURE__ */ ((DaysOfTheWeekEnum2) => {
+  DaysOfTheWeekEnum2["MONDAY"] = "MONDAY";
+  DaysOfTheWeekEnum2["TUESDAY"] = "TUESDAY";
+  DaysOfTheWeekEnum2["WEDNESDAY"] = "WEDNESDAY";
+  DaysOfTheWeekEnum2["THURSDAY"] = "THURSDAY";
+  DaysOfTheWeekEnum2["FRIDAY"] = "FRIDAY";
+  DaysOfTheWeekEnum2["SATURDAY"] = "SATURDAY";
+  DaysOfTheWeekEnum2["SUNDAY"] = "SUNDAY";
+  return DaysOfTheWeekEnum2;
+})(DaysOfTheWeekEnum || {});
+var TimeSlotsEnum = /* @__PURE__ */ ((TimeSlotsEnum2) => {
+  TimeSlotsEnum2["T_06_00"] = "06:00";
+  TimeSlotsEnum2["T_06_30"] = "06:30";
+  TimeSlotsEnum2["T_07_00"] = "07:00";
+  TimeSlotsEnum2["T_07_30"] = "07:30";
+  TimeSlotsEnum2["T_08_00"] = "08:00";
+  TimeSlotsEnum2["T_08_30"] = "08:30";
+  TimeSlotsEnum2["T_09_00"] = "09:00";
+  TimeSlotsEnum2["T_09_30"] = "09:30";
+  TimeSlotsEnum2["T_10_00"] = "10:00";
+  TimeSlotsEnum2["T_10_30"] = "10:30";
+  TimeSlotsEnum2["T_11_00"] = "11:00";
+  TimeSlotsEnum2["T_11_30"] = "11:30";
+  TimeSlotsEnum2["T_12_00"] = "12:00";
+  TimeSlotsEnum2["T_12_30"] = "12:30";
+  TimeSlotsEnum2["T_13_00"] = "13:00";
+  TimeSlotsEnum2["T_13_30"] = "13:30";
+  TimeSlotsEnum2["T_14_00"] = "14:00";
+  TimeSlotsEnum2["T_14_30"] = "14:30";
+  TimeSlotsEnum2["T_15_00"] = "15:00";
+  TimeSlotsEnum2["T_15_30"] = "15:30";
+  TimeSlotsEnum2["T_16_00"] = "16:00";
+  TimeSlotsEnum2["T_16_30"] = "16:30";
+  TimeSlotsEnum2["T_17_00"] = "17:00";
+  TimeSlotsEnum2["T_17_30"] = "17:30";
+  TimeSlotsEnum2["T_18_00"] = "18:00";
+  TimeSlotsEnum2["T_18_30"] = "18:30";
+  TimeSlotsEnum2["T_19_00"] = "19:00";
+  TimeSlotsEnum2["T_19_30"] = "19:30";
+  TimeSlotsEnum2["T_20_00"] = "20:00";
+  TimeSlotsEnum2["T_20_30"] = "20:30";
+  TimeSlotsEnum2["T_21_00"] = "21:00";
+  TimeSlotsEnum2["T_21_30"] = "21:30";
+  TimeSlotsEnum2["T_22_00"] = "22:00";
+  return TimeSlotsEnum2;
+})(TimeSlotsEnum || {});
 
 // src/models/MongoDB/user.model.ts
 var UserSchema = new Schema2(
   {
-    email: { type: String, required: true, unique: true },
-    username: { type: String },
-    first_name: { type: String },
-    last_name: { type: String },
-    image_url: { type: String, required: false },
-    date_of_birth: { type: Date, required: false },
+    athlete_bio: { type: String, required: false },
+    auth_id: { type: String, required: true },
     city: { type: Schema2.Types.ObjectId, ref: "City", required: false },
+    completed_trainings: { type: Number, default: 0 },
+    date_of_birth: { type: Date, required: false },
+    email: { type: String, required: true, unique: true },
+    first_name: { type: String },
+    has_completed_onboarding: { type: Boolean, required: false },
+    image_url: { type: String, required: false },
+    last_name: { type: String },
+    last_onboarding_step: { type: String, required: false },
+    privacy_settings: { type: Boolean, default: false },
+    range_of_action: { type: Number },
     sports: [
       {
         type: String,
         enum: Object.values(SportsEnum)
       }
     ],
-    training_level: {
-      type: String,
-      enum: Object.values(TrainingLevelEnum)
-    },
+    training_created: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
     training_goal: [
       {
         type: String,
         enum: Object.values(TrainingGoalEnum)
       }
     ],
-    completed_trainings: { type: Number, default: 0 },
-    social_number: { type: String, required: false },
-    athlete_bio: { type: String, required: false },
-    training_created: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
     training_join: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
-    auth_id: { type: String, required: true },
-    last_onboarding_step: { type: String, required: false },
-    has_completed_onboarding: { type: Boolean, required: false },
-    privacy_settings: { type: Boolean, default: false }
+    training_level: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    training_frequency: {
+      type: String,
+      enum: Object.values(TrainingFrequencyEnum)
+    },
+    training_partner_preference: { type: String },
+    training_time_slot: [
+      {
+        day: {
+          type: String,
+          enum: Object.values(DaysOfTheWeekEnum)
+        },
+        startTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        },
+        endTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        }
+      }
+    ],
+    username: { type: String }
   },
   {
     timestamps: true

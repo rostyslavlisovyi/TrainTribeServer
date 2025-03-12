@@ -1,4 +1,4 @@
-import { DaysOfTheWeekEnum, TimeSlotsEnum } from "types/enums.ts";
+import { DaysOfTheWeekEnum, TimeSlotsEnum } from "../types/enums.js";
 
 export interface ITimeSlot {
   day: DaysOfTheWeekEnum;
