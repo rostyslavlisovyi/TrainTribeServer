@@ -54,14 +54,11 @@ export abstract class BaseService<T extends Document> {
 
       const totalItems = await this.model.countDocuments(filters);
       const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-
       let query = this.model.find(filters).skip(skips).limit(pageSize);
       if (populateFields) {
         query = query.populate(populateFields);
       }
-
       const data = await query;
-
       return {
         data,
         totalItems,

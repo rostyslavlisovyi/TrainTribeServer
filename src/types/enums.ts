@@ -72,4 +72,9 @@ export enum TimeSlotsEnum {
   T_21_30 = "21:30",
   T_22_00 = "22:00"
 }
+
+export enum LanguageEnum {
+  IT = "it",
+  EN = "en"
+}
 /* eslint-enable no-unused-vars */

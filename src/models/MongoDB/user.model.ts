@@ -2,6 +2,7 @@ import mongoose, { Model, Schema } from "mongoose";
 import { IUser } from "../../interfaces/index.js";
 import {
   DaysOfTheWeekEnum,
+  LanguageEnum,
   SportsEnum,
   TimeSlotsEnum,
   TrainingFrequencyEnum,
@@ -63,7 +64,12 @@ const UserSchema: Schema = new Schema(
         }
       }
     ],
-    username: { type: String }
+    username: { type: String },
+    language: {
+      type: String,
+      enum: Object.values(LanguageEnum),
+      default: LanguageEnum.IT
+    },
   },
   {
     timestamps: true

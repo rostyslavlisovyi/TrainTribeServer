@@ -7,7 +7,7 @@ const cityRoute: Router = express.Router();
 
 const cityController = container.resolve<CityController>("cityController");
 
-cityRoute.get("/", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/", (req, res) => cityController.getAll(req, res));
 
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 

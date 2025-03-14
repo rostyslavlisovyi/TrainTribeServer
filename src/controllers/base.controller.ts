@@ -32,31 +32,29 @@ export abstract class BaseController<T extends Document> {
 
   async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const pageNumStr = (req.query.pageNum as string) || "1";
-      const pageSizeStr = (req.query.pageSize as string) || "10";
 
-      const pageNum = parseInt(pageNumStr, 10);
-      const pageSize = parseInt(pageSizeStr, 10);
+      const { pageNum, pageSize, populate, ...filters } = req.body;
 
-      if (isNaN(pageNum) || pageNum < 1) {
+      const parsedPageNum = parseInt((pageNum as string) || "1", 10);
+      const parsedPageSize = parseInt((pageSize as string) || "10", 10);
+
+      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
         res
           .status(400)
           .json({ message: "Invalid pageNum. Must be a positive number." });
         return;
       }
 
-      if (isNaN(pageSize) || pageSize < 1) {
+      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
         res
           .status(400)
           .json({ message: "Invalid pageSize. Must be a positive number." });
         return;
       }
 
-      const { populate, ...filters } = req.query;
-
       const result = await this.service.getAll({
-        pageNum,
-        pageSize,
+        pageNum: parsedPageNum,
+        pageSize: parsedPageSize,
         populateFields: populate as string | string[],
         filters: filters as unknown as FilterQuery<T>
       });

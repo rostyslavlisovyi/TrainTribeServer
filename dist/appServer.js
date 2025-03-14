@@ -317,22 +317,20 @@ var BaseController = class {
   }
   async getAll(req, res) {
     try {
-      const pageNumStr = req.query.pageNum || "1";
-      const pageSizeStr = req.query.pageSize || "10";
-      const pageNum = parseInt(pageNumStr, 10);
-      const pageSize = parseInt(pageSizeStr, 10);
-      if (isNaN(pageNum) || pageNum < 1) {
+      const { pageNum, pageSize, populate, ...filters } = req.body;
+      const parsedPageNum = parseInt(pageNum || "1", 10);
+      const parsedPageSize = parseInt(pageSize || "10", 10);
+      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
         res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
         return;
       }
-      if (isNaN(pageSize) || pageSize < 1) {
+      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
         res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
         return;
       }
-      const { populate, ...filters } = req.query;
       const result = await this.service.getAll({
-        pageNum,
-        pageSize,
+        pageNum: parsedPageNum,
+        pageSize: parsedPageSize,
         populateFields: populate,
         filters
       });
@@ -460,6 +458,11 @@ var TimeSlotsEnum = /* @__PURE__ */ ((TimeSlotsEnum2) => {
   TimeSlotsEnum2["T_22_00"] = "22:00";
   return TimeSlotsEnum2;
 })(TimeSlotsEnum || {});
+var LanguageEnum = /* @__PURE__ */ ((LanguageEnum2) => {
+  LanguageEnum2["IT"] = "it";
+  LanguageEnum2["EN"] = "en";
+  return LanguageEnum2;
+})(LanguageEnum || {});
 
 // src/models/MongoDB/user.model.ts
 var UserSchema = new Schema2(
@@ -516,7 +519,12 @@ var UserSchema = new Schema2(
         }
       }
     ],
-    username: { type: String }
+    username: { type: String },
+    language: {
+      type: String,
+      enum: Object.values(LanguageEnum),
+      default: "it" /* IT */
+    }
   },
   {
     timestamps: true
@@ -743,7 +751,7 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.get("/", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/", (req, res) => cityController.getAll(req, res));
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 cityRoute.post("/", (req, res) => cityController.create(req, res));
 cityRoute.put("/:id", (req, res) => cityController.update(req, res));

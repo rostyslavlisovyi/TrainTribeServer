@@ -3,7 +3,8 @@ import {
   SportsEnum,
   TrainingGoalEnum,
   TrainingLevelEnum,
-  TrainingFrequencyEnum
+  TrainingFrequencyEnum,
+  LanguageEnum
 } from "../types/index.js";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document {
@@ -29,6 +30,7 @@ export interface IUser extends Document {
   training_partner_preference: string;
   training_time_slot: ITimeSlot[];
   username?: string;
+  language: LanguageEnum;
 }
 
 export type UserDocument = HydratedDocument<IUser>;
