@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IUser } from "../interfaces/index.js";
-import { handleError } from "../errors/index.js";
+import { handleError } from "../utils/index.js";
 import { BaseController } from "./base.controller.ts";
 import { UserService } from "services/user.service.ts";
 

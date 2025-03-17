@@ -110,84 +110,75 @@ var BaseError = class extends Error {
   }
 };
 
-// src/errors/notFoundError.ts
+// src/errors/clientErrors.ts
 var NotFoundError = class extends BaseError {
-  constructor(message = "NOT FOUND") {
-    super(message, 404);
-    this.name = "NotFoundError";
+  constructor(resource) {
+    super(`${resource} not found`, 404, true);
   }
 };
-
-// src/errors/dataCannotBeEmptyError.ts
+var BadRequestError = class extends BaseError {
+  constructor(message = "Invalid request", details) {
+    super(message, 400, true, details);
+  }
+};
 var DataCannotBeEmpty = class extends BaseError {
-  constructor(message = "DATA CANNOT BE EMPTY") {
-    super(message, 400);
-    this.name = "DataCannotBeEmptyError";
+  constructor(field) {
+    super(`${field} cannot be empty`, 400, true);
   }
 };
 
-// src/errors/handleError.ts
-import mongoose3 from "mongoose";
-import chalk2 from "chalk";
-function handleError(res, error) {
-  console.error(chalk2.red("Error:", error));
-  if (error instanceof NotFoundError) {
-    res.status(404).json({ message: error.message });
-  } else if (error instanceof DataCannotBeEmpty) {
-    res.status(400).json({ message: error.message });
-  } else if (error instanceof mongoose3.Error.CastError) {
-    if (error.kind === "ObjectId") {
-      res.status(422).json({
-        message: "Invalid ID format",
-        details: "The provided ID is not a valid MongoDB ObjectId"
-      });
-    } else {
-      res.status(400).json({
-        message: "Invalid data format",
-        details: error.message
-      });
-    }
-  } else if (error instanceof Error) {
-    if (error.message.includes("network") || error.message.includes("connection")) {
-      res.status(503).json({
-        message: "Database connection error",
-        details: error.message
-      });
-    } else {
-      res.status(500).json({ message: error.message || "Internal Server Error" });
-    }
-  } else if (error instanceof mongoose3.Error.ValidationError) {
-    res.status(400).json({
-      message: "Validation Error",
+// src/errors/mongoErrors.ts
+var MongoValidationError = class extends BaseError {
+  constructor(error) {
+    super("Validation Error", 400, true, {
       errors: Object.values(error.errors).map((err) => ({
         field: err.path,
         message: err.message
       }))
     });
-  } else if (error instanceof mongoose3.mongo.MongoServerError) {
-    if (error.code === 11e3) {
-      res.status(409).json({
-        message: "Duplicate key error",
-        details: error.message
-      });
-    } else if (error.code === 50) {
-      res.status(504).json({
-        message: "Database operation timeout",
-        details: error.message
-      });
-    } else {
-      res.status(500).json({
-        message: "Database error",
-        details: error.message
-      });
-    }
-  } else {
-    res.status(500).json({ message: "An unknown error occurred" });
   }
-}
+};
+var MongoCastError = class extends BaseError {
+  constructor(error) {
+    super("Invalid ID format", 422, true, {
+      details: `The provided value '${error.value}' is not a valid MongoDB ObjectId.`
+    });
+  }
+};
+var MongoDuplicateKeyError = class extends BaseError {
+  constructor(error) {
+    super("Duplicate key error", 409, true, {
+      details: error.message
+    });
+  }
+};
+
+// src/errors/networkErrors.ts
+var DatabaseConnectionError = class extends BaseError {
+  constructor(details) {
+    super(
+      "Database connection error",
+      503,
+      true,
+      details ? { details } : void 0
+    );
+  }
+};
+
+// src/errors/serverError.ts
+var InternalServerError = class extends BaseError {
+  constructor(details) {
+    super(
+      "Internal Server Error",
+      500,
+      false,
+      details ? { details } : void 0
+    );
+  }
+};
 
 // src/services/base.service.ts
-import chalk3 from "chalk";
+import chalk2 from "chalk";
 var BaseService = class {
   model;
   constructor(model) {
@@ -205,7 +196,7 @@ var BaseService = class {
       const result = await query;
       return { data: result };
     } catch (error) {
-      console.error(chalk3.red("Error in get method:"), error);
+      console.error(chalk2.red("Error in get method:"), error);
       throw error;
     }
   }
@@ -235,7 +226,7 @@ var BaseService = class {
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk3.red("Error in getAll:"), chalk3.red(error));
+      console.error(chalk2.red("Error in getAll:"), chalk2.red(error));
       throw error;
     }
   }
@@ -247,7 +238,7 @@ var BaseService = class {
       const newEntity = await this.model.create(entity);
       return { data: newEntity };
     } catch (error) {
-      console.error(chalk3.red("Error in create:"), error);
+      console.error(chalk2.red("Error in create:"), error);
       throw error;
     }
   }
@@ -272,7 +263,7 @@ var BaseService = class {
       }
       return { data: updatedData };
     } catch (error) {
-      console.error(chalk3.red("Error in update:"), error);
+      console.error(chalk2.red("Error in update:"), error);
       throw error;
     }
   }
@@ -284,7 +275,7 @@ var BaseService = class {
       }
       return { data: !!deleted };
     } catch (error) {
-      console.error(chalk3.red("Error in delete:"), error);
+      console.error(chalk2.red("Error in delete:"), error);
       throw error;
     }
   }
@@ -300,6 +291,49 @@ var CityService = class extends BaseService {
 
 // src/container.ts
 import { asClass, createContainer, InjectionMode } from "awilix";
+
+// src/utils/validators/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+var validateFileContent = async (fileBuffer) => {
+  const fileType = await fileTypeFromBuffer(fileBuffer);
+  return fileType ? fileType.mime.startsWith("image/") : false;
+};
+
+// src/utils/handleError.ts
+import mongoose3 from "mongoose";
+import chalk3 from "chalk";
+function handleError(res, error) {
+  console.error(chalk3.red("Error:", error));
+  if (error instanceof BaseError) {
+    return res.status(error.statusCode).json(error.toJSON());
+  }
+  if (error instanceof NotFoundError) {
+    return res.status(404).json(error.toJSON());
+  }
+  if (error instanceof BadRequestError) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof DataCannotBeEmpty) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof mongoose3.Error.ValidationError) {
+    return res.status(400).json(new MongoValidationError(error).toJSON());
+  }
+  if (error instanceof mongoose3.Error.CastError) {
+    return res.status(422).json(new MongoCastError(error).toJSON());
+  }
+  if (error instanceof mongoose3.mongo.MongoServerError) {
+    if (error.code === 11e3) {
+      return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
+    }
+  }
+  if (error instanceof Error) {
+    if (error.message.includes("network") || error.message.includes("connection")) {
+      return res.status(503).json(new DatabaseConnectionError(error.message).toJSON());
+    }
+  }
+  return res.status(500).json(new InternalServerError().toJSON());
+}
 
 // src/controllers/base.controller.ts
 var BaseController = class {
@@ -688,15 +722,6 @@ import express2 from "express";
 // src/controllers/upload.controller.ts
 import chalk4 from "chalk";
 import multer2 from "multer";
-
-// src/utils/validators/validateFileContent.ts
-import { fileTypeFromBuffer } from "file-type";
-var validateFileContent = async (fileBuffer) => {
-  const fileType = await fileTypeFromBuffer(fileBuffer);
-  return fileType ? fileType.mime.startsWith("image/") : false;
-};
-
-// src/controllers/upload.controller.ts
 import path from "path";
 import fs from "fs/promises";
 var UploadFile = async (req, res) => {
