@@ -80,44 +80,55 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | ------------------------------ | -------------------------------------------------- |
 | `src/`                         | Main code directory                                |
 | ├── `config/`                  | Configuration files (e.g., database, environment)  |
-| │ └── `database.ts`            | Database connection configuration                  |
-| │ └── `swagger.ts`             | Swagger/OpenAPI documentation configuration        |
 | ├── `controllers/`             | Controllers for handling requests                  |
+| │ └── `base.controller.ts`     | Base controller with common functionality          |
 | │ └── `city.controller.ts`     | Logic for handling city-related API requests       |
+| │ └── `training.controller.ts` | Logic for handling training-related API requests   |
 | │ └── `upload.controller.ts`   | Logic for handling file uploads                    |
 | │ └── `user.controller.ts`     | Logic for handling user-related API requests       |
+| ├── `errors/`                  | Error handling classes and utilities               |
+| │ └── `baseError.ts`           | Base error class for custom error handling         |
+| │ └── `clientErrors.ts`        | Client-side error definitions                      |
+| │ └── `mongoErrors.ts`         | MongoDB-specific error handling                    |
+| │ └── `networkErrors.ts`       | Network-related error definitions                  |
+| │ └── `serverError.ts`         | Server-side error definitions                      |
 | ├── `interfaces/`              | TypeScript interfaces for strict type definitions  |
-| │ └── `training.interfaces.ts` | Define TypeScript interfaces for training entities |
-| │ └── `user.interfaces.ts`     | Define TypeScript interfaces for user entities     |
-| ├── `middleware/`              | Middleware functions                               |
+| ├── `middlewares/`             | Middleware functions                               |
 | │ └── `auth.middleware.ts`     | Middleware for handling user authentication        |
 | │ └── `upload.middleware.ts`   | Middleware for handling file uploads               |
+| │ └── `validation.middleware.ts` | Middleware for request validation                |
+| ├── `mock/`                    | Mock data for testing and development              |
 | ├── `models/`                  | Database structure definitions (Models)            |
 | │ └── `MongoDB/`               | MongoDB models for application                     |
+| │ │ └── `city.model.ts`        | MongoDB model for city entities                    |
 | │ │ └── `training.model.ts`    | MongoDB model for training entities                |
 | │ │ └── `user.model.ts`        | MongoDB model for user entities                    |
 | ├── `routes/`                  | API route definitions                              |
-| │ └── `city.route.ts`          | Routes for city-related endpoints                  |
+| │ └── `city.routes.ts`         | Routes for city-related endpoints                  |
 | │ └── `index.ts`               | Main router combining all routes                   |
 | │ └── `user.routes.ts`         | Routes for user-related endpoints                  |
 | │ └── `training.routes.ts`     | Routes for training-related endpoints              |
-| │ └── `upload.routes.ts`       | Routes for file upload endpoints                   |
+| │ └── `upload.route.ts`        | Routes for file upload endpoints                   |
+| ├── `services/`                | Business logic layer                               |
+| │ └── `base.service.ts`        | Base service with common functionality             |
+| │ └── `city.service.ts`        | Service for city-related operations                |
+| │ └── `training.service.ts`    | Service for training-related operations            |
+| │ └── `user.service.ts`        | Service for user-related operations                |
 | ├── `types/`                   | Global TypeScript type definitions                 |
-| │ └── `enums.ts`               | Enums for type-safe constants (e.g., sports types) |
 | ├── `utils/`                   | Utility and helper functions                       |
-| │ └── `handleError.ts`         | General error handling utility                     |
-| │ └── `handleMongooseError.ts` | Utility for handling MongoDB-specific errors       |
-| │ └── `validationObjectId.ts`  | Utility for validating MongoDB ObjectIDs           |
-| └── `appServer.ts`             | Main server initialization logic                   |
-| `uploads/`                     | Uploads directory                                  |
+| ├── `validators/`              | Request validation schemas                         |
+| │ └── `user.validator.ts`      | Validation schemas for user-related requests       |
+| `dist/`                        | Compiled JavaScript output directory               |
+| `public/`                      | Static files directory                             |
+| `uploads/`                     | Uploads directory for storing user files           |
 | `.eslintrc.json`               | ESLint configuration                               |
-| `.prettierrc`                  | Prettier configuration                             |
+| `eslint.config.js`             | ESLint configuration                               |
 | `.gitignore`                   | Git ignore file                                    |
 | `package.json`                 | Node.js dependencies file                          |
 | `README.md`                    | Project documentation                              |
 | `jest.config.ts`               | Jest configuration file for testing setup          |
 | `nodemon.json`                 | Nodemon configuration file for automatic restarts  |
-| `.env.exemple`                 | Example environment variables configuration file   |
+| `tsconfig.json`                | TypeScript configuration                           |
 | `vercel.json`                  | Vercel deployment configuration                    |
 
 ## Technologies
