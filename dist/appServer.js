@@ -88,15 +88,24 @@ var city_model_default = CityModel;
 // src/errors/baseError.ts
 var BaseError = class extends Error {
   statusCode;
-  constructor(message, statusCode) {
+  isOperational;
+  details;
+  constructor(message, statusCode, isOperational = true, details) {
     super(message);
     this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    this.details = details;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+    this.name = this.constructor.name;
   }
   toJSON() {
     return {
       message: this.message,
       name: this.name,
-      statusCode: this.statusCode
+      statusCode: this.statusCode,
+      ...this.details && { details: this.details }
     };
   }
 };
