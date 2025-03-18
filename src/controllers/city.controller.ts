@@ -1,6 +1,6 @@
-import { ICity } from "../interfaces/city.interface.ts";
-import { CityService } from "../services/city.service.ts";
-import { BaseController } from "./base.controller.ts";
+import { ICity } from "../interfaces/index.js";
+import { CityService } from "../services/index.js";
+import { BaseController } from "./base.controller.js";
 
 export class CityController extends BaseController<ICity> {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor

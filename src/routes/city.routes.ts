@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { CityController } from "../controllers/city.controller.ts";
+import { CityController } from "../controllers/index.js";
 import express from "express";
-import container from "../container.ts";
+import container from "../container.js";
 
 const cityRoute: Router = express.Router();
 

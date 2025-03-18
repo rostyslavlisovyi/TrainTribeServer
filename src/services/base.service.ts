@@ -1,9 +1,11 @@
 import { Model, Document, FilterQuery } from "mongoose";
+import { NotFoundError, DataCannotBeEmpty } from "../errors/index.js";
+import chalk from "chalk";
 
 export abstract class BaseService<T extends Document> {
   model: Model<T>;
 
-  constructor(model: Model<T>) {
+  protected constructor(model: Model<T>) {
     this.model = model;
   }
 
@@ -14,11 +16,17 @@ export abstract class BaseService<T extends Document> {
     id: string;
     populateFields?: string | string[];
   }): Promise<{ data: T | null }> {
-    let query = this.model.findById(id);
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      let query = this.model.findById(id);
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const result = await query;
+      return { data: result };
+    } catch (error) {
+      console.error(chalk.red("Error in get method:"), error);
+      throw error;
     }
-    return { data: await query };
   }
 
   async getAll({
@@ -39,30 +47,45 @@ export abstract class BaseService<T extends Document> {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   }> {
-    const skips = pageSize * (pageNum - 1);
+    try {
+      const validPageNum = Math.max(1, pageNum);
+      const validPageSize = Math.max(1, pageSize);
+      const skips = validPageSize * (validPageNum - 1);
 
-    const totalItems = await this.model.countDocuments(filters);
-    const totalPages = Math.ceil(totalItems / pageSize);
-
-    let query = this.model.find(filters).skip(skips).limit(pageSize);
-    if (populateFields) {
-      query = query.populate(populateFields);
+      const totalItems = await this.model.countDocuments(filters);
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
+      let query = this.model.find(filters).skip(skips).limit(pageSize);
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const data = await query;
+      return {
+        data,
+        totalItems,
+        totalPages,
+        currentPage: validPageNum,
+        hasNextPage: validPageNum < totalPages,
+        hasPreviousPage: validPageNum > 1
+      };
+    } catch (error) {
+      console.error(chalk.red("Error in getAll:"), chalk.red(error));
+      throw error;
     }
-
-    const data = await query;
-
-    return {
-      data,
-      totalItems,
-      totalPages,
-      currentPage: pageNum,
-      hasNextPage: pageNum < totalPages,
-      hasPreviousPage: pageNum > 1
-    };
   }
 
-  async create(entity: Partial<T>): Promise<T> {
-    return await this.model.create(entity);
+  async create(entity: Partial<T>): Promise<{ data: T }> {
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Entity data cannot be empty");
+      }
+
+      const newEntity = await this.model.create(entity);
+
+      return { data: newEntity };
+    } catch (error) {
+      console.error(chalk.red("Error in create:"), error);
+      throw error;
+    }
   }
 
   async update({
@@ -74,17 +97,39 @@ export abstract class BaseService<T extends Document> {
     entity: Partial<T>;
     populateFields?: string | string[];
   }): Promise<{ data: T | null }> {
-    let query = this.model.findByIdAndUpdate(id, entity, {
-      new: true
-    });
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Update data cannot be empty");
+      }
+      let query = this.model.findByIdAndUpdate(id, entity, {
+        new: true
+      });
+      if (populateFields) {
+        query = query.populate(populateFields);
+      }
+      const updatedData = await query;
+      if (!updatedData) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: updatedData };
+    } catch (error) {
+      console.error(chalk.red("Error in update:"), error);
+      throw error;
     }
-    return { data: await query };
   }
 
   async delete(id: string): Promise<{ data: boolean }> {
-    const deleted = await this.model.findByIdAndDelete(id);
-    return { data: !!deleted };
+    try {
+      const deleted = await this.model.findByIdAndDelete(id);
+
+      if (!deleted) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+
+      return { data: !!deleted };
+    } catch (error) {
+      console.error(chalk.red("Error in delete:"), error);
+      throw error;
+    }
   }
 }

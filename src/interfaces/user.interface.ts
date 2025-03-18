@@ -1,25 +1,36 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
-import { SportsEnum, TrainingGoalEnum, TrainingLevelEnum } from "../types";
+import {
+  SportsEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum,
+  TrainingFrequencyEnum,
+  LanguageEnum
+} from "../types/index.js";
+import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document {
-  email: string;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  date_of_birth?: Date;
-  image_url?: string;
-  city: ObjectId;
-  sports?: SportsEnum[];
-  training_level?: TrainingLevelEnum;
-  training_goal?: TrainingGoalEnum[];
-  completed_trainings?: number;
-  social_number?: string;
   athlete_bio?: string;
-  training_created?: ObjectId[];
-  training_join?: ObjectId[];
   auth_id: string;
-  last_onboarding_step: string;
+  city: ObjectId;
+  completed_trainings?: number;
+  date_of_birth?: Date;
+  email: string;
+  first_name?: string;
   has_completed_onboarding: boolean;
+  image_url?: string;
+  last_name?: string;
+  last_onboarding_step: string;
   privacy_settings: boolean;
+  range_of_action: number;
+  sports?: SportsEnum[];
+  training_created?: ObjectId[];
+  training_goal?: TrainingGoalEnum[];
+  training_join?: ObjectId[];
+  training_level?: TrainingLevelEnum;
+  training_frequency: TrainingFrequencyEnum;
+  training_partner_preference: string;
+  training_time_slot: ITimeSlot[];
+  username?: string;
+  language: LanguageEnum;
 }
 
 export type UserDocument = HydratedDocument<IUser>;

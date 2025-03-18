@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { UserController } from "../controllers/user.controller.ts";
+import { UserController } from "../controllers/index.js";
 import express from "express";
-import { authenticate } from "../middlewares/auth.middleware.ts";
+import { authenticate } from "../middlewares/index.js";
 import container from "../container.ts";
-import { handleValidationErrors } from "../middlewares/validation.middleware.ts";
+import { handleValidationErrors } from "../middlewares/index.js";
 import {
   validateUserCreation,
   validateUserUpdate
-} from "../validators/user.validator.ts";
+} from "../validators/index.js";
 
 const userRoute: Router = express.Router();
 
