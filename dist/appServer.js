@@ -785,7 +785,7 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/list", (req, res) => cityController.getAll(req, res));
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 cityRoute.post("/", (req, res) => cityController.create(req, res));
 cityRoute.put("/:id", (req, res) => cityController.update(req, res));
