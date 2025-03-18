@@ -159,7 +159,7 @@ The server provides the following API endpoints:
 
 | Method | Endpoint         | Description      |
 | ------ | ---------------- | ---------------- |
-| GET    | `/api/city`      | Get all cities   |
+| POST   | `/api/city`      | Get all cities   |
 | GET    | `/api/city/id`   | Get city by ID   |
 | GET    | `/api/city/name` | Get city by name |
 
@@ -173,33 +173,40 @@ The server provides the following API endpoints:
 
 ### User
 
-| Field                      | Type         | Required | Unique | Description                                                              |
-| -------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------ |
-| `_id`                      | `String`     | Yes      | Yes    | User's id.                                                               |
-| `username`                 | `String`     | No       | No     | User's display name.                                                     |
-| `first_name`               | `String`     | No       | No     | User's first name.                                                       |
-| `last_name`                | `String`     | No       | No     | User's last name.                                                        |
-| `email`                    | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).        |
-| `sports`                   | `String[]`   | Yes      | No     | Array of sports types from SportsEnum (e.g., running, cycling, swimming) |
-| `image_url`                | `String`     | No       | No     | URL to the user's profile picture.                                       |
-| `city`                     | `ObjectId`   | No       | No     | Reference to the user's city.                                            |
-| `completed_trainings`      | `Number`     | No       | No     | Number of trainings the user has completed.                              |
-| `social_number`            | `String`     | No       | No     | User's social number.                                                    |
-| `athlete_bio`              | `String`     | No       | No     | User's athletic biography and background information.                    |
-| `auth_id`                  | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                         |
-| `last_onboarding_step`     | `String`     | No       | No     | Indicates the last completed onboarding step.                            |
-| `has_completed_onboarding` | `Boolean`    | Yes      | No     | Indicates if user has completed onboarding.                              |
-| `privacy_settings`         | `Boolean`    | No       | No     | User's privacy preference. Default is false.                             |
-| `training_created`         | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.        |
-| `training_join`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.         |
-| `createdAt`                | `Date`       | Auto     | No     | Timestamp when the user document was created.                            |
-| `updatedAt`                | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                       |
+| Field                      | Type                | Required | Unique | Description                                                              |
+| -------------------------- | ------------------- | -------- | ------ | ------------------------------------------------------------------------ |
+| `_id`                      | `ObjectId`          | Yes      | Yes    | User's id.                                                               |
+| `username`                 | `String`            | No       | No     | User's display name.                                                     |
+| `first_name`               | `String`            | No       | No     | User's first name.                                                       |
+| `last_name`                | `String`            | No       | No     | User's last name.                                                        |
+| `email`                    | `String`            | Yes      | Yes    | User's email address (used for authentication and communication).        |
+| `sports`                   | `String[]`          | Yes      | No     | Array of sports types from SportsEnum (e.g., RUNNING, CYCLING, SWIMMING) |
+| `image_url`                | `String`            | No       | No     | URL to the user's profile picture.                                       |
+| `city`                     | `ObjectId`          | No       | No     | Reference to the user's city.                                            |
+| `completed_trainings`      | `Number`            | No       | No     | Number of trainings the user has completed. Default is 0.                |
+| `athlete_bio`              | `String`            | No       | No     | User's athletic biography and background information.                    |
+| `auth_id`                  | `String`            | Yes      | Yes    | Unique authentication ID from the auth provider.                         |
+| `last_onboarding_step`     | `String`            | No       | No     | Indicates the last completed onboarding step.                            |
+| `has_completed_onboarding` | `Boolean`           | No       | No     | Indicates if user has completed onboarding.                              |
+| `privacy_settings`         | `Boolean`           | No       | No     | User's privacy preference. Default is false.                             |
+| `training_created`         | `[ObjectId]`        | No       | No     | Array of references to `Training` documents the user has created.        |
+| `training_join`            | `[ObjectId]`        | No       | No     | Array of references to `Training` documents the user has joined.         |
+| `date_of_birth`            | `Date`              | No       | No     | User's date of birth.                                                    |
+| `range_of_action`          | `Number`            | No       | No     | Range of action for the user (in kilometers).                            |
+| `training_goal`            | `String[]`          | No       | No     | Array of training goals from TrainingGoalEnum.                           |
+| `training_level`           | `String`            | No       | No     | User's training level from TrainingLevelEnum.                            |
+| `training_frequency`       | `String`            | No       | No     | User's training frequency from TrainingFrequencyEnum.                    |
+| `training_partner_preference` | `String`         | No       | No     | User's preference for training partners.                                 |
+| `training_time_slot`       | `Object[]`          | No       | No     | Array of preferred training time slots with day and time range.          |
+| `language`                 | `String`            | No       | No     | User's preferred language. Default is 'it'.                              |
+| `createdAt`                | `Date`              | Auto     | No     | Timestamp when the user document was created.                            |
+| `updatedAt`                | `Date`              | Auto     | No     | Timestamp when the user document was last updated.                       |
 
 ### City
 
 | Field        | Type     | Required | Unique | Description                                       |
 | ------------ | -------- | -------- | ------ | ------------------------------------------------- |
-| `_id`        | `String` | Yes      | Yes    | City's id.                                        |
+| `_id`        | `ObjectId` | Yes      | Yes    | City's id.                                      |
 | `id`         | `Number` | Yes      | No     | City's numeric identifier.                        |
 | `name`       | `String` | No       | No     | Name of the city.                                 |
 | `latitude`   | `Number` | No       | No     | Geographical latitude of the city's location.     |
@@ -207,21 +214,26 @@ The server provides the following API endpoints:
 | `province`   | `String` | No       | No     | Province or state where the city is located.      |
 | `population` | `Number` | No       | No     | Population of the city.                           |
 | `createdAt`  | `Date`   | Auto     | No     | Timestamp when the city document was created.     |
-| `updatedAt`  | `Date`   | Auto     | No     | Timestamp when the user document was last updated |
+| `updatedAt`  | `Date`   | Auto     | No     | Timestamp when the city document was last updated.|
 
-### Training Model
+### Training
 
-| **Field**      | **Type**     | **Required** | **Description**                                                                              |
-| -------------- | ------------ | ------------ | -------------------------------------------------------------------------------------------- |
-| `title`        | `String`     | Yes          | The title or name of the training event.                                                     |
-| `description`  | `String`     | No           | Additional details about the training event.                                                 |
-| `date`         | `Date`       | Yes          | The date and time of the training event.                                                     |
-| `latitude`     | `Number`     | Yes          | The geographical latitude where the training event will take place.                          |
-| `longitude`    | `Number`     | Yes          | The geographical longitude where the training event will take place.                         |
-| `sport`        | `ObjectId`   | Yes          | A reference to the `Sport` collection, representing the sport category for the training.     |
-| `creator`      | `ObjectId`   | Yes          | A reference to the `User` collection, identifying the creator of the training event.         |
-| `participants` | `ObjectId[]` | No           | An array of references to the `User` collection, representing users who joined the training. |
-| `createdAt`    | `Date`       | Auto         | The timestamp when the training document was created.                                        |
-| `updatedAt`    | `Date`       | Auto         | The timestamp when the training document was last updated.                                   |
+| Field             | Type         | Required | Unique | Description                                                                |
+| ----------------- | ------------ | -------- | ------ | -------------------------------------------------------------------------- |
+| `_id`             | `ObjectId`   | Yes      | Yes    | Training's id.                                                             |
+| `title`           | `String`     | Yes      | No     | The title or name of the training event.                                   |
+| `description`     | `String`     | No       | No     | Additional details about the training event.                               |
+| `date`            | `Date`       | Yes      | No     | The date and time of the training event.                                   |
+| `latitude`        | `String`     | Yes      | No     | The geographical latitude where the training event will take place.        |
+| `longitude`       | `String`     | Yes      | No     | The geographical longitude where the training event will take place.       |
+| `sport`           | `String[]`   | Yes      | No     | Array of sports types from SportsEnum for this training.                   |
+| `creator`         | `ObjectId`   | Yes      | No     | Reference to the `User` collection, identifying the creator of the event.  |
+| `participants`    | `[ObjectId]` | No       | No     | Array of references to the `User` collection for participants.             |
+| `difficultyLevel` | `String`     | No       | No     | Difficulty level from TrainingLevelEnum.                                   |
+| `duration`        | `Number`     | No       | No     | Duration of the training in minutes.                                       |
+| `likes`           | `[ObjectId]` | No       | No     | Array of references to the `User` collection for users who liked the event.|
+| `comments`        | `Object`     | No       | No     | Comments on the training with user reference, text, and timestamp.         |
+| `createdAt`       | `Date`       | Auto     | No     | Timestamp when the training document was created.                          |
+| `updatedAt`       | `Date`       | Auto     | No     | Timestamp when the training document was last updated.                     |
 
 ---

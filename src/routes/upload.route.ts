@@ -1,9 +1,6 @@
 import express from "express";
 import { Router } from "express";
-import {
-  UploadFile,
-  handleUploadError
-} from "../controllers/index.js";
+import { UploadFile, handleUploadError } from "../controllers/index.js";
 import { upload } from "../middlewares/index.js";
 import { authenticate } from "../middlewares/index.js";
 
