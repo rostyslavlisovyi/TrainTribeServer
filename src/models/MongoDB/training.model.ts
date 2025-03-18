@@ -20,11 +20,14 @@ const TrainingSchema = new Schema<ITraining>(
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
     duration: { type: Number },
     likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    comments: {
-      user: { type: Schema.Types.ObjectId, ref: "User" },
-      text: { type: String },
-      timestamp: true
-    }
+    comments: [
+      {
+        user: { type: Schema.Types.ObjectId, ref: "User" },
+        text: { type: String },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   {
     timestamps: true
