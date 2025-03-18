@@ -1,5 +1,5 @@
 // src/appServer.ts
-import express5 from "express";
+import express6 from "express";
 import cors from "cors";
 import dotenv2 from "dotenv";
 
@@ -22,7 +22,7 @@ var connectDB = async () => {
 var database_default = connectDB;
 
 // src/routes/index.ts
-import express4 from "express";
+import express5 from "express";
 
 // src/routes/user.routes.ts
 import express from "express";
@@ -67,23 +67,8 @@ var handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// src/models/MongoDB/city.model.ts
-import mongoose2, { Schema } from "mongoose";
-var CitySchema = new Schema(
-  {
-    id: { type: Number, required: true },
-    name: { type: String },
-    latitude: { type: Number },
-    longitude: { type: Number },
-    province: { type: String },
-    population: { type: Number }
-  },
-  {
-    timestamps: true
-  }
-);
-var CityModel = mongoose2.model("City", CitySchema);
-var city_model_default = CityModel;
+// src/container.ts
+import { asClass, createContainer, InjectionMode } from "awilix";
 
 // src/errors/baseError.ts
 var BaseError = class extends Error {
@@ -281,6 +266,24 @@ var BaseService = class {
   }
 };
 
+// src/models/MongoDB/city.model.ts
+import mongoose2, { Schema } from "mongoose";
+var CitySchema = new Schema(
+  {
+    id: { type: Number, required: true },
+    name: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    province: { type: String },
+    population: { type: Number }
+  },
+  {
+    timestamps: true
+  }
+);
+var CityModel = mongoose2.model("City", CitySchema);
+var city_model_default = CityModel;
+
 // src/services/city.service.ts
 var CityService = class extends BaseService {
   now = Date.now();
@@ -289,142 +292,8 @@ var CityService = class extends BaseService {
   }
 };
 
-// src/container.ts
-import { asClass, createContainer, InjectionMode } from "awilix";
-
-// src/utils/validators/validateFileContent.ts
-import { fileTypeFromBuffer } from "file-type";
-var validateFileContent = async (fileBuffer) => {
-  const fileType = await fileTypeFromBuffer(fileBuffer);
-  return fileType ? fileType.mime.startsWith("image/") : false;
-};
-
-// src/utils/handleError.ts
-import mongoose3 from "mongoose";
-import chalk3 from "chalk";
-function handleError(res, error) {
-  console.error(chalk3.red("Error:", error));
-  if (error instanceof BaseError) {
-    return res.status(error.statusCode).json(error.toJSON());
-  }
-  if (error instanceof NotFoundError) {
-    return res.status(404).json(error.toJSON());
-  }
-  if (error instanceof BadRequestError) {
-    return res.status(400).json(error.toJSON());
-  }
-  if (error instanceof DataCannotBeEmpty) {
-    return res.status(400).json(error.toJSON());
-  }
-  if (error instanceof mongoose3.Error.ValidationError) {
-    return res.status(400).json(new MongoValidationError(error).toJSON());
-  }
-  if (error instanceof mongoose3.Error.CastError) {
-    return res.status(422).json(new MongoCastError(error).toJSON());
-  }
-  if (error instanceof mongoose3.mongo.MongoServerError) {
-    if (error.code === 11e3) {
-      return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
-    }
-  }
-  if (error instanceof Error) {
-    if (error.message.includes("network") || error.message.includes("connection")) {
-      return res.status(503).json(new DatabaseConnectionError(error.message).toJSON());
-    }
-  }
-  return res.status(500).json(new InternalServerError().toJSON());
-}
-
-// src/controllers/base.controller.ts
-var BaseController = class {
-  service;
-  constructor(service) {
-    this.service = service;
-  }
-  async get(req, res) {
-    try {
-      const { id } = req.params;
-      const populateFields = req.query.populate;
-      const result = await this.service.get({
-        id,
-        populateFields
-      });
-      if (!result.data) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async getAll(req, res) {
-    try {
-      const { pageNum, pageSize, populate, ...filters } = req.body;
-      const parsedPageNum = parseInt(pageNum || "1", 10);
-      const parsedPageSize = parseInt(pageSize || "10", 10);
-      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
-        res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
-        return;
-      }
-      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
-        res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
-        return;
-      }
-      const result = await this.service.getAll({
-        pageNum: parsedPageNum,
-        pageSize: parsedPageSize,
-        populateFields: populate,
-        filters
-      });
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async create(req, res) {
-    try {
-      const result = await this.service.create(req.body);
-      res.status(201).json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const populateFields = req.query.populate;
-      const result = await this.service.update({
-        id,
-        entity: req.body,
-        populateFields
-      });
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async delete(req, res) {
-    try {
-      const { id } = req.params;
-      await this.service.delete(id);
-      res.status(204).send();
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-};
-
-// src/controllers/city.controller.ts
-var CityController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(cityService) {
-    super(cityService);
-  }
-};
-
 // src/models/MongoDB/user.model.ts
-import mongoose4, { Schema as Schema2 } from "mongoose";
+import mongoose3, { Schema as Schema2 } from "mongoose";
 
 // src/types/enums.ts
 var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
@@ -573,13 +442,241 @@ var UserSchema = new Schema2(
     timestamps: true
   }
 );
-var UserModel = mongoose4.model("User", UserSchema);
+var UserModel = mongoose3.model("User", UserSchema);
 var user_model_default = UserModel;
 
 // src/services/user.service.ts
 var UserService = class extends BaseService {
   constructor() {
     super(user_model_default);
+  }
+};
+
+// src/models/MongoDB/training.model.ts
+import mongoose4, { Schema as Schema3 } from "mongoose";
+var TrainingSchema = new Schema3(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: false },
+    date: { type: Date, required: true },
+    latitude: { type: String, required: true },
+    longitude: { type: String, required: true },
+    sport: [
+      {
+        type: String,
+        enum: Object.values(SportsEnum)
+      }
+    ],
+    creator: { type: Schema3.Types.ObjectId, ref: "User", required: true },
+    participants: [{ type: Schema3.Types.ObjectId, ref: "User" }],
+    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
+    duration: { type: Number },
+    likes: [{ type: Schema3.Types.ObjectId, ref: "User" }],
+    comments: [
+      {
+        user: { type: Schema3.Types.ObjectId, ref: "User" },
+        text: { type: String },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now }
+      }
+    ]
+  },
+  {
+    timestamps: true
+  }
+);
+var TrainingModel = mongoose4.model(
+  "Training",
+  TrainingSchema
+);
+var training_model_default = TrainingModel;
+
+// src/services/training.service.ts
+var TrainingService = class extends BaseService {
+  constructor() {
+    super(training_model_default);
+  }
+};
+
+// src/utils/validators/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+var validateFileContent = async (fileBuffer) => {
+  const fileType = await fileTypeFromBuffer(fileBuffer);
+  return fileType ? fileType.mime.startsWith("image/") : false;
+};
+
+// src/utils/handleError.ts
+import mongoose5 from "mongoose";
+import chalk3 from "chalk";
+function handleError(res, error) {
+  console.error(chalk3.red("Error:", error));
+  if (error instanceof BaseError) {
+    return res.status(error.statusCode).json(error.toJSON());
+  }
+  if (error instanceof NotFoundError) {
+    return res.status(404).json(error.toJSON());
+  }
+  if (error instanceof BadRequestError) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof DataCannotBeEmpty) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof mongoose5.Error.ValidationError) {
+    return res.status(400).json(new MongoValidationError(error).toJSON());
+  }
+  if (error instanceof mongoose5.Error.CastError) {
+    return res.status(422).json(new MongoCastError(error).toJSON());
+  }
+  if (error instanceof mongoose5.mongo.MongoServerError) {
+    if (error.code === 11e3) {
+      return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
+    }
+  }
+  if (error instanceof Error) {
+    if (error.message.includes("network") || error.message.includes("connection")) {
+      return res.status(503).json(new DatabaseConnectionError(error.message).toJSON());
+    }
+  }
+  return res.status(500).json(new InternalServerError().toJSON());
+}
+
+// src/controllers/base.controller.ts
+var BaseController = class {
+  service;
+  constructor(service) {
+    this.service = service;
+  }
+  async get(req, res) {
+    try {
+      const { id } = req.params;
+      const populateFields = req.query.populate;
+      const result = await this.service.get({
+        id,
+        populateFields
+      });
+      if (!result.data) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async getAll(req, res) {
+    try {
+      const { pageNum, pageSize, populate, ...filters } = req.body;
+      const parsedPageNum = parseInt(pageNum || "1", 10);
+      const parsedPageSize = parseInt(pageSize || "10", 10);
+      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
+        res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
+        return;
+      }
+      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
+        res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
+        return;
+      }
+      const result = await this.service.getAll({
+        pageNum: parsedPageNum,
+        pageSize: parsedPageSize,
+        populateFields: populate,
+        filters
+      });
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async create(req, res) {
+    try {
+      const result = await this.service.create(req.body);
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const populateFields = req.query.populate;
+      const result = await this.service.update({
+        id,
+        entity: req.body,
+        populateFields
+      });
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+      await this.service.delete(id);
+      res.status(204).send();
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/controllers/city.controller.ts
+var CityController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(cityService) {
+    super(cityService);
+  }
+};
+
+// src/controllers/upload.controller.ts
+import chalk4 from "chalk";
+import multer2 from "multer";
+import path from "path";
+import fs from "fs/promises";
+var UploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: "NO FILE UPLOADED" });
+      return;
+    }
+    const isValidateFileContent = await validateFileContent(req.file.buffer);
+    if (!isValidateFileContent) {
+      res.status(422).json({ message: "INVALID FILE CONTENT" });
+      return;
+    }
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const fileExtension = path.extname(req.file.originalname);
+    const fileName = `${req.file.fieldname}-${uniqueSuffix}${fileExtension}`;
+    const filePath = path.join("uploads", fileName);
+    await fs.writeFile(filePath, req.file.buffer);
+    console.info(chalk4.green(`File ${fileName} uploaded successfully`));
+    res.status(200).json({
+      message: "FILE UPLOADED SUCCESSFULLY",
+      file: {
+        filename: fileName,
+        path: filePath,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      }
+    });
+  } catch (error) {
+    console.error(chalk4.red(error));
+    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+    return;
+  }
+};
+var handleUploadError = (error, res, next) => {
+  if (error instanceof multer2.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({ message: "FILE TOO LARGE" });
+    } else {
+      res.status(400).json({ message: error.message });
+    }
+  } else if (error instanceof Error) {
+    res.status(400).json({ message: error.message });
+  } else {
+    next();
   }
 };
 
@@ -609,16 +706,26 @@ var UserController = class extends BaseController {
   }
 };
 
+// src/controllers/training.controller.ts
+var TrainingController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(trainingService) {
+    super(trainingService);
+  }
+};
+
 // src/container.ts
 var container = createContainer({
   injectionMode: InjectionMode.CLASSIC
 });
 container.register({
   cityService: asClass(CityService),
-  userService: asClass(UserService)
+  userService: asClass(UserService),
+  trainingService: asClass(TrainingService)
 }).register({
   cityController: asClass(CityController),
-  userController: asClass(UserController)
+  userController: asClass(UserController),
+  trainingController: asClass(TrainingController)
 });
 var container_default = container;
 
@@ -718,59 +825,6 @@ var user_routes_default = userRoute;
 
 // src/routes/upload.route.ts
 import express2 from "express";
-
-// src/controllers/upload.controller.ts
-import chalk4 from "chalk";
-import multer2 from "multer";
-import path from "path";
-import fs from "fs/promises";
-var UploadFile = async (req, res) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ message: "NO FILE UPLOADED" });
-      return;
-    }
-    const isValidateFileContent = await validateFileContent(req.file.buffer);
-    if (!isValidateFileContent) {
-      res.status(422).json({ message: "INVALID FILE CONTENT" });
-      return;
-    }
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const fileExtension = path.extname(req.file.originalname);
-    const fileName = `${req.file.fieldname}-${uniqueSuffix}${fileExtension}`;
-    const filePath = path.join("uploads", fileName);
-    await fs.writeFile(filePath, req.file.buffer);
-    console.info(chalk4.green(`File ${fileName} uploaded successfully`));
-    res.status(200).json({
-      message: "FILE UPLOADED SUCCESSFULLY",
-      file: {
-        filename: fileName,
-        path: filePath,
-        mimetype: req.file.mimetype,
-        size: req.file.size
-      }
-    });
-  } catch (error) {
-    console.error(chalk4.red(error));
-    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    return;
-  }
-};
-var handleUploadError = (error, res, next) => {
-  if (error instanceof multer2.MulterError) {
-    if (error.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ message: "FILE TOO LARGE" });
-    } else {
-      res.status(400).json({ message: error.message });
-    }
-  } else if (error instanceof Error) {
-    res.status(400).json({ message: error.message });
-  } else {
-    next();
-  }
-};
-
-// src/routes/upload.route.ts
 var uploadRoute = express2.Router({ mergeParams: true });
 uploadRoute.post(
   "/",
@@ -792,11 +846,26 @@ cityRoute.put("/:id", (req, res) => cityController.update(req, res));
 cityRoute.delete("/:id", (req, res) => cityController.delete(req, res));
 var city_routes_default = cityRoute;
 
+// src/routes/training.routes.ts
+import express4 from "express";
+var trainingRoutes = express4.Router({ mergeParams: true });
+var trainingController = container_default.resolve("trainingController");
+trainingRoutes.get("/", (req, res) => trainingController.getAll(req, res));
+trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
+trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
+trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
+trainingRoutes.delete(
+  "/:id",
+  (req, res) => trainingController.delete(req, res)
+);
+var training_routes_default = trainingRoutes;
+
 // src/routes/index.ts
-var router = express4.Router({ mergeParams: true });
+var router = express5.Router({ mergeParams: true });
 router.use("/user", user_routes_default);
 router.use("/upload", upload_route_default);
 router.use("/city", city_routes_default);
+router.use("/training", training_routes_default);
 var routes_default = router;
 
 // src/mock/citys.mock.ts
@@ -999760,17 +999829,17 @@ REQUIRED_ENV_VARS.forEach((varName) => {
   }
 });
 var SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "666", 10);
-var appServer = express5();
+var appServer = express6();
 appServer.use(scopePerRequest(container_default));
-appServer.use(express5.json());
+appServer.use(express6.json());
 var corsOptions = {
   origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 appServer.use(cors(corsOptions));
 appServer.options("*", cors(corsOptions));
-appServer.use(express5.urlencoded({ extended: true }));
-appServer.use(express5.static("public"));
+appServer.use(express6.urlencoded({ extended: true }));
+appServer.use(express6.static("public"));
 appServer.get("/", (_req, res) => {
   res.sendFile("index.html", { root: "./public" });
 });

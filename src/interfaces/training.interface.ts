@@ -18,7 +18,7 @@ export interface ITraining extends Document {
     text: string;
     createdAt: Date;
     updatedAt: Date;
-  };
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
