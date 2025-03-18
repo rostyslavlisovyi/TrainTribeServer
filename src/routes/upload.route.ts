@@ -10,22 +10,26 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  * @swagger
  * /upload:
  *   post:
- *     summary: Upload a file
- *     tags:
- *       - Upload
+ *     summary: Upload an image file
+ *     tags: [Upload]
  *     security:
  *       - bearerAuth: []
+ *     description: Uploads an image file to the server. Only authenticated users can upload files.
+ *     consumes:
+ *       - multipart/form-data
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - image
  *             properties:
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: The image file to be uploaded
+ *                 description: The image file to upload (max 2MB, only image formats allowed)
  *     responses:
  *       200:
  *         description: File uploaded successfully
@@ -42,18 +46,22 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  *                   properties:
  *                     filename:
  *                       type: string
- *                       example: image-123456789.jpg
+ *                       description: Generated unique filename
+ *                       example: image-1647853254123-123456789.jpg
  *                     path:
  *                       type: string
- *                       example: uploads/image-123456789.jpg
+ *                       description: Path where the file is stored
+ *                       example: uploads/image-1647853254123-123456789.jpg
  *                     mimetype:
  *                       type: string
+ *                       description: MIME type of the file
  *                       example: image/jpeg
  *                     size:
- *                       type: number
- *                       example: 204800
+ *                       type: integer
+ *                       description: Size of the file in bytes
+ *                       example: 102400
  *       400:
- *         description: Bad Request - File validation error or no file uploaded
+ *         description: Bad request, no file uploaded or invalid file type
  *         content:
  *           application/json:
  *             schema:
@@ -61,12 +69,19 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  *               properties:
  *                 message:
  *                   type: string
- *                   enum:
- *                     - "NO FILE UPLOADED"
- *                     - "ONLY IMAGES ARE ALLOWED"
- *                   example: "NO FILE UPLOADED"
+ *                   example: NO FILE UPLOADED
+ *       401:
+ *         description: Unauthorized, authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
  *       413:
- *         description: Payload Too Large - File size exceeds the limit
+ *         description: File too large (exceeds 2MB limit)
  *         content:
  *           application/json:
  *             schema:
@@ -75,8 +90,8 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  *                 message:
  *                   type: string
  *                   example: FILE TOO LARGE
- *       401:
- *         description: Unauthorized - User is not authenticated
+ *       422:
+ *         description: Invalid file content
  *         content:
  *           application/json:
  *             schema:
@@ -84,9 +99,9 @@ const uploadRoute: Router = express.Router({ mergeParams: true });
  *               properties:
  *                 message:
  *                   type: string
- *                   example: UNAUTHORIZED ACCESS
+ *                   example: INVALID FILE CONTENT
  *       500:
- *         description: Internal Server Error - Unexpected error during upload
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -103,5 +118,15 @@ uploadRoute.post(
   handleUploadError,
   UploadFile
 );
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
 
 export default uploadRoute;
