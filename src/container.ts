@@ -1,9 +1,11 @@
-import { CityService } from "./services/city.service.ts";
-
 import { asClass, createContainer, InjectionMode } from "awilix";
-import { CityController } from "./controllers/city.controller.ts";
-import { UserService } from "./services/user.service.ts";
-import { UserController } from "./controllers/user.controller.ts";
+
+import { TrainingService, UserService, CityService } from "./services/index.js";
+import {
+  TrainingController,
+  UserController,
+  CityController
+} from "./controllers/index.js";
 
 const container = createContainer({
   injectionMode: InjectionMode.CLASSIC
@@ -12,11 +14,13 @@ const container = createContainer({
 container
   .register({
     cityService: asClass(CityService),
-    userService: asClass(UserService)
+    userService: asClass(UserService),
+    trainingService: asClass(TrainingService)
   })
   .register({
     cityController: asClass(CityController),
-    userController: asClass(UserController)
+    userController: asClass(UserController),
+    trainingController: asClass(TrainingController)
   });
 
 export default container;
