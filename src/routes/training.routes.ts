@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { TrainingController } from "controllers/index.js";
+import { TrainingController } from "../controllers/index.js";
 import express from "express";
 import container from "../container.js";
 
