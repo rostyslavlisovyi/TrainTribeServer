@@ -286,7 +286,6 @@ var city_model_default = CityModel;
 
 // src/services/city.service.ts
 var CityService = class extends BaseService {
-  now = Date.now();
   constructor() {
     super(city_model_default);
   }
@@ -850,7 +849,7 @@ var city_routes_default = cityRoute;
 import express4 from "express";
 var trainingRoutes = express4.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
-trainingRoutes.get("/", (req, res) => trainingController.getAll(req, res));
+trainingRoutes.post("/list", (req, res) => trainingController.getAll(req, res));
 trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
 trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
 trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
