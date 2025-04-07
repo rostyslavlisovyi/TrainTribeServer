@@ -43,6 +43,7 @@ export abstract class BaseService<T extends Document> {
     data: T[];
     totalItems: number;
     totalPages: number;
+    pageSize: number;
     currentPage: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
@@ -63,6 +64,7 @@ export abstract class BaseService<T extends Document> {
         data,
         totalItems,
         totalPages,
+        pageSize: validPageSize,
         currentPage: validPageNum,
         hasNextPage: validPageNum < totalPages,
         hasPreviousPage: validPageNum > 1

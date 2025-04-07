@@ -206,6 +206,7 @@ var BaseService = class {
         data,
         totalItems,
         totalPages,
+        pageSize: validPageSize,
         currentPage: validPageNum,
         hasNextPage: validPageNum < totalPages,
         hasPreviousPage: validPageNum > 1
