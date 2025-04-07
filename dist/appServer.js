@@ -189,6 +189,7 @@ var BaseService = class {
     pageNum = 1,
     pageSize = 10,
     populateFields,
+    sort,
     filters = {}
   }) {
     try {
@@ -196,8 +197,12 @@ var BaseService = class {
       const validPageSize = Math.max(1, pageSize);
       const skips = validPageSize * (validPageNum - 1);
       const totalItems = await this.model.countDocuments(filters);
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-      let query = this.model.find(filters).skip(skips).limit(pageSize);
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      let query = this.model.find(filters);
+      if (sort) {
+        query = query.sort(sort);
+      }
+      query = query.skip(skips).limit(validPageSize);
       if (populateFields) {
         query = query.populate(populateFields);
       }
@@ -567,7 +572,7 @@ var BaseController = class {
   }
   async getAll(req, res) {
     try {
-      const { pageNum, pageSize, populate, ...filters } = req.body;
+      const { pageNum, pageSize, sort, populate, filters } = req.body;
       const parsedPageNum = parseInt(pageNum || "1", 10);
       const parsedPageSize = parseInt(pageSize || "10", 10);
       if (isNaN(parsedPageNum) || parsedPageNum < 1) {
@@ -582,6 +587,7 @@ var BaseController = class {
         pageNum: parsedPageNum,
         pageSize: parsedPageSize,
         populateFields: populate,
+        sort,
         filters
       });
       res.json(result);
