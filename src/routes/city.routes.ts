@@ -72,7 +72,7 @@ const cityController = container.resolve<CityController>("cityController");
  *         $ref: '#/components/responses/InternalServerError'
  */
 
-cityRoute.post("/list", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/list", (req, res) => cityController.list(req, res));
 
 /**
  * @swagger

@@ -185,7 +185,7 @@ var BaseService = class {
       throw error;
     }
   }
-  async getAll({
+  async list({
     pageNum = 1,
     pageSize = 10,
     populateFields,
@@ -217,7 +217,7 @@ var BaseService = class {
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk2.red("Error in getAll:"), chalk2.red(error));
+      console.error(chalk2.red("Error in list:"), chalk2.red(error));
       throw error;
     }
   }
@@ -570,7 +570,7 @@ var BaseController = class {
       handleError(res, error);
     }
   }
-  async getAll(req, res) {
+  async list(req, res) {
     try {
       const { pageNum, pageSize, sort, populate, filters } = req.body;
       const parsedPageNum = parseInt(pageNum || "1", 10);
@@ -583,7 +583,7 @@ var BaseController = class {
         res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
         return;
       }
-      const result = await this.service.getAll({
+      const result = await this.service.list({
         pageNum: parsedPageNum,
         pageSize: parsedPageSize,
         populateFields: populate,
@@ -846,7 +846,7 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/list", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/list", (req, res) => cityController.list(req, res));
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 cityRoute.post("/", (req, res) => cityController.create(req, res));
 cityRoute.put("/:id", (req, res) => cityController.update(req, res));
@@ -857,7 +857,7 @@ var city_routes_default = cityRoute;
 import express4 from "express";
 var trainingRoutes = express4.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
-trainingRoutes.post("/list", (req, res) => trainingController.getAll(req, res));
+trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
 trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
 trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
 trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));

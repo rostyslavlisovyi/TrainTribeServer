@@ -29,7 +29,7 @@ export abstract class BaseService<T extends Document> {
     }
   }
 
-  async getAll({
+  async list({
     pageNum = 1,
     pageSize = 10,
     populateFields,
@@ -56,7 +56,8 @@ export abstract class BaseService<T extends Document> {
       const skips = validPageSize * (validPageNum - 1);
 
       const totalItems = await this.model.countDocuments(filters);
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      const totalPages =
+        totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
       let query = this.model.find(filters);
 
       if (sort) {
@@ -78,7 +79,7 @@ export abstract class BaseService<T extends Document> {
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk.red("Error in getAll:"), chalk.red(error));
+      console.error(chalk.red("Error in list:"), chalk.red(error));
       throw error;
     }
   }

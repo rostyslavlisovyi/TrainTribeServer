@@ -30,7 +30,7 @@ export abstract class BaseController<T extends Document> {
     }
   }
 
-  async getAll(req: Request, res: Response): Promise<void> {
+  async list(req: Request, res: Response): Promise<void> {
     try {
 
       const { pageNum, pageSize, sort, populate, filters } = req.body;
@@ -52,7 +52,7 @@ export abstract class BaseController<T extends Document> {
         return;
       }
 
-      const result = await this.service.getAll({
+      const result = await this.service.list({
         pageNum: parsedPageNum,
         pageSize: parsedPageSize,
         populateFields: populate as string | string[],
