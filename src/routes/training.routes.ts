@@ -35,7 +35,7 @@ const trainingController =
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.get("/", (req, res) => trainingController.getAll(req, res));
+trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
 
 /**
  * @swagger

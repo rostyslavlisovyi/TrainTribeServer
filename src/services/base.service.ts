@@ -1,4 +1,4 @@
-import { Model, Document, FilterQuery } from "mongoose";
+import { Model, Document, FilterQuery, SortOrder } from "mongoose";
 import { NotFoundError, DataCannotBeEmpty } from "../errors/index.js";
 import chalk from "chalk";
 
@@ -29,20 +29,23 @@ export abstract class BaseService<T extends Document> {
     }
   }
 
-  async getAll({
+  async list({
     pageNum = 1,
     pageSize = 10,
     populateFields,
+    sort,
     filters = {}
   }: {
     pageNum?: number;
     pageSize?: number;
     populateFields?: string | string[];
+    sort?: Record<string, SortOrder>;
     filters?: FilterQuery<T>;
   }): Promise<{
     data: T[];
     totalItems: number;
     totalPages: number;
+    pageSize: number;
     currentPage: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
@@ -53,8 +56,15 @@ export abstract class BaseService<T extends Document> {
       const skips = validPageSize * (validPageNum - 1);
 
       const totalItems = await this.model.countDocuments(filters);
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-      let query = this.model.find(filters).skip(skips).limit(pageSize);
+      const totalPages =
+        totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      let query = this.model.find(filters);
+
+      if (sort) {
+        query = query.sort(sort);
+      }
+      query = query.skip(skips).limit(validPageSize);
+
       if (populateFields) {
         query = query.populate(populateFields);
       }
@@ -63,12 +73,13 @@ export abstract class BaseService<T extends Document> {
         data,
         totalItems,
         totalPages,
+        pageSize: validPageSize,
         currentPage: validPageNum,
         hasNextPage: validPageNum < totalPages,
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk.red("Error in getAll:"), chalk.red(error));
+      console.error(chalk.red("Error in list:"), chalk.red(error));
       throw error;
     }
   }

@@ -7,6 +7,7 @@ const TrainingSchema = new Schema<ITraining>(
     title: { type: String, required: true },
     description: { type: String, required: false },
     date: { type: Date, required: true },
+    address: { type: String, required: true },
     latitude: { type: String, required: true },
     longitude: { type: String, required: true },
     sport: [

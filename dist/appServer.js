@@ -185,10 +185,11 @@ var BaseService = class {
       throw error;
     }
   }
-  async getAll({
+  async list({
     pageNum = 1,
     pageSize = 10,
     populateFields,
+    sort,
     filters = {}
   }) {
     try {
@@ -196,8 +197,12 @@ var BaseService = class {
       const validPageSize = Math.max(1, pageSize);
       const skips = validPageSize * (validPageNum - 1);
       const totalItems = await this.model.countDocuments(filters);
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-      let query = this.model.find(filters).skip(skips).limit(pageSize);
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      let query = this.model.find(filters);
+      if (sort) {
+        query = query.sort(sort);
+      }
+      query = query.skip(skips).limit(validPageSize);
       if (populateFields) {
         query = query.populate(populateFields);
       }
@@ -206,12 +211,13 @@ var BaseService = class {
         data,
         totalItems,
         totalPages,
+        pageSize: validPageSize,
         currentPage: validPageNum,
         hasNextPage: validPageNum < totalPages,
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk2.red("Error in getAll:"), chalk2.red(error));
+      console.error(chalk2.red("Error in list:"), chalk2.red(error));
       throw error;
     }
   }
@@ -286,7 +292,6 @@ var city_model_default = CityModel;
 
 // src/services/city.service.ts
 var CityService = class extends BaseService {
-  now = Date.now();
   constructor() {
     super(city_model_default);
   }
@@ -459,6 +464,7 @@ var TrainingSchema = new Schema3(
     title: { type: String, required: true },
     description: { type: String, required: false },
     date: { type: Date, required: true },
+    address: { type: String, required: true },
     latitude: { type: String, required: true },
     longitude: { type: String, required: true },
     sport: [
@@ -564,9 +570,9 @@ var BaseController = class {
       handleError(res, error);
     }
   }
-  async getAll(req, res) {
+  async list(req, res) {
     try {
-      const { pageNum, pageSize, populate, ...filters } = req.body;
+      const { pageNum, pageSize, sort, populate, filters } = req.body;
       const parsedPageNum = parseInt(pageNum || "1", 10);
       const parsedPageSize = parseInt(pageSize || "10", 10);
       if (isNaN(parsedPageNum) || parsedPageNum < 1) {
@@ -577,10 +583,11 @@ var BaseController = class {
         res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
         return;
       }
-      const result = await this.service.getAll({
+      const result = await this.service.list({
         pageNum: parsedPageNum,
         pageSize: parsedPageSize,
         populateFields: populate,
+        sort,
         filters
       });
       res.json(result);
@@ -839,7 +846,7 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/list", (req, res) => cityController.getAll(req, res));
+cityRoute.post("/list", (req, res) => cityController.list(req, res));
 cityRoute.get("/:id", (req, res) => cityController.get(req, res));
 cityRoute.post("/", (req, res) => cityController.create(req, res));
 cityRoute.put("/:id", (req, res) => cityController.update(req, res));
@@ -850,7 +857,7 @@ var city_routes_default = cityRoute;
 import express4 from "express";
 var trainingRoutes = express4.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
-trainingRoutes.get("/", (req, res) => trainingController.getAll(req, res));
+trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
 trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
 trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
 trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
