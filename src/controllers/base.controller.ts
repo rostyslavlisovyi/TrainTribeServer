@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Document, FilterQuery } from "mongoose";
+import { Document, FilterQuery, SortOrder } from "mongoose";
 import { BaseService } from "../services/index.js";
 import { handleError } from "../utils/index.js";
 
@@ -30,10 +30,10 @@ export abstract class BaseController<T extends Document> {
     }
   }
 
-  async getAll(req: Request, res: Response): Promise<void> {
+  async list(req: Request, res: Response): Promise<void> {
     try {
 
-      const { pageNum, pageSize, populate, ...filters } = req.body;
+      const { pageNum, pageSize, sort, populate, filters } = req.body;
 
       const parsedPageNum = parseInt((pageNum as string) || "1", 10);
       const parsedPageSize = parseInt((pageSize as string) || "10", 10);
@@ -52,10 +52,11 @@ export abstract class BaseController<T extends Document> {
         return;
       }
 
-      const result = await this.service.getAll({
+      const result = await this.service.list({
         pageNum: parsedPageNum,
         pageSize: parsedPageSize,
         populateFields: populate as string | string[],
+        sort: sort as unknown as Record<string, SortOrder>,
         filters: filters as unknown as FilterQuery<T>
       });
 
