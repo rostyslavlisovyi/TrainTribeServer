@@ -516,6 +516,20 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
+  async addParticipant(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $addToSet: { participants: userId } },
+      { new: true }
+    );
+  }
+  async removeParticipant(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { participants: userId } },
+      { new: true }
+    );
+  }
 };
 
 // src/utils/validators/validateFileContent.ts
@@ -745,6 +759,17 @@ var TrainingController = class extends BaseController {
     const data = await this.service.removeLike(id, userId);
     res.status(200).json({ data });
   }
+  async addParticipant(req, res) {
+    const { id } = req.params;
+    const userId = req.body.userId;
+    const data = await this.service.addParticipant(id, userId);
+    res.status(200).json({ data });
+  }
+  async removeParticipant(req, res) {
+    const { id, userId } = req.params;
+    const data = await this.service.removeParticipant(id, userId);
+    res.status(200).json({ data });
+  }
 };
 
 // src/container.ts
@@ -891,9 +916,17 @@ trainingRoutes.post(
   "/:id/like",
   (req, res) => trainingController.addLike(req, res)
 );
+trainingRoutes.post(
+  "/:id/participants",
+  (req, res) => trainingController.addParticipant(req, res)
+);
 trainingRoutes.delete(
   "/:id/likeremove",
   (req, res) => trainingController.removeLike(req, res)
+);
+trainingRoutes.delete(
+  "/:id/participants/:userId",
+  (req, res) => trainingController.removeParticipant(req, res)
 );
 trainingRoutes.delete(
   "/:id",

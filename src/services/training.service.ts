@@ -22,4 +22,20 @@ export class TrainingService extends BaseService<ITraining> {
       { new: true }
     );
   }
+
+  async addParticipant(id: string, userId: string) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $addToSet: { participants: userId } },
+      { new: true }
+    );
+  }
+
+  async removeParticipant(id: string, userId: string) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { participants: userId } },
+      { new: true }
+    );
+  }
 }

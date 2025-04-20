@@ -25,4 +25,17 @@ export class TrainingController extends BaseController<
     const data = await this.service.removeLike(id, userId);
     res.status(200).json({ data });
   }
+
+  async addParticipant(req: Request, res: Response) {
+    const { id } = req.params;
+    const userId = req.body.userId;
+    const data = await this.service.addParticipant(id, userId);
+    res.status(200).json({ data });
+  }
+
+  async removeParticipant(req: Request, res: Response) {
+    const { id, userId } = req.params;
+    const data = await this.service.removeParticipant(id, userId);
+    res.status(200).json({ data });
+  }
 }

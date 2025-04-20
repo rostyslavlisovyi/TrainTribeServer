@@ -254,6 +254,43 @@ trainingRoutes.post("/:id/like", (req, res) =>
 
 /**
  * @swagger
+ * /training/{id}/participants:
+ *   post:
+ *     summary: Add a participant to a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID to add as participant
+ *     responses:
+ *       200:
+ *         description: Training returned with added participant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.post("/:id/participants", (req, res) =>
+  trainingController.addParticipant(req, res)
+);
+
+/**
+ * @swagger
  * /training/{id}/likeremove:
  *   delete:
  *     summary: Remove a like from a training
@@ -287,6 +324,40 @@ trainingRoutes.post("/:id/like", (req, res) =>
  */
 trainingRoutes.delete("/:id/likeremove", (req, res) =>
   trainingController.removeLike(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/participants/{userId}:
+ *   delete:
+ *     summary: Remove a participant from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID to remove from participants
+ *     responses:
+ *       200:
+ *         description: Training returned with removed participant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/participants/:userId", (req, res) =>
+  trainingController.removeParticipant(req, res)
 );
 
 /**
