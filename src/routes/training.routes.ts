@@ -217,6 +217,80 @@ trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
 
 /**
  * @swagger
+ * /training/{id}/like:
+ *   post:
+ *     summary: Add a like to a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID liking the training
+ *     responses:
+ *       200:
+ *         description: Training returned with updated likes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.post("/:id/like", (req, res) =>
+  trainingController.addLike(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/likeremove:
+ *   delete:
+ *     summary: Remove a like from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID removing the like
+ *     responses:
+ *       200:
+ *         description: Training returned with likes removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/likeremove", (req, res) =>
+  trainingController.removeLike(req, res)
+);
+
+/**
+ * @swagger
  * /training/{id}:
  *   delete:
  *     summary: Delete a training by ID

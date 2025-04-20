@@ -502,6 +502,20 @@ var TrainingService = class extends BaseService {
   constructor() {
     super(training_model_default);
   }
+  async addLike(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $addToSet: { likes: userId } },
+      { new: true }
+    );
+  }
+  async removeLike(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { likes: userId } },
+      { new: true }
+    );
+  }
 };
 
 // src/utils/validators/validateFileContent.ts
@@ -715,9 +729,21 @@ var UserController = class extends BaseController {
 
 // src/controllers/training.controller.ts
 var TrainingController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(trainingService) {
     super(trainingService);
+    this.service = trainingService;
+  }
+  async addLike(req, res) {
+    const { id } = req.params;
+    const userId = req.body.userId;
+    const data = await this.service.addLike(id, userId);
+    res.status(200).json({ data });
+  }
+  async removeLike(req, res) {
+    const { id } = req.params;
+    const userId = req.body.userId;
+    const data = await this.service.removeLike(id, userId);
+    res.status(200).json({ data });
   }
 };
 
@@ -861,6 +887,14 @@ trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
 trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
 trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
 trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
+trainingRoutes.post(
+  "/:id/like",
+  (req, res) => trainingController.addLike(req, res)
+);
+trainingRoutes.delete(
+  "/:id/likeremove",
+  (req, res) => trainingController.removeLike(req, res)
+);
 trainingRoutes.delete(
   "/:id",
   (req, res) => trainingController.delete(req, res)
