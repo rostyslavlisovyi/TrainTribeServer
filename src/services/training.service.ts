@@ -1,5 +1,7 @@
+import CommentModel from "../models/MongoDB/comment.model.js";
 import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
+
 import { BaseService } from "./base.service.js";
 
 export class TrainingService extends BaseService<ITraining> {
@@ -35,6 +37,32 @@ export class TrainingService extends BaseService<ITraining> {
     return this.model.findByIdAndUpdate(
       id,
       { $pull: { participants: userId } },
+      { new: true }
+    );
+  }
+
+  async addComment(id: string, userId: string, text: string) {
+    const comment = await CommentModel.create({ user: userId, text });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $push: { comments: comment._id } },
+      { new: true }
+    );
+  }
+
+  async updateComment(commentId: string, text: string) {
+    return CommentModel.findByIdAndUpdate(
+      commentId,
+      { text, updatedAt: new Date() },
+      { new: true }
+    );
+  }
+
+  async removeComment(id: string, commentId: string) {
+    await CommentModel.deleteOne({ _id: commentId });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { comments: commentId } },
       { new: true }
     );
   }

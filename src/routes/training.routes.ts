@@ -396,6 +396,85 @@ trainingRoutes.delete("/:id", (req, res) =>
   trainingController.delete(req, res)
 );
 
+trainingRoutes.post("/:id/comments", (req, res) =>
+  trainingController.addComment(req, res)
+);
+
+/**
+ * @swagger
+ * /training/comments/{commentId}:
+ *   put:
+ *     summary: Update a comment
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: Updated comment text
+ *     responses:
+ *       200:
+ *         description: Comment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+trainingRoutes.put("/comments/:commentId", (req, res) =>
+  trainingController.updateComment(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/comments/{commentId}:
+ *   delete:
+ *     summary: Remove a comment from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     responses:
+ *       200:
+ *         description: Comment removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
+  trainingController.removeComment(req, res)
+);
+
 /**
  * @swagger
  * components:
@@ -463,22 +542,8 @@ trainingRoutes.delete("/:id", (req, res) =>
  *         comments:
  *           type: array
  *           items:
- *             type: object
- *             properties:
- *               user:
- *                 type: string
- *                 description: ID of the user who made the comment
- *               text:
- *                 type: string
- *                 description: Comment text
- *               createdAt:
- *                 type: string
- *                 format: date-time
- *                 description: Date when the comment was created
- *               updatedAt:
- *                 type: string
- *                 format: date-time
- *                 description: Date when the comment was last updated
+ *             type: string
+ *           description: Array of comment IDs linked to the training
  *         createdAt:
  *           type: string
  *           format: date-time

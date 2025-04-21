@@ -23,10 +23,8 @@ const TrainingSchema = new Schema<ITraining>(
     likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
     comments: [
       {
-        user: { type: Schema.Types.ObjectId, ref: "User" },
-        text: { type: String },
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now }
+        type: Schema.Types.ObjectId,
+        ref: "Comment"
       }
     ]
   },

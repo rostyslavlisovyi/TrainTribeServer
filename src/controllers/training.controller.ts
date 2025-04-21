@@ -38,4 +38,24 @@ export class TrainingController extends BaseController<
     const data = await this.service.removeParticipant(id, userId);
     res.status(200).json({ data });
   }
+
+  async addComment(req: Request, res: Response) {
+    const { id } = req.params;
+    const { userId, text } = req.body;
+    const data = await this.service.addComment(id, userId, text);
+    res.status(200).json({ data });
+  }
+
+  async updateComment(req: Request, res: Response) {
+    const { commentId } = req.params;
+    const { text } = req.body;
+    const data = await this.service.updateComment(commentId, text);
+    res.status(200).json({ data });
+  }
+
+  async removeComment(req: Request, res: Response) {
+    const { id, commentId } = req.params;
+    const data = await this.service.removeComment(id, commentId);
+    res.status(200).json({ data });
+  }
 }

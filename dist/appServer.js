@@ -457,9 +457,23 @@ var UserService = class extends BaseService {
   }
 };
 
-// src/models/MongoDB/training.model.ts
+// src/models/MongoDB/comment.model.ts
 import mongoose4, { Schema as Schema3 } from "mongoose";
-var TrainingSchema = new Schema3(
+var CommentSchema = new Schema3(
+  {
+    user: { type: Schema3.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true }
+  },
+  {
+    timestamps: true
+  }
+);
+var CommentModel = mongoose4.model("Comment", CommentSchema);
+var comment_model_default = CommentModel;
+
+// src/models/MongoDB/training.model.ts
+import mongoose5, { Schema as Schema4 } from "mongoose";
+var TrainingSchema = new Schema4(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },
@@ -473,17 +487,15 @@ var TrainingSchema = new Schema3(
         enum: Object.values(SportsEnum)
       }
     ],
-    creator: { type: Schema3.Types.ObjectId, ref: "User", required: true },
-    participants: [{ type: Schema3.Types.ObjectId, ref: "User" }],
+    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
+    participants: [{ type: Schema4.Types.ObjectId, ref: "User" }],
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
     duration: { type: Number },
-    likes: [{ type: Schema3.Types.ObjectId, ref: "User" }],
+    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
     comments: [
       {
-        user: { type: Schema3.Types.ObjectId, ref: "User" },
-        text: { type: String },
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now }
+        type: Schema4.Types.ObjectId,
+        ref: "Comment"
       }
     ]
   },
@@ -491,7 +503,7 @@ var TrainingSchema = new Schema3(
     timestamps: true
   }
 );
-var TrainingModel = mongoose4.model(
+var TrainingModel = mongoose5.model(
   "Training",
   TrainingSchema
 );
@@ -530,6 +542,29 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
+  async addComment(id, userId, text) {
+    const comment = await comment_model_default.create({ user: userId, text });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $push: { comments: comment._id } },
+      { new: true }
+    );
+  }
+  async updateComment(commentId, text) {
+    return comment_model_default.findByIdAndUpdate(
+      commentId,
+      { text, updatedAt: /* @__PURE__ */ new Date() },
+      { new: true }
+    );
+  }
+  async removeComment(id, commentId) {
+    await comment_model_default.deleteOne({ _id: commentId });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { comments: commentId } },
+      { new: true }
+    );
+  }
 };
 
 // src/utils/validators/validateFileContent.ts
@@ -540,7 +575,7 @@ var validateFileContent = async (fileBuffer) => {
 };
 
 // src/utils/handleError.ts
-import mongoose5 from "mongoose";
+import mongoose6 from "mongoose";
 import chalk3 from "chalk";
 function handleError(res, error) {
   console.error(chalk3.red("Error:", error));
@@ -556,13 +591,13 @@ function handleError(res, error) {
   if (error instanceof DataCannotBeEmpty) {
     return res.status(400).json(error.toJSON());
   }
-  if (error instanceof mongoose5.Error.ValidationError) {
+  if (error instanceof mongoose6.Error.ValidationError) {
     return res.status(400).json(new MongoValidationError(error).toJSON());
   }
-  if (error instanceof mongoose5.Error.CastError) {
+  if (error instanceof mongoose6.Error.CastError) {
     return res.status(422).json(new MongoCastError(error).toJSON());
   }
-  if (error instanceof mongoose5.mongo.MongoServerError) {
+  if (error instanceof mongoose6.mongo.MongoServerError) {
     if (error.code === 11e3) {
       return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
     }
@@ -770,6 +805,23 @@ var TrainingController = class extends BaseController {
     const data = await this.service.removeParticipant(id, userId);
     res.status(200).json({ data });
   }
+  async addComment(req, res) {
+    const { id } = req.params;
+    const { userId, text } = req.body;
+    const data = await this.service.addComment(id, userId, text);
+    res.status(200).json({ data });
+  }
+  async updateComment(req, res) {
+    const { commentId } = req.params;
+    const { text } = req.body;
+    const data = await this.service.updateComment(commentId, text);
+    res.status(200).json({ data });
+  }
+  async removeComment(req, res) {
+    const { id, commentId } = req.params;
+    const data = await this.service.removeComment(id, commentId);
+    res.status(200).json({ data });
+  }
 };
 
 // src/container.ts
@@ -931,6 +983,18 @@ trainingRoutes.delete(
 trainingRoutes.delete(
   "/:id",
   (req, res) => trainingController.delete(req, res)
+);
+trainingRoutes.post(
+  "/:id/comments",
+  (req, res) => trainingController.addComment(req, res)
+);
+trainingRoutes.put(
+  "/comments/:commentId",
+  (req, res) => trainingController.updateComment(req, res)
+);
+trainingRoutes.delete(
+  "/:id/comments/:commentId",
+  (req, res) => trainingController.removeComment(req, res)
 );
 var training_routes_default = trainingRoutes;
 

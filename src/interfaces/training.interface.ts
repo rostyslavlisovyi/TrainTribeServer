@@ -1,5 +1,6 @@
 import { Document, ObjectId } from "mongoose";
 import { SportsEnum, TrainingLevelEnum } from "../types/index.js";
+
 export interface ITraining extends Document {
   title: string;
   description: string;
@@ -13,12 +14,7 @@ export interface ITraining extends Document {
   difficultyLevel: TrainingLevelEnum;
   duration: number;
   likes: ObjectId[];
-  comments: {
-    user: ObjectId;
-    text: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
+  comments: ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
