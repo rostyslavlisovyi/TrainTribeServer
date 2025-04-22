@@ -176,7 +176,7 @@ var BaseService = class {
     try {
       let query = this.model.findById(id);
       if (populateFields) {
-        query = query.populate(populateFields);
+        query = query.populate(this.buildPopulate(populateFields));
       }
       const result = await query;
       return { data: result };
@@ -204,7 +204,7 @@ var BaseService = class {
       }
       query = query.skip(skips).limit(validPageSize);
       if (populateFields) {
-        query = query.populate(populateFields);
+        query = query.populate(this.buildPopulate(populateFields));
       }
       const data = await query;
       return {
@@ -246,7 +246,7 @@ var BaseService = class {
         new: true
       });
       if (populateFields) {
-        query = query.populate(populateFields);
+        query = query.populate(this.buildPopulate(populateFields));
       }
       const updatedData = await query;
       if (!updatedData) {
@@ -269,6 +269,30 @@ var BaseService = class {
       console.error(chalk2.red("Error in delete:"), error);
       throw error;
     }
+  }
+  buildPopulate(paths) {
+    const tree = {};
+    const pathArray = Array.isArray(paths) ? paths : [paths];
+    for (const path2 of pathArray) {
+      const parts = path2.split(".");
+      let current = tree;
+      for (const part of parts) {
+        if (!current[part]) current[part] = {};
+        current = current[part];
+      }
+    }
+    function convert(node) {
+      return Object.entries(node).map(([key, value]) => {
+        const populate = convert(value);
+        const result2 = { path: key };
+        if (populate.length > 0) {
+          result2.populate = populate.length === 1 ? populate[0] : populate;
+        }
+        return result2;
+      });
+    }
+    const result = convert(tree);
+    return result.length === 1 ? result[0] : result;
   }
 };
 
