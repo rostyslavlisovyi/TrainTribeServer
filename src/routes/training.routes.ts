@@ -217,6 +217,151 @@ trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
 
 /**
  * @swagger
+ * /training/{id}/like:
+ *   post:
+ *     summary: Add a like to a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID liking the training
+ *     responses:
+ *       200:
+ *         description: Training returned with updated likes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.post("/:id/like", (req, res) =>
+  trainingController.addLike(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/participants:
+ *   post:
+ *     summary: Add a participant to a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID to add as participant
+ *     responses:
+ *       200:
+ *         description: Training returned with added participant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.post("/:id/participants", (req, res) =>
+  trainingController.addParticipant(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/likeremove:
+ *   delete:
+ *     summary: Remove a like from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID removing the like
+ *     responses:
+ *       200:
+ *         description: Training returned with likes removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/likeremove", (req, res) =>
+  trainingController.removeLike(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/participants/{userId}:
+ *   delete:
+ *     summary: Remove a participant from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID to remove from participants
+ *     responses:
+ *       200:
+ *         description: Training returned with removed participant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/participants/:userId", (req, res) =>
+  trainingController.removeParticipant(req, res)
+);
+
+/**
+ * @swagger
  * /training/{id}:
  *   delete:
  *     summary: Delete a training by ID
@@ -249,6 +394,85 @@ trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
  */
 trainingRoutes.delete("/:id", (req, res) =>
   trainingController.delete(req, res)
+);
+
+trainingRoutes.post("/:id/comments", (req, res) =>
+  trainingController.addComment(req, res)
+);
+
+/**
+ * @swagger
+ * /training/comments/{commentId}:
+ *   put:
+ *     summary: Update a comment
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: Updated comment text
+ *     responses:
+ *       200:
+ *         description: Comment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Comment'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+trainingRoutes.put("/comments/:commentId", (req, res) =>
+  trainingController.updateComment(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/comments/{commentId}:
+ *   delete:
+ *     summary: Remove a comment from a training
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     responses:
+ *       200:
+ *         description: Comment removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
+  trainingController.removeComment(req, res)
 );
 
 /**
@@ -318,22 +542,8 @@ trainingRoutes.delete("/:id", (req, res) =>
  *         comments:
  *           type: array
  *           items:
- *             type: object
- *             properties:
- *               user:
- *                 type: string
- *                 description: ID of the user who made the comment
- *               text:
- *                 type: string
- *                 description: Comment text
- *               createdAt:
- *                 type: string
- *                 format: date-time
- *                 description: Date when the comment was created
- *               updatedAt:
- *                 type: string
- *                 format: date-time
- *                 description: Date when the comment was last updated
+ *             type: string
+ *           description: Array of comment IDs linked to the training
  *         createdAt:
  *           type: string
  *           format: date-time

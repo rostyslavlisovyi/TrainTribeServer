@@ -25,7 +25,8 @@ export default tslint.config(
       "coverage",
       "public",
       "eslint.config.js",
-      "jest.config.ts"
+      "jest.config.ts",
+      "migrate-mongo-config.js"
     ]
   },
   {

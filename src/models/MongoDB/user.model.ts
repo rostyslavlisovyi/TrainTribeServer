@@ -69,7 +69,7 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: Object.values(LanguageEnum),
       default: LanguageEnum.IT
-    },
+    }
   },
   {
     timestamps: true

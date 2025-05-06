@@ -3,10 +3,13 @@ import { Document, FilterQuery, SortOrder } from "mongoose";
 import { BaseService } from "../services/index.js";
 import { handleError } from "../utils/index.js";
 
-export abstract class BaseController<T extends Document> {
-  protected service: BaseService<T>;
+export abstract class BaseController<
+  T extends Document,
+  S extends BaseService<T>
+> {
+  protected service: S;
 
-  constructor(service: BaseService<T>) {
+  constructor(service: S) {
     this.service = service;
   }
 
@@ -32,7 +35,6 @@ export abstract class BaseController<T extends Document> {
 
   async list(req: Request, res: Response): Promise<void> {
     try {
-
       const { pageNum, pageSize, sort, populate, filters } = req.body;
 
       const parsedPageNum = parseInt((pageNum as string) || "1", 10);

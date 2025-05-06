@@ -10,12 +10,10 @@ const TrainingSchema = new Schema<ITraining>(
     address: { type: String, required: true },
     latitude: { type: String, required: true },
     longitude: { type: String, required: true },
-    sport: [
-      {
-        type: String,
-        enum: Object.values(SportsEnum)
-      }
-    ],
+    sport: {
+      type: String,
+      enum: Object.values(SportsEnum)
+    },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     participants: [{ type: Schema.Types.ObjectId, ref: "User" }],
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
@@ -23,10 +21,8 @@ const TrainingSchema = new Schema<ITraining>(
     likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
     comments: [
       {
-        user: { type: Schema.Types.ObjectId, ref: "User" },
-        text: { type: String },
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now }
+        type: Schema.Types.ObjectId,
+        ref: "Comment"
       }
     ]
   },
