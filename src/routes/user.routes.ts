@@ -98,6 +98,8 @@ userRoute.get("/by-auth-id/:auth_id", authenticate, (req, res) =>
   userController.getByAuthId(req, res)
 );
 
+userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
+
 // POST: Create new user
 /**
  * @swagger
