@@ -934,6 +934,7 @@ userRoute.get(
   authenticate,
   (req, res) => userController.getByAuthId(req, res)
 );
+userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
 userRoute.post(
   "/",
   authenticate,
