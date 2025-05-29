@@ -1,6 +1,10 @@
 import mongoose, { Schema, Model } from "mongoose";
 import { ITraining } from "../../interfaces/index.js";
-import { SportsEnum, TrainingLevelEnum } from "../../types/index.js";
+import {
+  SportsEnum,
+  TrainingLevelEnum,
+  TrainingStatusEnum
+} from "../../types/index.js";
 
 const TrainingSchema = new Schema<ITraining>(
   {
@@ -24,7 +28,13 @@ const TrainingSchema = new Schema<ITraining>(
         type: Schema.Types.ObjectId,
         ref: "Comment"
       }
-    ]
+    ],
+    review: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    status: {
+      type: String,
+      enum: Object.values(TrainingStatusEnum),
+      default: TrainingStatusEnum.SCHEDULED
+    }
   },
   {
     timestamps: true

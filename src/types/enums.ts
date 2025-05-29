@@ -77,4 +77,10 @@ export enum LanguageEnum {
   IT = "it",
   EN = "en"
 }
+
+export enum TrainingStatusEnum {
+  SCHEDULED = "scheduled'",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled"
+}
 /* eslint-enable no-unused-vars */
