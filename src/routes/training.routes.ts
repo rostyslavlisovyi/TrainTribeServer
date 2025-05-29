@@ -477,6 +477,62 @@ trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
 
 /**
  * @swagger
+ * /training/{id}/status:
+ *   patch:
+ *     summary: Change training status
+ *     description: Only the creator can change status. When status becomes 'completed', points are awarded to creator (5) and participants (1) if there's at least one participant.
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, status]
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user (must be the creator)
+ *               status:
+ *                 type: string
+ *                 enum: [scheduled, completed, cancelled]
+ *                 description: New status for the training
+ *     responses:
+ *       200:
+ *         description: Status changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ *       400:
+ *         description: Bad request or unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Only the creator can change the status"
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+trainingRoutes.patch("/:id/status", (req, res) =>
+  trainingController.changeStatus(req, res)
+);
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     Training:

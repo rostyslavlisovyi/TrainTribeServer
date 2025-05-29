@@ -1,6 +1,7 @@
 import CommentModel from "../models/MongoDB/comment.model.js";
 import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
+import UserModel from "models/MongoDB/user.model.ts";
 
 import { BaseService } from "./base.service.js";
 
@@ -63,6 +64,42 @@ export class TrainingService extends BaseService<ITraining> {
     return this.model.findByIdAndUpdate(
       id,
       { $pull: { comments: commentId } },
+      { new: true }
+    );
+  }
+  async changeStatus(id: string, userId: string, newStatus: string) {
+    // First check if the user is the creator of the training
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    // Check if the user is the creator
+    if (training.creator.toString() !== userId) {
+      throw new Error("Only the creator can change the status");
+    }
+
+    // If changing to completed, award points
+    if (newStatus === "completed" && training.status !== "completed") {
+      // Only award points if there's at least one participant besides the creator
+      if (training.participants && training.participants.length > 0) {
+        // Award 5 points to creator
+        await UserModel.findByIdAndUpdate(userId, {
+          $inc: { training_points: 5 }
+        });
+
+        // Award 1 point to each participant
+        for (const participantId of training.participants) {
+          await UserModel.findByIdAndUpdate(participantId, {
+            $inc: { training_points: 1 }
+          });
+        }
+      }
+    }
+
+    return this.model.findByIdAndUpdate(
+      id,
+      { status: newStatus },
       { new: true }
     );
   }

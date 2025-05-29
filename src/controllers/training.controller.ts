@@ -58,4 +58,21 @@ export class TrainingController extends BaseController<
     const data = await this.service.removeComment(id, commentId);
     res.status(200).json({ data });
   }
+
+  async changeStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.body.userId;
+
+      const data = await this.service.changeStatus(id, userId, status);
+      res.status(200).json({ data });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
+  }
 }
