@@ -75,4 +75,26 @@ export class TrainingController extends BaseController<
       }
     }
   }
+
+  async addReview(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { userId, rating, comment, images } = req.body;
+
+      const data = await this.service.addReview(
+        id,
+        userId,
+        rating,
+        comment,
+        images
+      );
+      res.status(201).json({ data });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
+  }
 }

@@ -2,6 +2,7 @@ import CommentModel from "../models/MongoDB/comment.model.js";
 import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
+import ReviewModel from "../models/MongoDB/review.model.js";
 
 import { BaseService } from "./base.service.js";
 
@@ -102,5 +103,70 @@ export class TrainingService extends BaseService<ITraining> {
       { status: newStatus },
       { new: true }
     );
+  }
+
+  async addReview(
+    trainingId: string,
+    reviewerId: string,
+    rating: number,
+    comment?: string,
+    images?: string[]
+  ) {
+    // Find the training
+    const training = await this.model.findById(trainingId);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    // Check if the reviewer is a participant
+    const isParticipant =
+      training.participants &&
+      training.participants.some(
+        (participantId) => participantId.toString() === reviewerId
+      );
+
+    if (!isParticipant) {
+      throw new Error("Only participants can add reviews");
+    }
+
+    // Check if the reviewer has already reviewed this training
+    const existingReview = await ReviewModel.findOne({
+      training: trainingId,
+      reviewer: reviewerId
+    });
+
+    if (existingReview) {
+      throw new Error("You have already reviewed this training");
+    }
+
+    // Create the review
+    const review = await ReviewModel.create({
+      training: trainingId,
+      reviewer: reviewerId,
+      rating,
+      comment,
+      images
+    });
+
+    // Add review to training
+    await this.model.findByIdAndUpdate(trainingId, {
+      $addToSet: { reviews: review._id }
+    });
+
+    // Calculate and update the average rating
+    const reviews = await ReviewModel.find({ training: trainingId });
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRating / reviews.length;
+
+    await this.model.findByIdAndUpdate(trainingId, {
+      averageRating: Math.round(averageRating * 10) / 10
+    });
+
+    // Update creator's reviewPoints
+    await UserModel.findByIdAndUpdate(training.creator, {
+      $inc: { reviewPoints: rating }
+    });
+
+    return review;
   }
 }
