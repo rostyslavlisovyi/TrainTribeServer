@@ -1,7 +1,7 @@
 import CommentModel from "../models/MongoDB/comment.model.js";
 import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
-import UserModel from "models/MongoDB/user.model.ts";
+import UserModel from "../models/MongoDB/user.model.js";
 
 import { BaseService } from "./base.service.js";
 
