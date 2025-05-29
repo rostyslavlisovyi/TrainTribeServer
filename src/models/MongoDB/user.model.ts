@@ -64,6 +64,8 @@ const UserSchema: Schema = new Schema(
         }
       }
     ],
+    training_points: { type: Number, default: 0 },
+    reviewPoints: { type: Number, default: 0 },
     username: { type: String },
     language: {
       type: String,

@@ -29,6 +29,8 @@ export interface IUser extends Document {
   training_frequency: TrainingFrequencyEnum;
   training_partner_preference: string;
   training_time_slot: ITimeSlot[];
+  training_points: number;
+  review_points: number;
   username?: string;
   language: LanguageEnum;
 }
