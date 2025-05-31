@@ -93,6 +93,12 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `networkErrors.ts`       | Network-related error definitions                  |
 | │ └── `serverError.ts`         | Server-side error definitions                      |
 | ├── `interfaces/`              | TypeScript interfaces for strict type definitions  |
+| │ └── `city.interface.ts`      | Interface for city entities                        |
+| │ └── `comment.interface.ts`   | Interface for comment entities                     |
+| │ └── `review.interface.ts`    | Interface for review entities                      |
+| │ └── `timeSlot.interface.ts`  | Interface for time slot entities                   |
+| │ └── `training.interface.ts`  | Interface for training entities                    |
+| │ └── `user.interface.ts`      | Interface for user entities                        |
 | ├── `middlewares/`             | Middleware functions                               |
 | │ └── `auth.middleware.ts`     | Middleware for handling user authentication        |
 | │ └── `upload.middleware.ts`   | Middleware for handling file uploads               |
@@ -101,6 +107,8 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | ├── `models/`                  | Database structure definitions (Models)            |
 | │ └── `MongoDB/`               | MongoDB models for application                     |
 | │ │ └── `city.model.ts`        | MongoDB model for city entities                    |
+| │ │ └── `comment.model.ts`     | MongoDB model for comment entities                 |
+| │ │ └── `review.model.ts`      | MongoDB model for review entities                  |
 | │ │ └── `training.model.ts`    | MongoDB model for training entities                |
 | │ │ └── `user.model.ts`        | MongoDB model for user entities                    |
 | ├── `routes/`                  | API route definitions                              |
@@ -169,6 +177,22 @@ The server provides the following API endpoints:
 | ------ | ------------- | ------------- |
 | POST   | `/api/upload` | Upload images |
 
+### **Training**
+
+| Method | Endpoint                    | Description                                | Access               |
+| ------ | --------------------------- | ------------------------------------------ | -------------------- |
+| GET    | `/api/training`            | Get all trainings                          | All users            |
+| GET    | `/api/training/:id`        | Get training by ID                         | All users            |
+| POST   | `/api/training`            | Create new training                        | Authenticated users  |
+| PUT    | `/api/training/:id`        | Update training by ID                      | Training creator     |
+| DELETE | `/api/training/:id`        | Delete training by ID                      | Training creator     |
+| POST   | `/api/training/:id/like`   | Add a like to training                     | Authenticated users  |
+| POST   | `/api/training/:id/participant` | Add current user as participant       | Authenticated users  |
+| DELETE | `/api/training/:id/participant` | Remove current user from participants | Authenticated users  |
+| POST   | `/api/training/:id/comment` | Add a comment to training                  | Authenticated users  |
+| PATCH  | `/api/training/:id/status` | Change training status                     | Training creator     |
+| POST   | `/api/training/:id/reviews` | Add a review to training                   | Training participants |
+
 ## Models
 
 ### User
@@ -199,6 +223,8 @@ The server provides the following API endpoints:
 | `training_partner_preference` | `String`         | No       | No     | User's preference for training partners.                                 |
 | `training_time_slot`       | `Object[]`          | No       | No     | Array of preferred training time slots with day and time range.          |
 | `language`                 | `String`            | No       | No     | User's preferred language. Default is 'it'.                              |
+| `training_points`          | `Number`            | No       | No     | Points earned for creating (5 pts) or participating (1 pt) in trainings.|
+| `review_points`            | `Number`            | No       | No     | Sum of stars received as a training creator from reviews.                |
 | `createdAt`                | `Date`              | Auto     | No     | Timestamp when the user document was created.                            |
 | `updatedAt`                | `Date`              | Auto     | No     | Timestamp when the user document was last updated.                       |
 
@@ -233,7 +259,30 @@ The server provides the following API endpoints:
 | `duration`        | `Number`     | No       | No     | Duration of the training in minutes.                                       |
 | `likes`           | `[ObjectId]` | No       | No     | Array of references to the `User` collection for users who liked the event.|
 | `comments`        | `Object`     | No       | No     | Comments on the training with user reference, text, and timestamp.         |
+| `status`          | `String`     | Yes      | No     | Status of the training: 'scheduled', 'completed', or 'cancelled'.         |
+| `reviews`         | `[ObjectId]` | No       | No     | Array of references to the `Review` collection for training reviews.       |
 | `createdAt`       | `Date`       | Auto     | No     | Timestamp when the training document was created.                          |
 | `updatedAt`       | `Date`       | Auto     | No     | Timestamp when the training document was last updated.                     |
 
----
+### Review
+
+| Field       | Type       | Required | Unique | Description                                                             |
+| ----------- | ---------- | -------- | ------ | ----------------------------------------------------------------------- |
+| `_id`       | `ObjectId` | Yes      | Yes    | Review's id.                                                            |
+| `training`  | `ObjectId` | Yes      | No     | Reference to the `Training` collection, identifying the reviewed event. |
+| `reviewer`  | `ObjectId` | Yes      | No     | Reference to the `User` collection, identifying the reviewer.           |
+| `rating`    | `Number`   | Yes      | No     | Star rating (1-5) given by the reviewer.                                |
+| `comment`   | `String`   | No       | No     | Optional text comment provided with the review.                         |
+| `images`    | `String[]` | No       | No     | Optional array of image URLs attached to the review.                    |
+| `createdAt` | `Date`     | Auto     | No     | Timestamp when the review was created.                                  |
+
+## Points System
+
+The application implements a points system to reward users for their activity:
+
+1. **Training Points** (`training_points` field in `User` model)
+   - Training creators receive 5 points when their training is marked as completed
+   - Training participants receive 1 point each when a training they participated in is marked as completed
+
+2. **Review Points** (`review_points` field in `User` model)
+   - Training creators receive points equal to the rating value (1-5) whenever someone leaves a review
