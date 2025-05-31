@@ -75,6 +75,13 @@ export class TrainingService extends BaseService<ITraining> {
       throw new Error("Training not found");
     }
 
+    const validStatuses = ["scheduled", "completed", "cancelled"];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(
+        "Invalid status. Must be one of: scheduled, completed, cancelled"
+      );
+    }
+
     // Check if the user is the creator
     if (training.creator.toString() !== userId) {
       throw new Error("Only the creator can change the status");
@@ -117,16 +124,22 @@ export class TrainingService extends BaseService<ITraining> {
     if (!training) {
       throw new Error("Training not found");
     }
-
+    // Check training status
+    if (training.status !== "completed") {
+      throw new Error("Training must be completed before it can be reviewed");
+    }
     // Check if the reviewer is a participant
     const isParticipant =
       training.participants &&
       training.participants.some(
         (participantId) => participantId.toString() === reviewerId
       );
-
     if (!isParticipant) {
       throw new Error("Only participants can add reviews");
+    }
+    // Validate rating
+    if (rating < 1 || rating > 5) {
+      throw new Error("Rating must be between 1 and 5");
     }
 
     // Check if the reviewer has already reviewed this training
@@ -153,18 +166,9 @@ export class TrainingService extends BaseService<ITraining> {
       $addToSet: { reviews: review._id }
     });
 
-    // Calculate and update the average rating
-    const reviews = await ReviewModel.find({ training: trainingId });
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = totalRating / reviews.length;
-
-    await this.model.findByIdAndUpdate(trainingId, {
-      averageRating: Math.round(averageRating * 10) / 10
-    });
-
-    // Update creator's reviewPoints
+    // Update creator's review_points
     await UserModel.findByIdAndUpdate(training.creator, {
-      $inc: { reviewPoints: rating }
+      $inc: { review_points: rating }
     });
 
     return review;

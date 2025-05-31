@@ -29,7 +29,7 @@ const TrainingSchema = new Schema<ITraining>(
         ref: "Comment"
       }
     ],
-    review: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
     status: {
       type: String,
       enum: Object.values(TrainingStatusEnum),

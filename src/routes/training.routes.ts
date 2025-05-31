@@ -10,8 +10,8 @@ const trainingController =
 
 /**
  * @swagger
- * /training:
- *   get:
+ * /training/list:
+ *   post:
  *     summary: Get a list of all trainings
  *     tags: [Trainings]
  *     parameters:
@@ -536,7 +536,7 @@ trainingRoutes.patch("/:id/status", (req, res) =>
  * /training/{id}/reviews:
  *   post:
  *     summary: Add a review to a training
- *     description: Only participants can add reviews. Updates creator's reviewPoints with the rating stars.
+ *     description: Only participants can add reviews. Updates creator's review_points with the rating stars.
  *     tags: [Trainings]
  *     parameters:
  *       - in: path

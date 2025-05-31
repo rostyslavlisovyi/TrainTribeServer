@@ -19,7 +19,7 @@ export interface ITraining extends Document {
   duration: number;
   likes: ObjectId[];
   comments: ObjectId[];
-  review: ObjectId[];
+  reviews: ObjectId[];
   status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;
