@@ -691,6 +691,94 @@ trainingRoutes.post("/:id/reviews", (req, res) =>
  *           type: string
  *           format: date-time
  *           description: Date when the training was last updated
+ *         status:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled]
+ *           description: Current status of the training
+ *         reviews:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of review IDs associated with the training
+ *         averageRating:
+ *           type: number
+ *           description: Average rating of the training calculated from reviews
+ *     Review:
+ *       type: object
+ *       required:
+ *         - training
+ *         - reviewer
+ *         - rating
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated ID of the review
+ *         training:
+ *           type: string
+ *           description: ID of the training being reviewed
+ *         reviewer:
+ *           type: string
+ *           description: ID of the user who wrote the review
+ *         rating:
+ *           type: number
+ *           minimum: 1
+ *           maximum: 5
+ *           description: Star rating (1-5) given by the reviewer
+ *         comment:
+ *           type: string
+ *           description: Optional text comment provided with the review
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Optional array of image URLs attached to the review
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the review was created
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - auth_id
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated ID of the user
+ *         first_name:
+ *           type: string
+ *           description: User's first name
+ *         last_name:
+ *           type: string
+ *           description: User's last name
+ *         email:
+ *           type: string
+ *           description: User's email address
+ *         auth_id:
+ *           type: string
+ *           description: Authentication ID from identity provider
+ *         username:
+ *           type: string
+ *           description: User's username
+ *         image_url:
+ *           type: string
+ *           description: URL to user's profile image
+ *         training_created:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of training IDs created by the user
+ *         training_join:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of training IDs user has joined
+ *         training_points:
+ *           type: number
+ *           description: Points earned from creating and participating in trainings
+ *         review_points:
+ *           type: number
+ *           description: Points earned from reviews (sum of ratings received)
  */
 
 export default trainingRoutes;
