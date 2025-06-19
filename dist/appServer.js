@@ -405,7 +405,7 @@ var LanguageEnum = /* @__PURE__ */ ((LanguageEnum2) => {
   return LanguageEnum2;
 })(LanguageEnum || {});
 var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
-  TrainingStatusEnum2["SCHEDULED"] = "SCHEDULED'";
+  TrainingStatusEnum2["SCHEDULED"] = "SCHEDULED";
   TrainingStatusEnum2["COMPLETED"] = "COMPLETED";
   TrainingStatusEnum2["CANCELLED"] = "CANCELLED";
   return TrainingStatusEnum2;
@@ -532,7 +532,7 @@ var TrainingSchema = new Schema4(
     status: {
       type: String,
       enum: Object.values(TrainingStatusEnum),
-      default: "SCHEDULED'" /* SCHEDULED */
+      default: "SCHEDULED" /* SCHEDULED */
     }
   },
   {
@@ -624,7 +624,7 @@ var TrainingService = class extends BaseService {
       throw new Error("Training not found");
     }
     const validStatuses = [
-      "SCHEDULED'" /* SCHEDULED */,
+      "SCHEDULED" /* SCHEDULED */,
       "COMPLETED" /* COMPLETED */,
       "CANCELLED" /* CANCELLED */
     ];

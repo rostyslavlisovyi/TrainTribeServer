@@ -79,7 +79,7 @@ export enum LanguageEnum {
 }
 
 export enum TrainingStatusEnum {
-  SCHEDULED = "SCHEDULED'",
+  SCHEDULED = "SCHEDULED",
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED"
 }
