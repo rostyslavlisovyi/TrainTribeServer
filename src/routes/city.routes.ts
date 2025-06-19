@@ -2,6 +2,7 @@ import { Router } from "express";
 import { CityController } from "../controllers/index.js";
 import express from "express";
 import container from "../container.js";
+import { authenticate } from "../middlewares/index.js";
 
 const cityRoute: Router = express.Router();
 
@@ -72,7 +73,9 @@ const cityController = container.resolve<CityController>("cityController");
  *         $ref: '#/components/responses/InternalServerError'
  */
 
-cityRoute.post("/list", (req, res) => cityController.list(req, res));
+cityRoute.post("/list", authenticate, (req, res) =>
+  cityController.list(req, res)
+);
 
 /**
  * @swagger
@@ -107,7 +110,7 @@ cityRoute.post("/list", (req, res) => cityController.list(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.get("/:id", (req, res) => cityController.get(req, res));
+cityRoute.get("/:id", authenticate, (req, res) => cityController.get(req, res));
 
 /**
  * @swagger
@@ -156,7 +159,9 @@ cityRoute.get("/:id", (req, res) => cityController.get(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.post("/", (req, res) => cityController.create(req, res));
+cityRoute.post("/", authenticate, (req, res) =>
+  cityController.create(req, res)
+);
 
 /**
  * @swagger
@@ -215,7 +220,9 @@ cityRoute.post("/", (req, res) => cityController.create(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.put("/:id", (req, res) => cityController.update(req, res));
+cityRoute.put("/:id", authenticate, (req, res) =>
+  cityController.update(req, res)
+);
 
 /**
  * @swagger
@@ -238,6 +245,8 @@ cityRoute.put("/:id", (req, res) => cityController.update(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.delete("/:id", (req, res) => cityController.delete(req, res));
+cityRoute.delete("/:id", authenticate, (req, res) =>
+  cityController.delete(req, res)
+);
 
 export default cityRoute;

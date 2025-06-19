@@ -4,7 +4,8 @@ export enum SportsEnum {
   CYCLING = "CYCLING",
   RUNNING = "RUNNING",
   WALKING = "WALKING",
-  TRIATHLON = "TRIATHLON"
+  TRIATHLON = "TRIATHLON",
+  HYROX = "HYROX"
 }
 
 export enum TrainingLevelEnum {

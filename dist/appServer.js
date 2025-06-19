@@ -331,6 +331,7 @@ var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
   SportsEnum2["RUNNING"] = "RUNNING";
   SportsEnum2["WALKING"] = "WALKING";
   SportsEnum2["TRIATHLON"] = "TRIATHLON";
+  SportsEnum2["HYROX"] = "HYROX";
   return SportsEnum2;
 })(SportsEnum || {});
 var TrainingLevelEnum = /* @__PURE__ */ ((TrainingLevelEnum2) => {
@@ -741,8 +742,23 @@ function handleError(res, error) {
 // src/controllers/base.controller.ts
 var BaseController = class {
   service;
+  userService;
   constructor(service) {
     this.service = service;
+    this.userService = container_default.resolve("userService");
+  }
+  async getUserFromToken(req) {
+    const token = req.auth;
+    if (!token) {
+      throw new Error("No token provided");
+    }
+    const user = await this.userService.model.findOne({
+      auth_id: token.payload.user_id
+    });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
   }
   async get(req, res) {
     try {
@@ -906,83 +922,113 @@ var UserController = class extends BaseController {
 
 // src/controllers/training.controller.ts
 var TrainingController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(trainingService) {
     super(trainingService);
-    this.service = trainingService;
   }
   async addLike(req, res) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.addLike(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addLike(id, user._id);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async removeLike(req, res) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.removeLike(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeLike(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async addParticipant(req, res) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.addParticipant(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addParticipant(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async removeParticipant(req, res) {
-    const { id, userId } = req.params;
-    const data = await this.service.removeParticipant(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeParticipant(
+        id,
+        user._id.toString()
+      );
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async addComment(req, res) {
-    const { id } = req.params;
-    const { userId, text } = req.body;
-    const data = await this.service.addComment(id, userId, text);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const { text } = req.body;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addComment(id, user._id.toString(), text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async updateComment(req, res) {
-    const { commentId } = req.params;
-    const { text } = req.body;
-    const data = await this.service.updateComment(commentId, text);
-    res.status(200).json({ data });
+    try {
+      const { commentId } = req.params;
+      const { text } = req.body;
+      const data = await this.service.updateComment(commentId, text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async removeComment(req, res) {
-    const { id, commentId } = req.params;
-    const data = await this.service.removeComment(id, commentId);
-    res.status(200).json({ data });
+    try {
+      const { id, commentId } = req.params;
+      const data = await this.service.removeComment(id, commentId);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
   async changeStatus(req, res) {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.body.userId;
-      const data = await this.service.changeStatus(id, userId, status);
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.changeStatus(
+        id,
+        user._id.toString(),
+        status
+      );
       res.status(200).json({ data });
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "An unknown error occurred" });
-      }
+      handleError(res, error);
     }
   }
   async addReview(req, res) {
     try {
       const { id } = req.params;
-      const { userId, rating, comment, images } = req.body;
+      const { rating, comment, images } = req.body;
+      const user = await this.getUserFromToken(req);
       const data = await this.service.addReview(
         id,
-        userId,
+        user._id.toString(),
         rating,
         comment,
         images
       );
       res.status(201).json({ data });
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "An unknown error occurred" });
-      }
+      handleError(res, error);
     }
   }
 };
@@ -1113,59 +1159,101 @@ var upload_route_default = uploadRoute;
 import express3 from "express";
 var cityRoute = express3.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/list", (req, res) => cityController.list(req, res));
-cityRoute.get("/:id", (req, res) => cityController.get(req, res));
-cityRoute.post("/", (req, res) => cityController.create(req, res));
-cityRoute.put("/:id", (req, res) => cityController.update(req, res));
-cityRoute.delete("/:id", (req, res) => cityController.delete(req, res));
+cityRoute.post(
+  "/list",
+  authenticate,
+  (req, res) => cityController.list(req, res)
+);
+cityRoute.get("/:id", authenticate, (req, res) => cityController.get(req, res));
+cityRoute.post(
+  "/",
+  authenticate,
+  (req, res) => cityController.create(req, res)
+);
+cityRoute.put(
+  "/:id",
+  authenticate,
+  (req, res) => cityController.update(req, res)
+);
+cityRoute.delete(
+  "/:id",
+  authenticate,
+  (req, res) => cityController.delete(req, res)
+);
 var city_routes_default = cityRoute;
 
 // src/routes/training.routes.ts
 import express4 from "express";
 var trainingRoutes = express4.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
-trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
-trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
-trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
-trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
+trainingRoutes.post(
+  "/list",
+  authenticate,
+  (req, res) => trainingController.list(req, res)
+);
+trainingRoutes.get(
+  "/:id",
+  authenticate,
+  (req, res) => trainingController.get(req, res)
+);
+trainingRoutes.post(
+  "/",
+  authenticate,
+  (req, res) => trainingController.create(req, res)
+);
+trainingRoutes.put(
+  "/:id",
+  authenticate,
+  (req, res) => trainingController.update(req, res)
+);
 trainingRoutes.post(
   "/:id/like",
+  authenticate,
   (req, res) => trainingController.addLike(req, res)
 );
 trainingRoutes.post(
   "/:id/participants",
+  authenticate,
   (req, res) => trainingController.addParticipant(req, res)
 );
 trainingRoutes.delete(
   "/:id/likeremove",
+  authenticate,
   (req, res) => trainingController.removeLike(req, res)
 );
 trainingRoutes.delete(
   "/:id/participants/:userId",
+  authenticate,
   (req, res) => trainingController.removeParticipant(req, res)
 );
 trainingRoutes.delete(
   "/:id",
+  authenticate,
   (req, res) => trainingController.delete(req, res)
 );
 trainingRoutes.post(
   "/:id/comments",
+  authenticate,
   (req, res) => trainingController.addComment(req, res)
 );
 trainingRoutes.put(
   "/comments/:commentId",
+  authenticate,
   (req, res) => trainingController.updateComment(req, res)
 );
 trainingRoutes.delete(
   "/:id/comments/:commentId",
+  authenticate,
   (req, res) => trainingController.removeComment(req, res)
 );
 trainingRoutes.patch(
   "/:id/status",
+  authenticate,
   (req, res) => trainingController.changeStatus(req, res)
 );
 trainingRoutes.post(
   "/:id/reviews",
+  authenticate,
   (req, res) => trainingController.addReview(req, res)
 );
 var training_routes_default = trainingRoutes;
