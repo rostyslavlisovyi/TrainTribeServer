@@ -5,6 +5,7 @@ import UserModel from "../models/MongoDB/user.model.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
 
 import { BaseService } from "./base.service.js";
+import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingService extends BaseService<ITraining> {
   constructor() {
@@ -68,14 +69,22 @@ export class TrainingService extends BaseService<ITraining> {
       { new: true }
     );
   }
-  async changeStatus(id: string, userId: string, newStatus: string) {
+  async changeStatus(
+    id: string,
+    userId: string,
+    newStatus: TrainingStatusEnum
+  ) {
     // First check if the user is the creator of the training
     const training = await this.model.findById(id);
     if (!training) {
       throw new Error("Training not found");
     }
 
-    const validStatuses = ["scheduled", "completed", "cancelled"];
+    const validStatuses = [
+      TrainingStatusEnum.SCHEDULED,
+      TrainingStatusEnum.COMPLETED,
+      TrainingStatusEnum.CANCELLED
+    ];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(
         "Invalid status. Must be one of: scheduled, completed, cancelled"
@@ -88,7 +97,10 @@ export class TrainingService extends BaseService<ITraining> {
     }
 
     // If changing to completed, award points
-    if (newStatus === "completed" && training.status !== "completed") {
+    if (
+      newStatus === TrainingStatusEnum.COMPLETED &&
+      training.status !== TrainingStatusEnum.COMPLETED
+    ) {
       // Only award points if there's at least one participant besides the creator
       if (training.participants && training.participants.length > 0) {
         // Award 5 points to creator
@@ -125,7 +137,7 @@ export class TrainingService extends BaseService<ITraining> {
       throw new Error("Training not found");
     }
     // Check training status
-    if (training.status !== "completed") {
+    if (training.status !== TrainingStatusEnum.COMPLETED) {
       throw new Error("Training must be completed before it can be reviewed");
     }
     // Check if the reviewer is a participant

@@ -79,8 +79,8 @@ export enum LanguageEnum {
 }
 
 export enum TrainingStatusEnum {
-  SCHEDULED = "scheduled'",
-  COMPLETED = "completed",
-  CANCELLED = "cancelled"
+  SCHEDULED = "SCHEDULED'",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED"
 }
 /* eslint-enable no-unused-vars */

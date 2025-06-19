@@ -404,6 +404,12 @@ var LanguageEnum = /* @__PURE__ */ ((LanguageEnum2) => {
   LanguageEnum2["EN"] = "en";
   return LanguageEnum2;
 })(LanguageEnum || {});
+var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
+  TrainingStatusEnum2["SCHEDULED"] = "SCHEDULED'";
+  TrainingStatusEnum2["COMPLETED"] = "COMPLETED";
+  TrainingStatusEnum2["CANCELLED"] = "CANCELLED";
+  return TrainingStatusEnum2;
+})(TrainingStatusEnum || {});
 
 // src/models/MongoDB/user.model.ts
 var UserSchema = new Schema2(
@@ -460,6 +466,8 @@ var UserSchema = new Schema2(
         }
       }
     ],
+    training_points: { type: Number, default: 0 },
+    review_points: { type: Number, default: 0 },
     username: { type: String },
     language: {
       type: String,
@@ -519,7 +527,13 @@ var TrainingSchema = new Schema4(
         type: Schema4.Types.ObjectId,
         ref: "Comment"
       }
-    ]
+    ],
+    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
+    status: {
+      type: String,
+      enum: Object.values(TrainingStatusEnum),
+      default: "SCHEDULED'" /* SCHEDULED */
+    }
   },
   {
     timestamps: true
@@ -530,6 +544,23 @@ var TrainingModel = mongoose5.model(
   TrainingSchema
 );
 var training_model_default = TrainingModel;
+
+// src/models/MongoDB/review.model.ts
+import mongoose6, { Schema as Schema5 } from "mongoose";
+var ReviewSchema = new Schema5(
+  {
+    reviewer: { type: Schema5.Types.ObjectId, ref: "User", required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    comment: { type: String },
+    images: [{ type: String }],
+    createdAt: { type: Date, default: Date.now }
+  },
+  {
+    timestamps: true
+  }
+);
+var ReviewModel = mongoose6.model("Review", ReviewSchema);
+var review_model_default = ReviewModel;
 
 // src/services/training.service.ts
 var TrainingService = class extends BaseService {
@@ -587,6 +618,81 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
+  async changeStatus(id, userId, newStatus) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    const validStatuses = [
+      "SCHEDULED'" /* SCHEDULED */,
+      "COMPLETED" /* COMPLETED */,
+      "CANCELLED" /* CANCELLED */
+    ];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(
+        "Invalid status. Must be one of: scheduled, completed, cancelled"
+      );
+    }
+    if (training.creator.toString() !== userId) {
+      throw new Error("Only the creator can change the status");
+    }
+    if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
+      if (training.participants && training.participants.length > 0) {
+        await user_model_default.findByIdAndUpdate(userId, {
+          $inc: { training_points: 5 }
+        });
+        for (const participantId of training.participants) {
+          await user_model_default.findByIdAndUpdate(participantId, {
+            $inc: { training_points: 1 }
+          });
+        }
+      }
+    }
+    return this.model.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true }
+    );
+  }
+  async addReview(trainingId, reviewerId, rating, comment, images) {
+    const training = await this.model.findById(trainingId);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    if (training.status !== "COMPLETED" /* COMPLETED */) {
+      throw new Error("Training must be completed before it can be reviewed");
+    }
+    const isParticipant = training.participants && training.participants.some(
+      (participantId) => participantId.toString() === reviewerId
+    );
+    if (!isParticipant) {
+      throw new Error("Only participants can add reviews");
+    }
+    if (rating < 1 || rating > 5) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+    const existingReview = await review_model_default.findOne({
+      training: trainingId,
+      reviewer: reviewerId
+    });
+    if (existingReview) {
+      throw new Error("You have already reviewed this training");
+    }
+    const review = await review_model_default.create({
+      training: trainingId,
+      reviewer: reviewerId,
+      rating,
+      comment,
+      images
+    });
+    await this.model.findByIdAndUpdate(trainingId, {
+      $addToSet: { reviews: review._id }
+    });
+    await user_model_default.findByIdAndUpdate(training.creator, {
+      $inc: { review_points: rating }
+    });
+    return review;
+  }
 };
 
 // src/utils/validators/validateFileContent.ts
@@ -597,7 +703,7 @@ var validateFileContent = async (fileBuffer) => {
 };
 
 // src/utils/handleError.ts
-import mongoose6 from "mongoose";
+import mongoose7 from "mongoose";
 import chalk3 from "chalk";
 function handleError(res, error) {
   console.error(chalk3.red("Error:", error));
@@ -613,13 +719,13 @@ function handleError(res, error) {
   if (error instanceof DataCannotBeEmpty) {
     return res.status(400).json(error.toJSON());
   }
-  if (error instanceof mongoose6.Error.ValidationError) {
+  if (error instanceof mongoose7.Error.ValidationError) {
     return res.status(400).json(new MongoValidationError(error).toJSON());
   }
-  if (error instanceof mongoose6.Error.CastError) {
+  if (error instanceof mongoose7.Error.CastError) {
     return res.status(422).json(new MongoCastError(error).toJSON());
   }
-  if (error instanceof mongoose6.mongo.MongoServerError) {
+  if (error instanceof mongoose7.mongo.MongoServerError) {
     if (error.code === 11e3) {
       return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
     }
@@ -844,6 +950,41 @@ var TrainingController = class extends BaseController {
     const data = await this.service.removeComment(id, commentId);
     res.status(200).json({ data });
   }
+  async changeStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.body.userId;
+      const data = await this.service.changeStatus(id, userId, status);
+      res.status(200).json({ data });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
+  }
+  async addReview(req, res) {
+    try {
+      const { id } = req.params;
+      const { userId, rating, comment, images } = req.body;
+      const data = await this.service.addReview(
+        id,
+        userId,
+        rating,
+        comment,
+        images
+      );
+      res.status(201).json({ data });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
+  }
 };
 
 // src/container.ts
@@ -1018,6 +1159,14 @@ trainingRoutes.put(
 trainingRoutes.delete(
   "/:id/comments/:commentId",
   (req, res) => trainingController.removeComment(req, res)
+);
+trainingRoutes.patch(
+  "/:id/status",
+  (req, res) => trainingController.changeStatus(req, res)
+);
+trainingRoutes.post(
+  "/:id/reviews",
+  (req, res) => trainingController.addReview(req, res)
 );
 var training_routes_default = trainingRoutes;
 
