@@ -1,9 +1,8 @@
 import CommentModel from "../models/MongoDB/comment.model.js";
-import { ITraining } from "../interfaces/index.js";
+import { ITraining, ParticipantAttendance } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
-
 import { BaseService } from "./base.service.js";
 import { TrainingStatusEnum } from "../types/index.js";
 
@@ -72,9 +71,9 @@ export class TrainingService extends BaseService<ITraining> {
   async changeStatus(
     id: string,
     userId: string,
-    newStatus: TrainingStatusEnum
+    newStatus: TrainingStatusEnum,
+    participantAttendance?: ParticipantAttendance[]
   ) {
-    // First check if the user is the creator of the training
     const training = await this.model.findById(id);
     if (!training) {
       throw new Error("Training not found");
@@ -91,28 +90,46 @@ export class TrainingService extends BaseService<ITraining> {
       );
     }
 
-    // Check if the user is the creator
     if (training.creator.toString() !== userId) {
       throw new Error("Only the creator can change the status");
     }
 
-    // If changing to completed, award points
     if (
       newStatus === TrainingStatusEnum.COMPLETED &&
       training.status !== TrainingStatusEnum.COMPLETED
     ) {
-      // Only award points if there's at least one participant besides the creator
-      if (training.participants && training.participants.length > 0) {
-        // Award 5 points to creator
+      if (!participantAttendance || participantAttendance.length === 0) {
+        throw new Error(
+          "Participant attendance data is required when completing a training"
+        );
+      }
+
+      const participantIds = participantAttendance.map((p) => p.userId);
+      const allParticipantsIncluded = training.participants.every((p) =>
+        participantIds.includes(p.toString())
+      );
+
+      if (!allParticipantsIncluded) {
+        throw new Error(
+          "Attendance data must be provided for all participants"
+        );
+      }
+
+      const attendingParticipants = participantAttendance.filter(
+        (p) => p.attended
+      );
+
+      if (attendingParticipants.length > 0) {
         await UserModel.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
 
-        // Award 1 point to each participant
-        for (const participantId of training.participants) {
-          await UserModel.findByIdAndUpdate(participantId, {
-            $inc: { training_points: 1 }
-          });
+        for (const participant of participantAttendance) {
+          if (participant.attended) {
+            await UserModel.findByIdAndUpdate(participant.userId, {
+              $inc: { training_points: 1 }
+            });
+          }
         }
       }
     }

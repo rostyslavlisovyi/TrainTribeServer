@@ -619,7 +619,7 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
-  async changeStatus(id, userId, newStatus) {
+  async changeStatus(id, userId, newStatus, participantAttendance) {
     const training = await this.model.findById(id);
     if (!training) {
       throw new Error("Training not found");
@@ -638,14 +638,33 @@ var TrainingService = class extends BaseService {
       throw new Error("Only the creator can change the status");
     }
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (training.participants && training.participants.length > 0) {
+      if (!participantAttendance || participantAttendance.length === 0) {
+        throw new Error(
+          "Participant attendance data is required when completing a training"
+        );
+      }
+      const participantIds = participantAttendance.map((p) => p.userId);
+      const allParticipantsIncluded = training.participants.every(
+        (p) => participantIds.includes(p.toString())
+      );
+      if (!allParticipantsIncluded) {
+        throw new Error(
+          "Attendance data must be provided for all participants"
+        );
+      }
+      const attendingParticipants = participantAttendance.filter(
+        (p) => p.attended
+      );
+      if (attendingParticipants.length > 0) {
         await user_model_default.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
-        for (const participantId of training.participants) {
-          await user_model_default.findByIdAndUpdate(participantId, {
-            $inc: { training_points: 1 }
-          });
+        for (const participant of participantAttendance) {
+          if (participant.attended) {
+            await user_model_default.findByIdAndUpdate(participant.userId, {
+              $inc: { training_points: 1 }
+            });
+          }
         }
       }
     }
@@ -930,7 +949,7 @@ var TrainingController = class extends BaseController {
     try {
       const { id } = req.params;
       const user = await this.getUserFromToken(req);
-      const data = await this.service.addLike(id, user._id);
+      const data = await this.service.addLike(id, user._id.toString());
       res.status(200).json({ data });
     } catch (error) {
       handleError(res, error);
@@ -1002,12 +1021,13 @@ var TrainingController = class extends BaseController {
   async changeStatus(req, res) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, participantAttendance } = req.body;
       const user = await this.getUserFromToken(req);
       const data = await this.service.changeStatus(
         id,
         user._id.toString(),
-        status
+        status,
+        participantAttendance
       );
       res.status(200).json({ data });
     } catch (error) {

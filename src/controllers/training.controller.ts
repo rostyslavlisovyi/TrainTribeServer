@@ -3,6 +3,8 @@ import { BaseController } from "./base.controller.js";
 import { TrainingService } from "../services/training.service.js";
 import { Request, Response } from "express";
 import { handleError } from "../utils/handleError.ts";
+import { ParticipantAttendance } from "../interfaces/index.js";
+import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingController extends BaseController<
   ITraining,
@@ -17,7 +19,7 @@ export class TrainingController extends BaseController<
     try {
       const { id } = req.params;
       const user = await this.getUserFromToken(req);
-      const data = await this.service.addLike(id, user._id as string);
+      const data = await this.service.addLike(id, user._id.toString());
       res.status(200).json({ data });
     } catch (error) {
       handleError(res, error);
@@ -96,13 +98,16 @@ export class TrainingController extends BaseController<
   async changeStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, participantAttendance } = req.body;
       const user = await this.getUserFromToken(req);
+
       const data = await this.service.changeStatus(
         id,
         user._id.toString(),
-        status
+        status as TrainingStatusEnum,
+        participantAttendance as ParticipantAttendance[]
       );
+
       res.status(200).json({ data });
     } catch (error) {
       handleError(res, error);
