@@ -638,7 +638,7 @@ var TrainingService = class extends BaseService {
       throw new Error("Only the creator can change the status");
     }
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (!participantAttendance || participantAttendance.length === 0) {
+      if (!participantAttendance) {
         throw new Error(
           "Participant attendance data is required when completing a training"
         );

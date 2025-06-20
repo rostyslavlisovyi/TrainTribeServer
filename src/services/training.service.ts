@@ -98,7 +98,7 @@ export class TrainingService extends BaseService<ITraining> {
       newStatus === TrainingStatusEnum.COMPLETED &&
       training.status !== TrainingStatusEnum.COMPLETED
     ) {
-      if (!participantAttendance || participantAttendance.length === 0) {
+      if (!participantAttendance) {
         throw new Error(
           "Participant attendance data is required when completing a training"
         );
