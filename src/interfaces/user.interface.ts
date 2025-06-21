@@ -7,7 +7,7 @@ import {
   LanguageEnum
 } from "../types/index.js";
 import { ITimeSlot } from "./timeSlot.interface.js";
-export interface IUser extends Document {
+export interface IUser extends Document<ObjectId> {
   athlete_bio?: string;
   auth_id: string;
   city: ObjectId;
@@ -29,6 +29,8 @@ export interface IUser extends Document {
   training_frequency: TrainingFrequencyEnum;
   training_partner_preference: string;
   training_time_slot: ITimeSlot[];
+  training_points: number;
+  review_points: number;
   username?: string;
   language: LanguageEnum;
 }

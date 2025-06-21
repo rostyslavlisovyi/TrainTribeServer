@@ -4,7 +4,8 @@ export enum SportsEnum {
   CYCLING = "CYCLING",
   RUNNING = "RUNNING",
   WALKING = "WALKING",
-  TRIATHLON = "TRIATHLON"
+  TRIATHLON = "TRIATHLON",
+  HYROX = "HYROX"
 }
 
 export enum TrainingLevelEnum {
@@ -76,5 +77,11 @@ export enum TimeSlotsEnum {
 export enum LanguageEnum {
   IT = "it",
   EN = "en"
+}
+
+export enum TrainingStatusEnum {
+  SCHEDULED = "SCHEDULED",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED"
 }
 /* eslint-enable no-unused-vars */

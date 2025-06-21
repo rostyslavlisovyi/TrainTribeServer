@@ -2,6 +2,7 @@ import { Router } from "express";
 import { TrainingController } from "../controllers/index.js";
 import express from "express";
 import container from "../container.js";
+import { authenticate } from "../middlewares/index.js";
 
 const trainingRoutes: Router = express.Router({ mergeParams: true });
 
@@ -10,8 +11,8 @@ const trainingController =
 
 /**
  * @swagger
- * /training:
- *   get:
+ * /training/list:
+ *   post:
  *     summary: Get a list of all trainings
  *     tags: [Trainings]
  *     parameters:
@@ -35,7 +36,9 @@ const trainingController =
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
+trainingRoutes.post("/list", authenticate, (req, res) =>
+  trainingController.list(req, res)
+);
 
 /**
  * @swagger
@@ -70,7 +73,9 @@ trainingRoutes.post("/list", (req, res) => trainingController.list(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
+trainingRoutes.get("/:id", authenticate, (req, res) =>
+  trainingController.get(req, res)
+);
 
 /**
  * @swagger
@@ -139,7 +144,9 @@ trainingRoutes.get("/:id", (req, res) => trainingController.get(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
+trainingRoutes.post("/", authenticate, (req, res) =>
+  trainingController.create(req, res)
+);
 
 /**
  * @swagger
@@ -213,7 +220,9 @@ trainingRoutes.post("/", (req, res) => trainingController.create(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
+trainingRoutes.put("/:id", authenticate, (req, res) =>
+  trainingController.update(req, res)
+);
 
 /**
  * @swagger
@@ -248,7 +257,7 @@ trainingRoutes.put("/:id", (req, res) => trainingController.update(req, res));
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.post("/:id/like", (req, res) =>
+trainingRoutes.post("/:id/like", authenticate, (req, res) =>
   trainingController.addLike(req, res)
 );
 
@@ -285,7 +294,7 @@ trainingRoutes.post("/:id/like", (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.post("/:id/participants", (req, res) =>
+trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
   trainingController.addParticipant(req, res)
 );
 
@@ -322,7 +331,7 @@ trainingRoutes.post("/:id/participants", (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/likeremove", (req, res) =>
+trainingRoutes.delete("/:id/likeremove", authenticate, (req, res) =>
   trainingController.removeLike(req, res)
 );
 
@@ -356,7 +365,7 @@ trainingRoutes.delete("/:id/likeremove", (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/participants/:userId", (req, res) =>
+trainingRoutes.delete("/:id/participants/:userId", authenticate, (req, res) =>
   trainingController.removeParticipant(req, res)
 );
 
@@ -392,11 +401,11 @@ trainingRoutes.delete("/:id/participants/:userId", (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.delete("/:id", (req, res) =>
+trainingRoutes.delete("/:id", authenticate, (req, res) =>
   trainingController.delete(req, res)
 );
 
-trainingRoutes.post("/:id/comments", (req, res) =>
+trainingRoutes.post("/:id/comments", authenticate, (req, res) =>
   trainingController.addComment(req, res)
 );
 
@@ -437,7 +446,7 @@ trainingRoutes.post("/:id/comments", (req, res) =>
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-trainingRoutes.put("/comments/:commentId", (req, res) =>
+trainingRoutes.put("/comments/:commentId", authenticate, (req, res) =>
   trainingController.updateComment(req, res)
 );
 
@@ -471,15 +480,154 @@ trainingRoutes.put("/comments/:commentId", (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
+trainingRoutes.delete("/:id/comments/:commentId", authenticate, (req, res) =>
   trainingController.removeComment(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/status:
+ *   patch:
+ *     summary: Change training status
+ *     description: Only the creator can change status. When status becomes 'completed', points are awarded to creator (5) and participants (1) if there's at least one participant.
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, status]
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user (must be the creator)
+ *               status:
+ *                 type: string
+ *                 enum: [scheduled, completed, cancelled]
+ *                 description: New status for the training
+ *     responses:
+ *       200:
+ *         description: Status changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ *       400:
+ *         description: Bad request or unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Only the creator can change the status"
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+trainingRoutes.patch("/:id/status", authenticate, (req, res) =>
+  trainingController.changeStatus(req, res)
+);
+
+/**
+ * @swagger
+ * /training/{id}/reviews:
+ *   post:
+ *     summary: Add a review to a training
+ *     description: Only participants can add reviews. Updates creator's review_points with the rating stars.
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId, rating]
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID of the reviewer (must be a participant)
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Rating value between 1 and 5
+ *               comment:
+ *                 type: string
+ *                 description: Optional review comment
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Optional image URLs
+ *     responses:
+ *       201:
+ *         description: Review added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     training:
+ *                       type: string
+ *                     reviewer:
+ *                       type: string
+ *                     rating:
+ *                       type: number
+ *                     comment:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request or unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Only participants can add reviews"
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
+  trainingController.addReview(req, res)
 );
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     Training:
+ *     Training:end
  *       type: object
  *       required:
  *         - title
@@ -552,6 +700,94 @@ trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
  *           type: string
  *           format: date-time
  *           description: Date when the training was last updated
+ *         status:
+ *           type: string
+ *           enum: [scheduled, completed, cancelled]
+ *           description: Current status of the training
+ *         reviews:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of review IDs associated with the training
+ *         averageRating:
+ *           type: number
+ *           description: Average rating of the training calculated from reviews
+ *     Review:
+ *       type: object
+ *       required:
+ *         - training
+ *         - reviewer
+ *         - rating
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated ID of the review
+ *         training:
+ *           type: string
+ *           description: ID of the training being reviewed
+ *         reviewer:
+ *           type: string
+ *           description: ID of the user who wrote the review
+ *         rating:
+ *           type: number
+ *           minimum: 1
+ *           maximum: 5
+ *           description: Star rating (1-5) given by the reviewer
+ *         comment:
+ *           type: string
+ *           description: Optional text comment provided with the review
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Optional array of image URLs attached to the review
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the review was created
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - auth_id
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated ID of the user
+ *         first_name:
+ *           type: string
+ *           description: User's first name
+ *         last_name:
+ *           type: string
+ *           description: User's last name
+ *         email:
+ *           type: string
+ *           description: User's email address
+ *         auth_id:
+ *           type: string
+ *           description: Authentication ID from identity provider
+ *         username:
+ *           type: string
+ *           description: User's username
+ *         image_url:
+ *           type: string
+ *           description: URL to user's profile image
+ *         training_created:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of training IDs created by the user
+ *         training_join:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of training IDs user has joined
+ *         training_points:
+ *           type: number
+ *           description: Points earned from creating and participating in trainings
+ *         review_points:
+ *           type: number
+ *           description: Points earned from reviews (sum of ratings received)
  */
 
 export default trainingRoutes;

@@ -1,5 +1,9 @@
 import { Document, ObjectId } from "mongoose";
-import { SportsEnum, TrainingLevelEnum } from "../types/index.js";
+import {
+  SportsEnum,
+  TrainingLevelEnum,
+  TrainingStatusEnum
+} from "../types/index.js";
 
 export interface ITraining extends Document {
   title: string;
@@ -15,6 +19,8 @@ export interface ITraining extends Document {
   duration: number;
   likes: ObjectId[];
   comments: ObjectId[];
+  reviews: ObjectId[];
+  status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;
 }
