@@ -1,4 +1,5 @@
 import { Document, ObjectId } from "mongoose";
+import { IParticipantAttendance } from "./participantAttendance.interface.js";
 import {
   SportsEnum,
   TrainingLevelEnum,
@@ -14,7 +15,7 @@ export interface ITraining extends Document {
   longitude: string;
   sport: SportsEnum;
   creator: ObjectId;
-  participants: ObjectId[];
+  participantAttendance: IParticipantAttendance[];
   difficultyLevel: TrainingLevelEnum;
   duration: number;
   likes: ObjectId[];
