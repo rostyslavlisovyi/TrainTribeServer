@@ -10,6 +10,37 @@ export class TrainingService extends BaseService<ITraining> {
   constructor() {
     super(TrainingModel);
   }
+  async create(entity: Partial<ITraining>): Promise<{ data: ITraining }> {
+    const { data: newTraining } = await super.create(entity);
+
+    if (newTraining && newTraining.creator) {
+      await UserModel.findByIdAndUpdate(newTraining.creator, {
+        $inc: { countTrainingOrganized: 1 }
+      });
+    }
+
+    return { data: newTraining };
+  }
+
+  async delete(id: string): Promise<{ data: boolean }> {
+    const training = await this.model.findById(id);
+
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    const creatorId = training.creator;
+
+    const { data: deleted } = await super.delete(id);
+
+    if (deleted && creatorId) {
+      await UserModel.findByIdAndUpdate(creatorId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
+    }
+
+    return { data: deleted };
+  }
 
   async addLike(id: string, userId: string) {
     return this.model.findByIdAndUpdate(
@@ -28,9 +59,10 @@ export class TrainingService extends BaseService<ITraining> {
   }
 
   async addParticipant(id: string, userId: string) {
+    const newParticipant = { participant: userId, attended: false };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participants: userId } },
+      { $addToSet: { participant_attendance: newParticipant } },
       { new: true }
     );
   }
@@ -38,7 +70,7 @@ export class TrainingService extends BaseService<ITraining> {
   async removeParticipant(id: string, userId: string) {
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participants: userId } },
+      { $pull: { participant_attendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -90,19 +122,38 @@ export class TrainingService extends BaseService<ITraining> {
     // If changing to completed, award points
     if (newStatus === "completed" && training.status !== "completed") {
       // Only award points if there's at least one participant besides the creator
-      if (training.participants && training.participants.length > 0) {
+      if (
+        training.participant_attendance &&
+        training.participant_attendance.length > 0
+      ) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
 
         // Award 1 point to each participant
-        for (const participantId of training.participants) {
-          await UserModel.findByIdAndUpdate(participantId, {
+        for (const attendance of training.participant_attendance) {
+          await UserModel.findByIdAndUpdate(attendance.participant, {
             $inc: { training_points: 1 }
           });
+
+          if (attendance.attended) {
+            await UserModel.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingJoined: 1 }
+            });
+          } else {
+            await UserModel.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingMissed: 1 }
+            });
+          }
         }
       }
+    }
+
+    if (newStatus === "cancelled" && training.status !== "cancelled") {
+      await UserModel.findByIdAndUpdate(userId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
     }
 
     return this.model.findByIdAndUpdate(
