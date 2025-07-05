@@ -181,9 +181,9 @@ export class TrainingService extends BaseService<ITraining> {
     }
     // Check if the reviewer is a participant
     const isParticipant =
-      training.participants &&
-      training.participants.some(
-        (participantId) => participantId.toString() === reviewerId
+      training.participant_attendance &&
+      training.participant_attendance.some(
+        (attendance) => attendance.participant.toString() === reviewerId
       );
     if (!isParticipant) {
       throw new Error("Only participants can add reviews");
