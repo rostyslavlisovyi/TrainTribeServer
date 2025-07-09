@@ -218,6 +218,19 @@ const swaggerOptions = {
             }
           }
         },
+        ParticipantAttendance: {
+          type: "object",
+          properties: {
+            participant: {
+              type: "string",
+              description: "The user ID of the participant"
+            },
+            attended: {
+              type: "boolean",
+              description: "Whether the participant attended the training"
+            }
+          }
+        },
         Training: {
           type: "object",
           required: ["title", "date", "latitude", "longitude", "creator"],
@@ -263,12 +276,12 @@ const swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            participants: {
+            participant_attendance: {
               type: "array",
               items: {
-                type: "string"
+                $ref: "#/components/schemas/ParticipantAttendance"
               },
-              description: "Array of user IDs who are participating"
+              description: "Array of objects tracking participant attendance"
             },
             difficultyLevel: {
               type: "string",
@@ -338,6 +351,23 @@ const swaggerOptions = {
             completed_trainings: {
               type: "integer",
               description: "Number of trainings the user has completed"
+            },
+            countTrainingOrganized: {
+              type: "integer",
+              description: "Number of trainings organized by the user",
+              example: 0
+            },
+            countTrainingJoined: {
+              type: "integer",
+              description:
+                "Number of trainings the user has joined and attended",
+              example: 0
+            },
+            countTrainingMissed: {
+              type: "integer",
+              description:
+                "Number of trainings the user was registered for but missed",
+              example: 0
             },
             date_of_birth: {
               type: "string",

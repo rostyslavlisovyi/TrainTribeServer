@@ -95,6 +95,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | ├── `interfaces/`              | TypeScript interfaces for strict type definitions  |
 | │ └── `city.interface.ts`      | Interface for city entities                        |
 | │ └── `comment.interface.ts`   | Interface for comment entities                     |
+| │ └── `participantAttendance.interface.ts` | Interface for participant attendance entities      |
 | │ └── `review.interface.ts`    | Interface for review entities                      |
 | │ └── `timeSlot.interface.ts`  | Interface for time slot entities                   |
 | │ └── `training.interface.ts`  | Interface for training entities                    |
@@ -221,6 +222,9 @@ The server provides the following API endpoints:
 | `training_level`           | `String`            | No       | No     | User's training level from TrainingLevelEnum.                            |
 | `training_frequency`       | `String`            | No       | No     | User's training frequency from TrainingFrequencyEnum.                    |
 | `training_partner_preference` | `String`         | No       | No     | User's preference for training partners.                                 |
+| `count_training_organized`   | `Number`           | No       | No     | The number of trainings organized by the user. Default is 0.             |
+| `count_training_joined`      | `Number`           | No       | No     | The number of trainings the user has joined and attended. Default is 0.  |
+| `count_training_missed`      | `Number`           | No       | No     | The number of trainings the user was registered for but missed. Default is 0.|
 | `training_time_slot`       | `Object[]`          | No       | No     | Array of preferred training time slots with day and time range.          |
 | `language`                 | `String`            | No       | No     | User's preferred language. Default is 'it'.                              |
 | `training_points`          | `Number`            | No       | No     | Points earned for creating (5 pts) or participating (1 pt) in trainings.|
@@ -254,7 +258,7 @@ The server provides the following API endpoints:
 | `longitude`       | `String`     | Yes      | No     | The geographical longitude where the training event will take place.       |
 | `sport`           | `String[]`   | Yes      | No     | Array of sports types from SportsEnum for this training.                   |
 | `creator`         | `ObjectId`   | Yes      | No     | Reference to the `User` collection, identifying the creator of the event.  |
-| `participants`    | `[ObjectId]` | No       | No     | Array of references to the `User` collection for participants.             |
+| `participant_attendance` | `Object[]` | No       | No     | Array of objects tracking participant attendance. Each object contains a `participant` (ObjectId) and `attended` (Boolean). |
 | `difficultyLevel` | `String`     | No       | No     | Difficulty level from TrainingLevelEnum.                                   |
 | `duration`        | `Number`     | No       | No     | Duration of the training in minutes.                                       |
 | `likes`           | `[ObjectId]` | No       | No     | Array of references to the `User` collection for users who liked the event.|
@@ -276,13 +280,23 @@ The server provides the following API endpoints:
 | `images`    | `String[]` | No       | No     | Optional array of image URLs attached to the review.                    |
 | `createdAt` | `Date`     | Auto     | No     | Timestamp when the review was created.                                  |
 
-## Points System
+## Points and Statistics System
 
-The application implements a points system to reward users for their activity:
+The application implements a system to reward users and track their activity:
 
-1. **Training Points** (`training_points` field in `User` model)
-   - Training creators receive 5 points when their training is marked as completed
-   - Training participants receive 1 point each when a training they participated in is marked as completed
+### 1. User Statistics
 
-2. **Review Points** (`review_points` field in `User` model)
-   - Training creators receive points equal to the rating value (1-5) whenever someone leaves a review
+The `User` model includes several fields to track training-related statistics:
+
+- `count_training_organized`: Incremented when a user creates a training. Decremented if the training is cancelled or deleted.
+- `count_training_joined`: Incremented when a user attends a training they were registered for (status `completed` and `attended: true`).
+- `count_training_missed`: Incremented when a user is registered for a training but does not attend (status `completed` and `attended: false`).
+
+### 2. Points System
+
+- **Training Points** (`training_points` field in `User` model):
+  - **Creators**: Receive 5 points when their training is marked as `completed`.
+  - **Participants**: Receive 1 point when a training they were part of is marked as `completed`, regardless of their attendance status.
+
+- **Review Points** (`review_points` field in `User` model):
+  - **Creators**: Receive points equal to the rating value (1-5) whenever another user leaves a review on their completed training.

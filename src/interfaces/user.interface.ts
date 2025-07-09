@@ -32,6 +32,9 @@ export interface IUser extends Document<ObjectId> {
   training_points: number;
   review_points: number;
   username?: string;
+  count_training_organized?: number;
+  count_training_joined?: number;
+  count_training_missed?: number;
   language: LanguageEnum;
 }
 

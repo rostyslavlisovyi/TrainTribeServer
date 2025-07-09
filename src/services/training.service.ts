@@ -1,5 +1,5 @@
 import CommentModel from "../models/MongoDB/comment.model.js";
-import { ITraining, ParticipantAttendance } from "../interfaces/index.js";
+import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
@@ -9,6 +9,37 @@ import { TrainingStatusEnum } from "../types/index.js";
 export class TrainingService extends BaseService<ITraining> {
   constructor() {
     super(TrainingModel);
+  }
+  async create(entity: Partial<ITraining>): Promise<{ data: ITraining }> {
+    const { data: newTraining } = await super.create(entity);
+
+    if (newTraining && newTraining.creator) {
+      await UserModel.findByIdAndUpdate(newTraining.creator, {
+        $inc: { countTrainingOrganized: 1 }
+      });
+    }
+
+    return { data: newTraining };
+  }
+
+  async delete(id: string): Promise<{ data: boolean }> {
+    const training = await this.model.findById(id);
+
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    const creatorId = training.creator;
+
+    const { data: deleted } = await super.delete(id);
+
+    if (deleted && creatorId) {
+      await UserModel.findByIdAndUpdate(creatorId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
+    }
+
+    return { data: deleted };
   }
 
   async addLike(id: string, userId: string) {
@@ -28,17 +59,39 @@ export class TrainingService extends BaseService<ITraining> {
   }
 
   async addParticipant(id: string, userId: string) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    if (training.status !== TrainingStatusEnum.SCHEDULED) {
+      throw new Error(
+        "Cannot add participant. Training is not in scheduled status."
+      );
+    }
+
+    const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participants: userId } },
+      { $addToSet: { participant_attendance: newParticipant } },
       { new: true }
     );
   }
 
   async removeParticipant(id: string, userId: string) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    if (training.status !== TrainingStatusEnum.SCHEDULED) {
+      throw new Error(
+        "Cannot remove participant. Training is not in scheduled status."
+      );
+    }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participants: userId } },
+      { $pull: { participant_attendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -71,8 +124,7 @@ export class TrainingService extends BaseService<ITraining> {
   async changeStatus(
     id: string,
     userId: string,
-    newStatus: TrainingStatusEnum,
-    participantAttendance?: ParticipantAttendance[]
+    newStatus: TrainingStatusEnum
   ) {
     const training = await this.model.findById(id);
     if (!training) {
@@ -94,44 +146,45 @@ export class TrainingService extends BaseService<ITraining> {
       throw new Error("Only the creator can change the status");
     }
 
+    // If changing to completed, award points
     if (
       newStatus === TrainingStatusEnum.COMPLETED &&
       training.status !== TrainingStatusEnum.COMPLETED
     ) {
-      if (!participantAttendance) {
-        throw new Error(
-          "Participant attendance data is required when completing a training"
-        );
-      }
-
-      const participantIds = participantAttendance.map((p) => p.userId);
-      const allParticipantsIncluded = training.participants.every((p) =>
-        participantIds.includes(p.toString())
-      );
-
-      if (!allParticipantsIncluded) {
-        throw new Error(
-          "Attendance data must be provided for all participants"
-        );
-      }
-
-      const attendingParticipants = participantAttendance.filter(
-        (p) => p.attended
-      );
-
-      if (attendingParticipants.length > 0) {
+      // Only award points if there's at least one participant besides the creator
+      if (
+        training.participant_attendance &&
+        training.participant_attendance.length > 0
+      ) {
+        // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
 
-        for (const participant of participantAttendance) {
-          if (participant.attended) {
-            await UserModel.findByIdAndUpdate(participant.userId, {
-              $inc: { training_points: 1 }
+        // Award 1 point to each participant
+        for (const attendance of training.participant_attendance) {
+
+
+          if (attendance.attended) {
+            await UserModel.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingJoined: 1, training_points: 1 }
+            });
+          } else {
+            await UserModel.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingMissed: 1 }
             });
           }
         }
       }
+    }
+
+    if (
+      newStatus === TrainingStatusEnum.CANCELLED &&
+      training.status !== TrainingStatusEnum.CANCELLED
+    ) {
+      await UserModel.findByIdAndUpdate(userId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
     }
 
     return this.model.findByIdAndUpdate(
@@ -159,9 +212,9 @@ export class TrainingService extends BaseService<ITraining> {
     }
     // Check if the reviewer is a participant
     const isParticipant =
-      training.participants &&
-      training.participants.some(
-        (participantId) => participantId.toString() === reviewerId
+      training.participant_attendance &&
+      training.participant_attendance.some(
+        (attendance) => attendance.participant.toString() === reviewerId
       );
     if (!isParticipant) {
       throw new Error("Only participants can add reviews");

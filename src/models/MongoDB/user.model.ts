@@ -66,7 +66,10 @@ const UserSchema: Schema = new Schema(
     ],
     training_points: { type: Number, default: 0 },
     review_points: { type: Number, default: 0 },
-    username: { type: String },
+    username: { type: String, unique: true, sparse: true },
+    count_training_organized: { type: Number, default: 0 },
+    count_training_joined: { type: Number, default: 0 },
+    count_training_missed: { type: Number, default: 0 },
     language: {
       type: String,
       enum: Object.values(LanguageEnum),
