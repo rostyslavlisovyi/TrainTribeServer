@@ -469,7 +469,10 @@ var UserSchema = new Schema2(
     ],
     training_points: { type: Number, default: 0 },
     review_points: { type: Number, default: 0 },
-    username: { type: String },
+    username: { type: String, unique: true, sparse: true },
+    count_training_organized: { type: Number, default: 0 },
+    count_training_joined: { type: Number, default: 0 },
+    count_training_missed: { type: Number, default: 0 },
     language: {
       type: String,
       enum: Object.values(LanguageEnum),
@@ -519,7 +522,12 @@ var TrainingSchema = new Schema4(
       enum: Object.values(SportsEnum)
     },
     creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
-    participants: [{ type: Schema4.Types.ObjectId, ref: "User" }],
+    participant_attendance: [
+      {
+        participant: { type: Schema4.Types.ObjectId, ref: "User" },
+        attended: { type: Boolean, default: false }
+      }
+    ],
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
     duration: { type: Number },
     likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
@@ -568,6 +576,29 @@ var TrainingService = class extends BaseService {
   constructor() {
     super(training_model_default);
   }
+  async create(entity) {
+    const { data: newTraining } = await super.create(entity);
+    if (newTraining && newTraining.creator) {
+      await user_model_default.findByIdAndUpdate(newTraining.creator, {
+        $inc: { countTrainingOrganized: 1 }
+      });
+    }
+    return { data: newTraining };
+  }
+  async delete(id) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    const creatorId = training.creator;
+    const { data: deleted } = await super.delete(id);
+    if (deleted && creatorId) {
+      await user_model_default.findByIdAndUpdate(creatorId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
+    }
+    return { data: deleted };
+  }
   async addLike(id, userId) {
     return this.model.findByIdAndUpdate(
       id,
@@ -583,16 +614,17 @@ var TrainingService = class extends BaseService {
     );
   }
   async addParticipant(id, userId) {
+    const newParticipant = { participant: userId, attended: false };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participants: userId } },
+      { $addToSet: { participant_attendance: newParticipant } },
       { new: true }
     );
   }
   async removeParticipant(id, userId) {
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participants: userId } },
+      { $pull: { participant_attendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -619,7 +651,7 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
-  async changeStatus(id, userId, newStatus, participantAttendance) {
+  async changeStatus(id, userId, newStatus) {
     const training = await this.model.findById(id);
     if (!training) {
       throw new Error("Training not found");
@@ -638,35 +670,27 @@ var TrainingService = class extends BaseService {
       throw new Error("Only the creator can change the status");
     }
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (!participantAttendance) {
-        throw new Error(
-          "Participant attendance data is required when completing a training"
-        );
-      }
-      const participantIds = participantAttendance.map((p) => p.userId);
-      const allParticipantsIncluded = training.participants.every(
-        (p) => participantIds.includes(p.toString())
-      );
-      if (!allParticipantsIncluded) {
-        throw new Error(
-          "Attendance data must be provided for all participants"
-        );
-      }
-      const attendingParticipants = participantAttendance.filter(
-        (p) => p.attended
-      );
-      if (attendingParticipants.length > 0) {
+      if (training.participant_attendance && training.participant_attendance.length > 0) {
         await user_model_default.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
-        for (const participant of participantAttendance) {
-          if (participant.attended) {
-            await user_model_default.findByIdAndUpdate(participant.userId, {
-              $inc: { training_points: 1 }
+        for (const attendance of training.participant_attendance) {
+          if (attendance.attended) {
+            await user_model_default.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingJoined: 1, training_points: 1 }
+            });
+          } else {
+            await user_model_default.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingMissed: 1 }
             });
           }
         }
       }
+    }
+    if (newStatus === "CANCELLED" /* CANCELLED */ && training.status !== "CANCELLED" /* CANCELLED */) {
+      await user_model_default.findByIdAndUpdate(userId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
     }
     return this.model.findByIdAndUpdate(
       id,
@@ -682,8 +706,8 @@ var TrainingService = class extends BaseService {
     if (training.status !== "COMPLETED" /* COMPLETED */) {
       throw new Error("Training must be completed before it can be reviewed");
     }
-    const isParticipant = training.participants && training.participants.some(
-      (participantId) => participantId.toString() === reviewerId
+    const isParticipant = training.participant_attendance && training.participant_attendance.some(
+      (attendance) => attendance.participant.toString() === reviewerId
     );
     if (!isParticipant) {
       throw new Error("Only participants can add reviews");
@@ -999995,6 +1000019,19 @@ var swaggerOptions = {
             }
           }
         },
+        ParticipantAttendance: {
+          type: "object",
+          properties: {
+            participant: {
+              type: "string",
+              description: "The user ID of the participant"
+            },
+            attended: {
+              type: "boolean",
+              description: "Whether the participant attended the training"
+            }
+          }
+        },
         Training: {
           type: "object",
           required: ["title", "date", "latitude", "longitude", "creator"],
@@ -1000040,12 +1000077,12 @@ var swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            participants: {
+            participant_attendance: {
               type: "array",
               items: {
-                type: "string"
+                $ref: "#/components/schemas/ParticipantAttendance"
               },
-              description: "Array of user IDs who are participating"
+              description: "Array of objects tracking participant attendance"
             },
             difficultyLevel: {
               type: "string",
@@ -1000115,6 +1000152,21 @@ var swaggerOptions = {
             completed_trainings: {
               type: "integer",
               description: "Number of trainings the user has completed"
+            },
+            countTrainingOrganized: {
+              type: "integer",
+              description: "Number of trainings organized by the user",
+              example: 0
+            },
+            countTrainingJoined: {
+              type: "integer",
+              description: "Number of trainings the user has joined and attended",
+              example: 0
+            },
+            countTrainingMissed: {
+              type: "integer",
+              description: "Number of trainings the user was registered for but missed",
+              example: 0
             },
             date_of_birth: {
               type: "string",
