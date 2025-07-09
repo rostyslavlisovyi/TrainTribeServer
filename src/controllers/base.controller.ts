@@ -2,15 +2,35 @@ import { Request, Response } from "express";
 import { Document, FilterQuery, SortOrder } from "mongoose";
 import { BaseService } from "../services/index.js";
 import { handleError } from "../utils/index.js";
+import { UserService } from "../services/user.service.js";
+import container from "../container.js";
+import { IUser } from "../interfaces/user.interface.js";
 
 export abstract class BaseController<
   T extends Document,
   S extends BaseService<T>
 > {
   protected service: S;
+  protected userService: UserService;
 
   constructor(service: S) {
     this.service = service;
+    this.userService = container.resolve<UserService>("userService");
+  }
+
+  protected async getUserFromToken(req: Request): Promise<IUser> {
+    const token = req.auth;
+    if (!token) {
+      throw new Error("No token provided");
+    }
+    const user = await this.userService.model.findOne({
+      auth_id: token.payload.user_id
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user as IUser;
   }
 
   async get(req: Request, res: Response): Promise<void> {

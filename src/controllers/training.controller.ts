@@ -2,99 +2,133 @@ import { ITraining } from "../interfaces/index.js";
 import { BaseController } from "./base.controller.js";
 import { TrainingService } from "../services/training.service.js";
 import { Request, Response } from "express";
+import { handleError } from "../utils/handleError.ts";
+import { ParticipantAttendance } from "../interfaces/index.js";
+import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingController extends BaseController<
   ITraining,
   TrainingService
 > {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(trainingService: TrainingService) {
     super(trainingService);
-    this.service = trainingService;
   }
 
   async addLike(req: Request, res: Response) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.addLike(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addLike(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async removeLike(req: Request, res: Response) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.removeLike(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeLike(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async addParticipant(req: Request, res: Response) {
-    const { id } = req.params;
-    const userId = req.body.userId;
-    const data = await this.service.addParticipant(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addParticipant(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async removeParticipant(req: Request, res: Response) {
-    const { id, userId } = req.params;
-    const data = await this.service.removeParticipant(id, userId);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeParticipant(
+        id,
+        user._id.toString()
+      );
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async addComment(req: Request, res: Response) {
-    const { id } = req.params;
-    const { userId, text } = req.body;
-    const data = await this.service.addComment(id, userId, text);
-    res.status(200).json({ data });
+    try {
+      const { id } = req.params;
+      const { text } = req.body;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addComment(id, user._id.toString(), text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async updateComment(req: Request, res: Response) {
-    const { commentId } = req.params;
-    const { text } = req.body;
-    const data = await this.service.updateComment(commentId, text);
-    res.status(200).json({ data });
+    try {
+      const { commentId } = req.params;
+      const { text } = req.body;
+      const data = await this.service.updateComment(commentId, text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async removeComment(req: Request, res: Response) {
-    const { id, commentId } = req.params;
-    const data = await this.service.removeComment(id, commentId);
-    res.status(200).json({ data });
+    try {
+      const { id, commentId } = req.params;
+      const data = await this.service.removeComment(id, commentId);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async changeStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
-      const userId = req.body.userId;
+      const { status, participantAttendance } = req.body;
+      const user = await this.getUserFromToken(req);
 
-      const data = await this.service.changeStatus(id, userId, status);
+      const data = await this.service.changeStatus(
+        id,
+        user._id.toString(),
+        status as TrainingStatusEnum,
+        participantAttendance as ParticipantAttendance[]
+      );
+
       res.status(200).json({ data });
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "An unknown error occurred" });
-      }
+      handleError(res, error);
     }
   }
 
   async addReview(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { userId, rating, comment, images } = req.body;
-
+      const { rating, comment, images } = req.body;
+      const user = await this.getUserFromToken(req);
       const data = await this.service.addReview(
         id,
-        userId,
+        user._id.toString(),
         rating,
         comment,
         images
       );
       res.status(201).json({ data });
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "An unknown error occurred" });
-      }
+      handleError(res, error);
     }
   }
 }

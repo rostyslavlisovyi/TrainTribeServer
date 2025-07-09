@@ -3,8 +3,8 @@ import { ITraining } from "../interfaces/index.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
-
 import { BaseService } from "./base.service.js";
+import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingService extends BaseService<ITraining> {
   constructor() {
@@ -100,27 +100,36 @@ export class TrainingService extends BaseService<ITraining> {
       { new: true }
     );
   }
-  async changeStatus(id: string, userId: string, newStatus: string) {
-    // First check if the user is the creator of the training
+  async changeStatus(
+    id: string,
+    userId: string,
+    newStatus: TrainingStatusEnum
+  ) {
     const training = await this.model.findById(id);
     if (!training) {
       throw new Error("Training not found");
     }
 
-    const validStatuses = ["scheduled", "completed", "cancelled"];
+    const validStatuses = [
+      TrainingStatusEnum.SCHEDULED,
+      TrainingStatusEnum.COMPLETED,
+      TrainingStatusEnum.CANCELLED
+    ];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(
         "Invalid status. Must be one of: scheduled, completed, cancelled"
       );
     }
 
-    // Check if the user is the creator
     if (training.creator.toString() !== userId) {
       throw new Error("Only the creator can change the status");
     }
 
     // If changing to completed, award points
-    if (newStatus === "completed" && training.status !== "completed") {
+    if (
+      newStatus === TrainingStatusEnum.COMPLETED &&
+      training.status !== TrainingStatusEnum.COMPLETED
+    ) {
       // Only award points if there's at least one participant besides the creator
       if (
         training.participant_attendance &&
@@ -133,13 +142,11 @@ export class TrainingService extends BaseService<ITraining> {
 
         // Award 1 point to each participant
         for (const attendance of training.participant_attendance) {
-          await UserModel.findByIdAndUpdate(attendance.participant, {
-            $inc: { training_points: 1 }
-          });
+
 
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1 }
+              $inc: { countTrainingJoined: 1, training_points: 1 }
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {
@@ -150,7 +157,10 @@ export class TrainingService extends BaseService<ITraining> {
       }
     }
 
-    if (newStatus === "cancelled" && training.status !== "cancelled") {
+    if (
+      newStatus === TrainingStatusEnum.CANCELLED &&
+      training.status !== TrainingStatusEnum.CANCELLED
+    ) {
       await UserModel.findByIdAndUpdate(userId, {
         $inc: { countTrainingOrganized: -1 }
       });
@@ -176,7 +186,7 @@ export class TrainingService extends BaseService<ITraining> {
       throw new Error("Training not found");
     }
     // Check training status
-    if (training.status !== "completed") {
+    if (training.status !== TrainingStatusEnum.COMPLETED) {
       throw new Error("Training must be completed before it can be reviewed");
     }
     // Check if the reviewer is a participant

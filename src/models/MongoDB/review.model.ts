@@ -3,7 +3,6 @@ import { IReview } from "../../interfaces/review.interface.js";
 
 const ReviewSchema = new Schema<IReview>(
   {
-    training: { type: Schema.Types.ObjectId, ref: "Training", required: true },
     reviewer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String },
