@@ -34,7 +34,7 @@ export interface IUser extends Document {
   username?: string;
   count_training_organized?: number;
   count_training_joined?: number;
-  count_Training_missed?: number;
+  count_training_missed?: number;
   language: LanguageEnum;
 }
 
