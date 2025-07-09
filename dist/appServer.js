@@ -580,7 +580,7 @@ var TrainingService = class extends BaseService {
     const { data: newTraining } = await super.create(entity);
     if (newTraining && newTraining.creator) {
       await user_model_default.findByIdAndUpdate(newTraining.creator, {
-        $inc: { countTrainingOrganized: 1 }
+        $inc: { count_training_organized: 1 }
       });
     }
     return { data: newTraining };
@@ -594,7 +594,7 @@ var TrainingService = class extends BaseService {
     const { data: deleted } = await super.delete(id);
     if (deleted && creatorId) {
       await user_model_default.findByIdAndUpdate(creatorId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
     return { data: deleted };
@@ -695,11 +695,11 @@ var TrainingService = class extends BaseService {
         for (const attendance of training.participant_attendance) {
           if (attendance.attended) {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1, training_points: 1 }
+              $inc: { count_training_joined: 1, training_points: 1 }
             });
           } else {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingMissed: 1 }
+              $inc: { count_training_missed: 1 }
             });
           }
         }
@@ -707,7 +707,7 @@ var TrainingService = class extends BaseService {
     }
     if (newStatus === "CANCELLED" /* CANCELLED */ && training.status !== "CANCELLED" /* CANCELLED */) {
       await user_model_default.findByIdAndUpdate(userId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
     return this.model.findByIdAndUpdate(
@@ -1063,13 +1063,12 @@ var TrainingController = class extends BaseController {
   async changeStatus(req, res) {
     try {
       const { id } = req.params;
-      const { status, participantAttendance } = req.body;
+      const { status } = req.body;
       const user = await this.getUserFromToken(req);
       const data = await this.service.changeStatus(
         id,
         user._id.toString(),
-        status,
-        participantAttendance
+        status
       );
       res.status(200).json({ data });
     } catch (error) {
@@ -1000171,17 +1000170,17 @@ var swaggerOptions = {
               type: "integer",
               description: "Number of trainings the user has completed"
             },
-            countTrainingOrganized: {
+            count_training_organized: {
               type: "integer",
               description: "Number of trainings organized by the user",
               example: 0
             },
-            countTrainingJoined: {
+            count_training_joined: {
               type: "integer",
               description: "Number of trainings the user has joined and attended",
               example: 0
             },
-            countTrainingMissed: {
+            count_training_missed: {
               type: "integer",
               description: "Number of trainings the user was registered for but missed",
               example: 0

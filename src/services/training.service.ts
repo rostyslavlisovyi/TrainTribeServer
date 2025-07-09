@@ -15,7 +15,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (newTraining && newTraining.creator) {
       await UserModel.findByIdAndUpdate(newTraining.creator, {
-        $inc: { countTrainingOrganized: 1 }
+        $inc: { count_training_organized: 1 }
       });
     }
 
@@ -35,7 +35,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (deleted && creatorId) {
       await UserModel.findByIdAndUpdate(creatorId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
 
@@ -163,15 +163,13 @@ export class TrainingService extends BaseService<ITraining> {
 
         // Award 1 point to each participant
         for (const attendance of training.participant_attendance) {
-
-
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1, training_points: 1 }
+              $inc: { count_training_joined: 1, training_points: 1 }
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingMissed: 1 }
+              $inc: { count_training_missed: 1 }
             });
           }
         }
@@ -183,7 +181,7 @@ export class TrainingService extends BaseService<ITraining> {
       training.status !== TrainingStatusEnum.CANCELLED
     ) {
       await UserModel.findByIdAndUpdate(userId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
 

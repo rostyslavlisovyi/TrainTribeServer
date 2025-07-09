@@ -98,14 +98,13 @@ export class TrainingController extends BaseController<
   async changeStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { status, participantAttendance } = req.body;
+      const { status } = req.body;
       const user = await this.getUserFromToken(req);
 
       const data = await this.service.changeStatus(
         id,
         user._id.toString(),
-        status as TrainingStatusEnum,
-        participantAttendance as ParticipantAttendance[]
+        status as TrainingStatusEnum
       );
 
       res.status(200).json({ data });
