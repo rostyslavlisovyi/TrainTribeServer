@@ -59,7 +59,18 @@ export class TrainingService extends BaseService<ITraining> {
   }
 
   async addParticipant(id: string, userId: string) {
-    const newParticipant = { participant: userId, attended: false };
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    if (training.status !== TrainingStatusEnum.SCHEDULED) {
+      throw new Error(
+        "Cannot add participant. Training is not in scheduled status."
+      );
+    }
+
+    const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
       { $addToSet: { participant_attendance: newParticipant } },
@@ -68,6 +79,16 @@ export class TrainingService extends BaseService<ITraining> {
   }
 
   async removeParticipant(id: string, userId: string) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+
+    if (training.status !== TrainingStatusEnum.SCHEDULED) {
+      throw new Error(
+        "Cannot remove participant. Training is not in scheduled status."
+      );
+    }
     return this.model.findByIdAndUpdate(
       id,
       { $pull: { participant_attendance: { participant: userId } } },
