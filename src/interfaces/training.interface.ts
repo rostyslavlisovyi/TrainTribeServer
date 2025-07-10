@@ -15,7 +15,7 @@ export interface ITraining extends Document {
   longitude: string;
   sport: SportsEnum;
   creator: ObjectId;
-  participant_attendance: IParticipantAttendance[];
+  partipantAttendance: IParticipantAttendance[];
   difficultyLevel: TrainingLevelEnum;
   duration: number;
   likes: ObjectId[];
