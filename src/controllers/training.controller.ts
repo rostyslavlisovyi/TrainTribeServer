@@ -2,8 +2,7 @@ import { ITraining } from "../interfaces/index.js";
 import { BaseController } from "./base.controller.js";
 import { TrainingService } from "../services/training.service.js";
 import { Request, Response } from "express";
-import { handleError } from "../utils/handleError.ts";
-import { ParticipantAttendance } from "../interfaces/index.js";
+import { handleError } from "../utils/handleError.js";
 import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingController extends BaseController<
