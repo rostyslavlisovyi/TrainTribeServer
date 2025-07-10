@@ -15,7 +15,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (newTraining && newTraining.creator) {
       await UserModel.findByIdAndUpdate(newTraining.creator, {
-        $inc: { countTrainingOrganized: 1 }
+        $inc: { count_training_organized: 1 }
       });
     }
 
@@ -35,7 +35,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (deleted && creatorId) {
       await UserModel.findByIdAndUpdate(creatorId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
 
@@ -73,7 +73,7 @@ export class TrainingService extends BaseService<ITraining> {
     const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participant_attendance: newParticipant } },
+      { $addToSet: { partipantAttendance: newParticipant } },
       { new: true }
     );
   }
@@ -91,7 +91,7 @@ export class TrainingService extends BaseService<ITraining> {
     }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participant_attendance: { participant: userId } } },
+      { $pull: { partipantAttendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -153,8 +153,8 @@ export class TrainingService extends BaseService<ITraining> {
     ) {
       // Only award points if there's at least one participant besides the creator
       if (
-        training.participant_attendance &&
-        training.participant_attendance.length > 0
+        training.partipantAttendance &&
+        training.partipantAttendance.length > 0
       ) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
@@ -162,16 +162,14 @@ export class TrainingService extends BaseService<ITraining> {
         });
 
         // Award 1 point to each participant
-        for (const attendance of training.participant_attendance) {
-
-
+        for (const attendance of training.partipantAttendance) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1, training_points: 1 }
+              $inc: { count_training_joined: 1, training_points: 1 }
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingMissed: 1 }
+              $inc: { count_training_missed: 1 }
             });
           }
         }
@@ -183,7 +181,7 @@ export class TrainingService extends BaseService<ITraining> {
       training.status !== TrainingStatusEnum.CANCELLED
     ) {
       await UserModel.findByIdAndUpdate(userId, {
-        $inc: { countTrainingOrganized: -1 }
+        $inc: { count_training_organized: -1 }
       });
     }
 
@@ -212,8 +210,8 @@ export class TrainingService extends BaseService<ITraining> {
     }
     // Check if the reviewer is a participant
     const isParticipant =
-      training.participant_attendance &&
-      training.participant_attendance.some(
+      training.partipantAttendance &&
+      training.partipantAttendance.some(
         (attendance) => attendance.participant.toString() === reviewerId
       );
     if (!isParticipant) {

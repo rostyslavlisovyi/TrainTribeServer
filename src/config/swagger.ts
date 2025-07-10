@@ -276,7 +276,7 @@ const swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            participant_attendance: {
+            partipantAttendance: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/ParticipantAttendance"
@@ -352,18 +352,18 @@ const swaggerOptions = {
               type: "integer",
               description: "Number of trainings the user has completed"
             },
-            countTrainingOrganized: {
+            count_training_organized: {
               type: "integer",
               description: "Number of trainings organized by the user",
               example: 0
             },
-            countTrainingJoined: {
+            count_training_joined: {
               type: "integer",
               description:
                 "Number of trainings the user has joined and attended",
               example: 0
             },
-            countTrainingMissed: {
+            count_training_missed: {
               type: "integer",
               description:
                 "Number of trainings the user was registered for but missed",
