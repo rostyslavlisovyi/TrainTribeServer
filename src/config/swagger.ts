@@ -276,7 +276,7 @@ const swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            partipantAttendance: {
+            participantAttendance: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/ParticipantAttendance"

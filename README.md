@@ -258,7 +258,7 @@ The server provides the following API endpoints:
 | `longitude`       | `String`     | Yes      | No     | The geographical longitude where the training event will take place.       |
 | `sport`           | `String[]`   | Yes      | No     | Array of sports types from SportsEnum for this training.                   |
 | `creator`         | `ObjectId`   | Yes      | No     | Reference to the `User` collection, identifying the creator of the event.  |
-| `partipantAttendance` | `Object[]` | No       | No     | Array of objects tracking participant attendance. Each object contains a `participant` (ObjectId) and `attended` (Boolean). |
+| `participantAttendance` | `Object[]` | No       | No     | Array of objects tracking participant attendance. Each object contains a `participant` (ObjectId) and `attended` (Boolean). |
 | `difficultyLevel` | `String`     | No       | No     | Difficulty level from TrainingLevelEnum.                                   |
 | `duration`        | `Number`     | No       | No     | Duration of the training in minutes.                                       |
 | `likes`           | `[ObjectId]` | No       | No     | Array of references to the `User` collection for users who liked the event.|

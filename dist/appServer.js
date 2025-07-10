@@ -522,7 +522,7 @@ var TrainingSchema = new Schema4(
       enum: Object.values(SportsEnum)
     },
     creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
-    partipantAttendance: [
+    participantAttendance: [
       {
         participant: { type: Schema4.Types.ObjectId, ref: "User" },
         attended: { type: Boolean, default: false }
@@ -626,7 +626,7 @@ var TrainingService = class extends BaseService {
     const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { partipantAttendance: newParticipant } },
+      { $addToSet: { participantAttendance: newParticipant } },
       { new: true }
     );
   }
@@ -642,7 +642,7 @@ var TrainingService = class extends BaseService {
     }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { partipantAttendance: { participant: userId } } },
+      { $pull: { participantAttendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -688,11 +688,11 @@ var TrainingService = class extends BaseService {
       throw new Error("Only the creator can change the status");
     }
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (training.partipantAttendance && training.partipantAttendance.length > 0) {
+      if (training.participantAttendance && training.participantAttendance.length > 0) {
         await user_model_default.findByIdAndUpdate(userId, {
           $inc: { training_points: 5 }
         });
-        for (const attendance of training.partipantAttendance) {
+        for (const attendance of training.participantAttendance) {
           if (attendance.attended) {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
               $inc: { count_training_joined: 1, training_points: 1 }
@@ -724,7 +724,7 @@ var TrainingService = class extends BaseService {
     if (training.status !== "COMPLETED" /* COMPLETED */) {
       throw new Error("Training must be completed before it can be reviewed");
     }
-    const isParticipant = training.partipantAttendance && training.partipantAttendance.some(
+    const isParticipant = training.participantAttendance && training.participantAttendance.some(
       (attendance) => attendance.participant.toString() === reviewerId
     );
     if (!isParticipant) {
@@ -1000094,7 +1000094,7 @@ var swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            partipantAttendance: {
+            participantAttendance: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/ParticipantAttendance"

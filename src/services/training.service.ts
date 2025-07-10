@@ -73,7 +73,7 @@ export class TrainingService extends BaseService<ITraining> {
     const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { partipantAttendance: newParticipant } },
+      { $addToSet: { participantAttendance: newParticipant } },
       { new: true }
     );
   }
@@ -91,7 +91,7 @@ export class TrainingService extends BaseService<ITraining> {
     }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { partipantAttendance: { participant: userId } } },
+      { $pull: { participantAttendance: { participant: userId } } },
       { new: true }
     );
   }
@@ -153,8 +153,8 @@ export class TrainingService extends BaseService<ITraining> {
     ) {
       // Only award points if there's at least one participant besides the creator
       if (
-        training.partipantAttendance &&
-        training.partipantAttendance.length > 0
+        training.participantAttendance &&
+        training.participantAttendance.length > 0
       ) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
@@ -162,7 +162,7 @@ export class TrainingService extends BaseService<ITraining> {
         });
 
         // Award 1 point to each participant
-        for (const attendance of training.partipantAttendance) {
+        for (const attendance of training.participantAttendance) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
               $inc: { count_training_joined: 1, training_points: 1 }
@@ -210,8 +210,8 @@ export class TrainingService extends BaseService<ITraining> {
     }
     // Check if the reviewer is a participant
     const isParticipant =
-      training.partipantAttendance &&
-      training.partipantAttendance.some(
+      training.participantAttendance &&
+      training.participantAttendance.some(
         (attendance) => attendance.participant.toString() === reviewerId
       );
     if (!isParticipant) {
