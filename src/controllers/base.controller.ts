@@ -20,17 +20,23 @@ export abstract class BaseController<
 
   protected async getUserFromToken(req: Request): Promise<IUser> {
     const token = req.auth;
+    const { populate } = req.query;
+
     if (!token) {
       throw new Error("No token provided");
     }
-    const user = await this.userService.model.findOne({
+
+    const query = this.service.model.findOne({
       auth_id: token.payload.user_id
     });
-
+    if (populate) {
+      query.populate(populate as string | string[]);
+    }
+    const user = (await query) as unknown as IUser;
     if (!user) {
       throw new Error("User not found");
     }
-    return user as IUser;
+    return user;
   }
 
   async get(req: Request, res: Response): Promise<void> {

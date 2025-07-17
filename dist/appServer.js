@@ -810,12 +810,17 @@ var BaseController = class {
   }
   async getUserFromToken(req) {
     const token = req.auth;
+    const { populate } = req.query;
     if (!token) {
       throw new Error("No token provided");
     }
-    const user = await this.userService.model.findOne({
+    const query = this.service.model.findOne({
       auth_id: token.payload.user_id
     });
+    if (populate) {
+      query.populate(populate);
+    }
+    const user = await query;
     if (!user) {
       throw new Error("User not found");
     }
@@ -961,20 +966,10 @@ var UserController = class extends BaseController {
   constructor(userService) {
     super(userService);
   }
-  async getByAuthId(req, res) {
+  async getMe(req, res) {
     try {
-      const { auth_id } = req.params;
-      const { populate } = req.query;
-      const query = this.service.model.findOne({ auth_id });
-      if (populate) {
-        query.populate(populate);
-      }
-      const result = await query;
-      if (!result) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
-      res.json(result);
+      const user = await this.getUserFromToken(req);
+      res.json(user);
     } catch (error) {
       handleError(res, error);
     }
@@ -1178,9 +1173,9 @@ var validateUserUpdate = [
 var userRoute = express.Router();
 var userController = container_default.resolve("userController");
 userRoute.get(
-  "/by-auth-id/:auth_id",
+  "/me",
   authenticate,
-  (req, res) => userController.getByAuthId(req, res)
+  (req, res) => userController.getMe(req, res)
 );
 userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
 userRoute.post(
