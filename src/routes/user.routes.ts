@@ -94,8 +94,8 @@ const userController = container.resolve<UserController>("userController");
  *                   type: string
  *                   example: INTERNAL SERVER ERROR
  */
-userRoute.get("/by-auth-id/:auth_id", authenticate, (req, res) =>
-  userController.getByAuthId(req, res)
+userRoute.get("/me", authenticate, (req, res) =>
+  userController.getMe(req, res)
 );
 
 userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
