@@ -126,11 +126,11 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 type: string
  *                 description: The username of the user
  *                 example: testuser
- *               first_name:
+ *               firstName:
  *                 type: string
  *                 description: The first name of the user
  *                 example: John
- *               last_name:
+ *               lastName:
  *                 type: string
  *                 description: The last name of the user
  *                 example: Doe
@@ -179,14 +179,14 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 message:
  *                   type: string
  *                   enum:
- *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image, latitude, longitude, sport"
+ *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *                     - "EMAIL IS REQUIRED"
- *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image, latitude, longitude, sport"
+ *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *             examples:
  *               extraFields:
  *                 summary: Extra fields provided in request body
  *                 value:
- *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image, latitude, longitude, sport"
+ *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *               missingEmail:
  *                 summary: Missing required email field
  *                 value:
@@ -274,11 +274,11 @@ userRoute.post(
  *                 type: string
  *                 description: The username of the user
  *                 example: test_user
- *               first_name:
+ *               firstName:
  *                 type: string
  *                 description: The first name of the user
  *                 example: John
- *               last_name:
+ *               lastName:
  *                 type: string
  *                 description: The last name of the user
  *                 example: Doe
@@ -296,18 +296,6 @@ userRoute.post(
  *               sport:
  *                 type: array
  *                 description: The sports associated with the user
- *                 items:
- *                   type: string
- *                   example: 67543795b67ad667d26e3bdc
- *               training_created:
- *                 type: array
- *                 description: The trainings created by the user
- *                 items:
- *                   type: string
- *                   example: 67543795b67ad667d26e3bdc
- *               training_join:
- *                 type: array
- *                 description: The trainings joined by the user
  *                 items:
  *                   type: string
  *                   example: 67543795b67ad667d26e3bdc

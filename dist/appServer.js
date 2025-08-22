@@ -178,7 +178,7 @@ var BaseController = class {
       throw new Error("No token provided");
     }
     const query = this.userService.model.findOne({
-      auth_id: token.payload.user_id
+      authId: token.payload.user_id
     });
     if (populate) {
       query.populate(populate);
@@ -880,43 +880,41 @@ var training_model_default = TrainingModel;
 import mongoose7, { Schema as Schema5 } from "mongoose";
 var UserSchema = new Schema5(
   {
-    athlete_bio: { type: String, required: false },
-    auth_id: { type: String, required: true },
+    athleteBio: { type: String, required: false },
+    authId: { type: String, required: true },
     city: { type: Schema5.Types.ObjectId, ref: "City", required: false },
-    completed_trainings: { type: Number, default: 0 },
-    date_of_birth: { type: Date, required: false },
+    completedTrainings: { type: Number, default: 0 },
+    dateOfBirth: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
-    first_name: { type: String },
-    has_completed_onboarding: { type: Boolean, required: false },
+    firstName: { type: String },
+    hasCompletedOnboarding: { type: Boolean, required: false },
     image: { type: Schema5.Types.Mixed, required: false },
-    last_name: { type: String },
-    last_onboarding_step: { type: String, required: false },
-    privacy_settings: { type: Boolean, default: false },
-    range_of_action: { type: Number },
+    lastName: { type: String },
+    lastOnboardingStep: { type: String, required: false },
+    privacySettings: { type: Boolean, default: false },
+    rangeOfAction: { type: Number },
     sports: [
       {
         type: String,
         enum: Object.values(SportsEnum)
       }
     ],
-    training_created: [{ type: Schema5.Types.ObjectId, ref: "Training" }],
-    training_goal: [
+    trainingGoal: [
       {
         type: String,
         enum: Object.values(TrainingGoalEnum)
       }
     ],
-    training_join: [{ type: Schema5.Types.ObjectId, ref: "Training" }],
-    training_level: {
+    trainingLevel: {
       type: String,
       enum: Object.values(TrainingLevelEnum)
     },
-    training_frequency: {
+    trainingFrequency: {
       type: String,
       enum: Object.values(TrainingFrequencyEnum)
     },
-    training_partner_preference: { type: String },
-    training_time_slot: [
+    trainingPartnerPreference: { type: String },
+    trainingTimeSlot: [
       {
         day: {
           type: String,
@@ -932,12 +930,12 @@ var UserSchema = new Schema5(
         }
       }
     ],
-    training_points: { type: Number, default: 0 },
-    review_points: { type: Number, default: 0 },
+    trainingPoints: { type: Number, default: 0 },
+    reviewPoints: { type: Number, default: 0 },
     username: { type: String, unique: true, sparse: true },
-    count_training_organized: { type: Number, default: 0 },
-    count_training_joined: { type: Number, default: 0 },
-    count_training_missed: { type: Number, default: 0 },
+    countTrainingOrganized: { type: Number, default: 0 },
+    countTrainingJoined: { type: Number, default: 0 },
+    countTrainingMissed: { type: Number, default: 0 },
     language: {
       type: String,
       enum: Object.values(LanguageEnum),
@@ -960,7 +958,7 @@ var TrainingService = class extends BaseService {
     const { data: newTraining } = await super.create(entity);
     if (newTraining && newTraining.creator) {
       await user_model_default.findByIdAndUpdate(newTraining.creator, {
-        $inc: { count_training_organized: 1 }
+        $inc: { countTrainingOrganized: 1 }
       });
     }
     return { data: newTraining };
@@ -974,7 +972,7 @@ var TrainingService = class extends BaseService {
     const { data: deleted } = await super.delete(id);
     if (deleted && creatorId) {
       await user_model_default.findByIdAndUpdate(creatorId, {
-        $inc: { count_training_organized: -1 }
+        $inc: { countTrainingOrganized: -1 }
       });
     }
     return { data: deleted };
@@ -1070,16 +1068,16 @@ var TrainingService = class extends BaseService {
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
       if (training.participantAttendance && training.participantAttendance.length > 0) {
         await user_model_default.findByIdAndUpdate(userId, {
-          $inc: { training_points: 5 }
+          $inc: { trainingPoints: 5 }
         });
         for (const attendance of training.participantAttendance) {
           if (attendance.attended) {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_joined: 1, training_points: 1 }
+              $inc: { countTrainingJoined: 1, trainingPoints: 1 }
             });
           } else {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_missed: 1 }
+              $inc: { countTrainingMissed: 1 }
             });
           }
         }
@@ -1087,7 +1085,7 @@ var TrainingService = class extends BaseService {
     }
     if (newStatus === "CANCELLED" /* CANCELLED */ && training.status !== "CANCELLED" /* CANCELLED */) {
       await user_model_default.findByIdAndUpdate(userId, {
-        $inc: { count_training_organized: -1 }
+        $inc: { countTrainingOrganized: -1 }
       });
     }
     return this.model.findByIdAndUpdate(
@@ -1131,7 +1129,7 @@ var TrainingService = class extends BaseService {
       $addToSet: { reviews: review._id }
     });
     await user_model_default.findByIdAndUpdate(training.creator, {
-      $inc: { review_points: rating }
+      $inc: { reviewPoints: rating }
     });
     return review;
   }
@@ -1347,65 +1345,55 @@ import express5 from "express";
 import { body } from "express-validator";
 var validateUserCreation = [
   body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").exists({ checkFalsy: true }).withMessage("AUTH_ID IS REQUIRED").isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("authId").exists({ checkFalsy: true }).withMessage("authId IS REQUIRED").isString().withMessage("authId INVALID TYPE"),
   body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
   body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("dateOfBirth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
   body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
   body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
     (sports) => sports.every(
       (sport) => Object.values(SportsEnum).includes(sport)
     )
   ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+  body("trainingLevel").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("trainingLevel NOT ALLOWED"),
+  body("trainingGoal").optional().isArray().withMessage("trainingGoal MUST BE AN ARRAY").custom(
     (goals) => goals.every(
       (goal) => Object.values(TrainingGoalEnum).includes(goal)
     )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+  ).withMessage("INVALID trainingGoal VALUE"),
+  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
+  body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings").optional().isBoolean().withMessage("privacySettings MUST BE BOOLEAN")
 ];
 var validateUserUpdate = [
   body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("authId").optional().isString().withMessage("authId INVALID TYPE"),
   body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
   body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("dateOfBirth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
   body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
   body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
     (sports) => sports.every(
       (sport) => Object.values(SportsEnum).includes(sport)
     )
   ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+  body("trainingLevel").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("trainingLevel NOT ALLOWED"),
+  body("trainingGoal").optional().isArray().withMessage("trainingGoal MUST BE AN ARRAY").custom(
     (goals) => goals.every(
       (goal) => Object.values(TrainingGoalEnum).includes(goal)
     )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+  ).withMessage("INVALID trainingGoal VALUE"),
+  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
+  body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings").optional().isBoolean().withMessage("privacySettings MUST BE BOOLEAN")
 ];
 
 // src/routes/user.routes.ts
@@ -1000268,17 +1000256,17 @@ var swaggerOptions = {
         },
         User: {
           type: "object",
-          required: ["email", "auth_id"],
+          required: ["email", "authId"],
           properties: {
             _id: {
               type: "string",
               description: "The unique identifier of the user"
             },
-            athlete_bio: {
+            athleteBio: {
               type: "string",
               description: "User's athletic biography"
             },
-            auth_id: {
+            authId: {
               type: "string",
               description: "Authentication ID from the auth provider"
             },
@@ -1000286,26 +1000274,26 @@ var swaggerOptions = {
               type: "string",
               description: "Reference to the user's city (ObjectId)"
             },
-            completed_trainings: {
+            completedTrainings: {
               type: "integer",
               description: "Number of trainings the user has completed"
             },
-            count_training_organized: {
+            countTrainingOrganized: {
               type: "integer",
               description: "Number of trainings organized by the user",
               example: 0
             },
-            count_training_joined: {
+            countTrainingJoined: {
               type: "integer",
               description: "Number of trainings the user has joined and attended",
               example: 0
             },
-            count_training_missed: {
+            countTrainingMissed: {
               type: "integer",
               description: "Number of trainings the user was registered for but missed",
               example: 0
             },
-            date_of_birth: {
+            dateOfBirth: {
               type: "string",
               format: "date",
               description: "The user's date of birth"
@@ -1000314,11 +1000302,11 @@ var swaggerOptions = {
               type: "string",
               description: "The email of the user"
             },
-            first_name: {
+            firstName: {
               type: "string",
               description: "The first name of the user"
             },
-            has_completed_onboarding: {
+            hasCompletedOnboarding: {
               type: "boolean",
               description: "Whether the user has completed onboarding"
             },
@@ -1000326,19 +1000314,19 @@ var swaggerOptions = {
               type: "object",
               description: "Object of cloudinary image"
             },
-            last_name: {
+            lastName: {
               type: "string",
               description: "The last name of the user"
             },
-            last_onboarding_step: {
+            lastOnboardingStep: {
               type: "string",
               description: "The last completed onboarding step"
             },
-            privacy_settings: {
+            privacySettings: {
               type: "boolean",
               description: "User's privacy settings"
             },
-            range_of_action: {
+            rangeOfAction: {
               type: "number",
               description: "User's preferred range of action in kilometers"
             },
@@ -1000357,7 +1000345,7 @@ var swaggerOptions = {
               },
               description: "Trainings created by the user"
             },
-            training_goal: {
+            trainingGoal: {
               type: "array",
               items: {
                 type: "string",
@@ -1000365,28 +1000353,21 @@ var swaggerOptions = {
               },
               description: "User's training goals"
             },
-            training_join: {
-              type: "array",
-              items: {
-                type: "string"
-              },
-              description: "Trainings the user has joined"
-            },
-            training_level: {
+            trainingLevel: {
               type: "string",
               enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
               description: "User's training level"
             },
-            training_frequency: {
+            trainingFrequency: {
               type: "string",
               enum: ["1_2_PER_WEEK", "3_4_PER_WEEK", "5_PLUS_PER_WEEK"],
               description: "User's training frequency"
             },
-            training_partner_preference: {
+            trainingPartnerPreference: {
               type: "string",
               description: "User's preference for training partners"
             },
-            training_time_slot: {
+            trainingTimeSlot: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/TimeSlot"

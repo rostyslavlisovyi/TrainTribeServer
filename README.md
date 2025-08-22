@@ -198,39 +198,37 @@ The server provides the following API endpoints:
 
 ### User
 
-| Field                         | Type         | Required | Unique | Description                                                                   |
-| ----------------------------- | ------------ | -------- | ------ | ----------------------------------------------------------------------------- |
-| `_id`                         | `ObjectId`   | Yes      | Yes    | User's id.                                                                    |
-| `username`                    | `String`     | No       | No     | User's display name.                                                          |
-| `first_name`                  | `String`     | No       | No     | User's first name.                                                            |
-| `last_name`                   | `String`     | No       | No     | User's last name.                                                             |
-| `email`                       | `String`     | Yes      | Yes    | User's email address (used for authentication and communication).             |
-| `sports`                      | `String[]`   | Yes      | No     | Array of sports types from SportsEnum (e.g., RUNNING, CYCLING, SWIMMING)      |
-| `image`                       | `Object`     | No       | No     | Object to cloudinary upload api picture.                                      |
-| `city`                        | `ObjectId`   | No       | No     | Reference to the user's city.                                                 |
-| `completed_trainings`         | `Number`     | No       | No     | Number of trainings the user has completed. Default is 0.                     |
-| `athlete_bio`                 | `String`     | No       | No     | User's athletic biography and background information.                         |
-| `auth_id`                     | `String`     | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
-| `last_onboarding_step`        | `String`     | No       | No     | Indicates the last completed onboarding step.                                 |
-| `has_completed_onboarding`    | `Boolean`    | No       | No     | Indicates if user has completed onboarding.                                   |
-| `privacy_settings`            | `Boolean`    | No       | No     | User's privacy preference. Default is false.                                  |
-| `training_created`            | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has created.             |
-| `training_join`               | `[ObjectId]` | No       | No     | Array of references to `Training` documents the user has joined.              |
-| `date_of_birth`               | `Date`       | No       | No     | User's date of birth.                                                         |
-| `range_of_action`             | `Number`     | No       | No     | Range of action for the user (in kilometers).                                 |
-| `training_goal`               | `String[]`   | No       | No     | Array of training goals from TrainingGoalEnum.                                |
-| `training_level`              | `String`     | No       | No     | User's training level from TrainingLevelEnum.                                 |
-| `training_frequency`          | `String`     | No       | No     | User's training frequency from TrainingFrequencyEnum.                         |
-| `training_partner_preference` | `String`     | No       | No     | User's preference for training partners.                                      |
-| `count_training_organized`    | `Number`     | No       | No     | The number of trainings organized by the user. Default is 0.                  |
-| `count_training_joined`       | `Number`     | No       | No     | The number of trainings the user has joined and attended. Default is 0.       |
-| `count_training_missed`       | `Number`     | No       | No     | The number of trainings the user was registered for but missed. Default is 0. |
-| `training_time_slot`          | `Object[]`   | No       | No     | Array of preferred training time slots with day and time range.               |
-| `language`                    | `String`     | No       | No     | User's preferred language. Default is 'it'.                                   |
-| `training_points`             | `Number`     | No       | No     | Points earned for creating (5 pts) or participating (1 pt) in trainings.      |
-| `review_points`               | `Number`     | No       | No     | Sum of stars received as a training creator from reviews.                     |
-| `createdAt`                   | `Date`       | Auto     | No     | Timestamp when the user document was created.                                 |
-| `updatedAt`                   | `Date`       | Auto     | No     | Timestamp when the user document was last updated.                            |
+| Field                       | Type       | Required | Unique | Description                                                                   |
+| --------------------------- | ---------- | -------- | ------ | ----------------------------------------------------------------------------- |
+| `_id`                       | `ObjectId` | Yes      | Yes    | User's id.                                                                    |
+| `username`                  | `String`   | No       | No     | User's display name.                                                          |
+| `firstName`                 | `String`   | No       | No     | User's first name.                                                            |
+| `lastName`                  | `String`   | No       | No     | User's last name.                                                             |
+| `email`                     | `String`   | Yes      | Yes    | User's email address (used for authentication and communication).             |
+| `sports`                    | `String[]` | Yes      | No     | Array of sports types from SportsEnum (e.g., RUNNING, CYCLING, SWIMMING)      |
+| `image`                     | `Object`   | No       | No     | Object to cloudinary upload api picture.                                      |
+| `city`                      | `ObjectId` | No       | No     | Reference to the user's city.                                                 |
+| `completedTrainings`        | `Number`   | No       | No     | Number of trainings the user has completed. Default is 0.                     |
+| `athleteBio`                | `String`   | No       | No     | User's athletic biography and background information.                         |
+| `authId`                    | `String`   | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
+| `lastOnboardingStep`        | `String`   | No       | No     | Indicates the last completed onboarding step.                                 |
+| `hasCompletedOnboarding`    | `Boolean`  | No       | No     | Indicates if user has completed onboarding.                                   |
+| `privacySettings`           | `Boolean`  | No       | No     | User's privacy preference. Default is false.                                  |
+| `dateOfBirth`               | `Date`     | No       | No     | User's date of birth.                                                         |
+| `rangeOfAction`             | `Number`   | No       | No     | Range of action for the user (in kilometers).                                 |
+| `trainingGoal`              | `String[]` | No       | No     | Array of training goals from TrainingGoalEnum.                                |
+| `trainingLevel`             | `String`   | No       | No     | User's training level from TrainingLevelEnum.                                 |
+| `trainingFrequency`         | `String`   | No       | No     | User's training frequency from TrainingFrequencyEnum.                         |
+| `trainingPartnerPreference` | `String`   | No       | No     | User's preference for training partners.                                      |
+| `countTrainingOrganized`    | `Number`   | No       | No     | The number of trainings organized by the user. Default is 0.                  |
+| `countTrainingJoined`       | `Number`   | No       | No     | The number of trainings the user has joined and attended. Default is 0.       |
+| `countTrainingMissed`       | `Number`   | No       | No     | The number of trainings the user was registered for but missed. Default is 0. |
+| `trainingTimeSlot`          | `Object[]` | No       | No     | Array of preferred training time slots with day and time range.               |
+| `language`                  | `String`   | No       | No     | User's preferred language. Default is 'it'.                                   |
+| `trainingPoints`            | `Number`   | No       | No     | Points earned for creating (5 pts) or participating (1 pt) in trainings.      |
+| `reviewPoints`              | `Number`   | No       | No     | Sum of stars received as a training creator from reviews.                     |
+| `createdAt`                 | `Date`     | Auto     | No     | Timestamp when the user document was created.                                 |
+| `updatedAt`                 | `Date`     | Auto     | No     | Timestamp when the user document was last updated.                            |
 
 ### City
 
@@ -288,16 +286,16 @@ The application implements a system to reward users and track their activity:
 
 The `User` model includes several fields to track training-related statistics:
 
-- `count_training_organized`: Incremented when a user creates a training. Decremented if the training is cancelled or deleted.
-- `count_training_joined`: Incremented when a user attends a training they were registered for (status `completed` and `attended: true`).
-- `count_training_missed`: Incremented when a user is registered for a training but does not attend (status `completed` and `attended: false`).
+- `countTrainingOrganized`: Incremented when a user creates a training. Decremented if the training is cancelled or deleted.
+- `countTrainingJoined`: Incremented when a user attends a training they were registered for (status `completed` and `attended: true`).
+- `countTrainingMissed`: Incremented when a user is registered for a training but does not attend (status `completed` and `attended: false`).
 
 ### 2. Points System
 
-- **Training Points** (`training_points` field in `User` model):
+- **Training Points** (`trainingPoints` field in `User` model):
 
   - **Creators**: Receive 5 points when their training is marked as `completed`.
   - **Participants**: Receive 1 point when a training they were part of is marked as `completed`, regardless of their attendance status.
 
-- **Review Points** (`review_points` field in `User` model):
+- **Review Points** (`reviewPoints` field in `User` model):
   - **Creators**: Receive points equal to the rating value (1-5) whenever another user leaves a review on their completed training.

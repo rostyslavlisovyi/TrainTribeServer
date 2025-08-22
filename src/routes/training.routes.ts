@@ -544,7 +544,7 @@ trainingRoutes.patch("/:id/status", authenticate, (req, res) =>
  * /training/{id}/reviews:
  *   post:
  *     summary: Add a review to a training
- *     description: Only participants can add reviews. Updates creator's review_points with the rating stars.
+ *     description: Only participants can add reviews. Updates creator's reviewPoints with the rating stars.
  *     tags: [Trainings]
  *     parameters:
  *       - in: path
@@ -748,21 +748,21 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *       type: object
  *       required:
  *         - email
- *         - auth_id
+ *         - authId
  *       properties:
  *         _id:
  *           type: string
  *           description: The auto-generated ID of the user
- *         first_name:
+ *         firstName:
  *           type: string
  *           description: User's first name
- *         last_name:
+ *         lastName:
  *           type: string
  *           description: User's last name
  *         email:
  *           type: string
  *           description: User's email address
- *         auth_id:
+ *         authId:
  *           type: string
  *           description: Authentication ID from identity provider
  *         username:
@@ -771,20 +771,10 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *         image:
  *           type: object
  *           description: The image object containing Cloudinary data
- *         training_created:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of training IDs created by the user
- *         training_join:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of training IDs user has joined
- *         training_points:
+ *         trainingPoints:
  *           type: number
  *           description: Points earned from creating and participating in trainings
- *         review_points:
+ *         reviewPoints:
  *           type: number
  *           description: Points earned from reviews (sum of ratings received)
  */

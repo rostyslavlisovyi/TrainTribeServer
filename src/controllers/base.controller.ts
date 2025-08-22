@@ -26,7 +26,7 @@ export abstract class BaseController<
       throw new Error("No token provided");
     }
     const query = this.userService.model.findOne({
-      auth_id: token.payload.user_id
+      authId: token.payload.user_id
     });
     if (populate) {
       query.populate(populate as string | string[]);
