@@ -1,5 +1,5 @@
 // src/appServer.ts
-import express6 from "express";
+import express7 from "express";
 import cors from "cors";
 import dotenv2 from "dotenv";
 
@@ -22,53 +22,20 @@ var connectDB = async () => {
 var database_default = connectDB;
 
 // src/routes/index.ts
-import express5 from "express";
+import express6 from "express";
 
-// src/routes/user.routes.ts
+// src/routes/city.routes.ts
 import express from "express";
-
-// src/middlewares/auth.middleware.ts
-import { auth } from "express-oauth2-jwt-bearer";
-var authenticate = auth({
-  audience: process.env.OAUTH_AUDIENCE,
-  issuerBaseURL: process.env.OAUTH_DOMAIN,
-  tokenSigningAlg: "RS256"
-});
-
-// src/middlewares/upload.middleware.ts
-import multer from "multer";
-var fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
-  }
-};
-var upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter,
-  limits: {
-    fileSize: 1024 * 1024 * 2
-    // 2MB file size limit
-  }
-});
-
-// src/middlewares/validation.middleware.ts
-import { validationResult } from "express-validator";
-var handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(422).json({
-      errors: errors.array(),
-      message: "INVALID INPUTS TYPE"
-    });
-    return;
-  }
-  next();
-};
 
 // src/container.ts
 import { asClass, createContainer, InjectionMode } from "awilix";
+
+// src/utils/validators/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+
+// src/utils/handleError.ts
+import mongoose2 from "mongoose";
+import chalk2 from "chalk";
 
 // src/errors/baseError.ts
 var BaseError = class extends Error {
@@ -162,613 +129,9 @@ var InternalServerError = class extends BaseError {
   }
 };
 
-// src/services/base.service.ts
-import chalk2 from "chalk";
-var BaseService = class {
-  model;
-  constructor(model) {
-    this.model = model;
-  }
-  async get({
-    id,
-    populateFields
-  }) {
-    try {
-      let query = this.model.findById(id);
-      if (populateFields) {
-        query = query.populate(this.buildPopulate(populateFields));
-      }
-      const result = await query;
-      return { data: result };
-    } catch (error) {
-      console.error(chalk2.red("Error in get method:"), error);
-      throw error;
-    }
-  }
-  async list({
-    pageNum = 1,
-    pageSize = 10,
-    populateFields,
-    sort,
-    filters = {}
-  }) {
-    try {
-      const validPageNum = Math.max(1, pageNum);
-      const validPageSize = Math.max(1, pageSize);
-      const skips = validPageSize * (validPageNum - 1);
-      const totalItems = await this.model.countDocuments(filters);
-      const totalPages = totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
-      let query = this.model.find(filters);
-      if (sort) {
-        query = query.sort(sort);
-      }
-      query = query.skip(skips).limit(validPageSize);
-      if (populateFields) {
-        query = query.populate(this.buildPopulate(populateFields));
-      }
-      const data = await query;
-      return {
-        data,
-        totalItems,
-        totalPages,
-        pageSize: validPageSize,
-        currentPage: validPageNum,
-        hasNextPage: validPageNum < totalPages,
-        hasPreviousPage: validPageNum > 1
-      };
-    } catch (error) {
-      console.error(chalk2.red("Error in list:"), chalk2.red(error));
-      throw error;
-    }
-  }
-  async create(entity) {
-    try {
-      if (!entity || Object.keys(entity).length === 0) {
-        throw new DataCannotBeEmpty("Entity data cannot be empty");
-      }
-      const newEntity = await this.model.create(entity);
-      return { data: newEntity };
-    } catch (error) {
-      console.error(chalk2.red("Error in create:"), error);
-      throw error;
-    }
-  }
-  async update({
-    id,
-    entity,
-    populateFields
-  }) {
-    try {
-      if (!entity || Object.keys(entity).length === 0) {
-        throw new DataCannotBeEmpty("Update data cannot be empty");
-      }
-      let query = this.model.findByIdAndUpdate(id, entity, {
-        new: true
-      });
-      if (populateFields) {
-        query = query.populate(this.buildPopulate(populateFields));
-      }
-      const updatedData = await query;
-      if (!updatedData) {
-        throw new NotFoundError(`Data with id ${id} not found`);
-      }
-      return { data: updatedData };
-    } catch (error) {
-      console.error(chalk2.red("Error in update:"), error);
-      throw error;
-    }
-  }
-  async delete(id) {
-    try {
-      const deleted = await this.model.findByIdAndDelete(id);
-      if (!deleted) {
-        throw new NotFoundError(`Data with id ${id} not found`);
-      }
-      return { data: !!deleted };
-    } catch (error) {
-      console.error(chalk2.red("Error in delete:"), error);
-      throw error;
-    }
-  }
-  buildPopulate(paths) {
-    const tree = {};
-    const pathArray = Array.isArray(paths) ? paths : [paths];
-    for (const path2 of pathArray) {
-      const parts = path2.split(".");
-      let current = tree;
-      for (const part of parts) {
-        if (!current[part]) current[part] = {};
-        current = current[part];
-      }
-    }
-    function convert(node) {
-      return Object.entries(node).map(([key, value]) => {
-        const populate = convert(value);
-        const result2 = { path: key };
-        if (populate.length > 0) {
-          result2.populate = populate.length === 1 ? populate[0] : populate;
-        }
-        return result2;
-      });
-    }
-    const result = convert(tree);
-    return result.length === 1 ? result[0] : result;
-  }
-};
-
-// src/models/MongoDB/city.model.ts
-import mongoose2, { Schema } from "mongoose";
-var CitySchema = new Schema(
-  {
-    id: { type: Number, required: true },
-    name: { type: String },
-    latitude: { type: Number },
-    longitude: { type: Number },
-    province: { type: String },
-    population: { type: Number }
-  },
-  {
-    timestamps: true
-  }
-);
-var CityModel = mongoose2.model("City", CitySchema);
-var city_model_default = CityModel;
-
-// src/services/city.service.ts
-var CityService = class extends BaseService {
-  constructor() {
-    super(city_model_default);
-  }
-};
-
-// src/models/MongoDB/user.model.ts
-import mongoose3, { Schema as Schema2 } from "mongoose";
-
-// src/types/enums.ts
-var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
-  SportsEnum2["SWIMMING"] = "SWIMMING";
-  SportsEnum2["CYCLING"] = "CYCLING";
-  SportsEnum2["RUNNING"] = "RUNNING";
-  SportsEnum2["WALKING"] = "WALKING";
-  SportsEnum2["TRIATHLON"] = "TRIATHLON";
-  SportsEnum2["HYROX"] = "HYROX";
-  return SportsEnum2;
-})(SportsEnum || {});
-var TrainingLevelEnum = /* @__PURE__ */ ((TrainingLevelEnum2) => {
-  TrainingLevelEnum2["BEGINNER"] = "BEGINNER";
-  TrainingLevelEnum2["INTERMEDIATE"] = "INTERMEDIATE";
-  TrainingLevelEnum2["ADVANCED"] = "ADVANCED";
-  return TrainingLevelEnum2;
-})(TrainingLevelEnum || {});
-var TrainingGoalEnum = /* @__PURE__ */ ((TrainingGoalEnum2) => {
-  TrainingGoalEnum2["RACE"] = "RACE";
-  TrainingGoalEnum2["LOSE_WEIGHT"] = "LOSE_WEIGHT";
-  TrainingGoalEnum2["STAY_FIT"] = "STAY_FIT";
-  TrainingGoalEnum2["HAVE_FUN"] = "HAVE_FUN";
-  TrainingGoalEnum2["OTHER"] = "OTHER";
-  return TrainingGoalEnum2;
-})(TrainingGoalEnum || {});
-var TrainingFrequencyEnum = /* @__PURE__ */ ((TrainingFrequencyEnum2) => {
-  TrainingFrequencyEnum2["BEGINNER"] = "1_2_PER_WEEK";
-  TrainingFrequencyEnum2["INTERMEDIATE"] = "3_4_PER_WEEK";
-  TrainingFrequencyEnum2["ADVANCED"] = "5_PLUS_PER_WEEK";
-  return TrainingFrequencyEnum2;
-})(TrainingFrequencyEnum || {});
-var DaysOfTheWeekEnum = /* @__PURE__ */ ((DaysOfTheWeekEnum2) => {
-  DaysOfTheWeekEnum2["MONDAY"] = "MONDAY";
-  DaysOfTheWeekEnum2["TUESDAY"] = "TUESDAY";
-  DaysOfTheWeekEnum2["WEDNESDAY"] = "WEDNESDAY";
-  DaysOfTheWeekEnum2["THURSDAY"] = "THURSDAY";
-  DaysOfTheWeekEnum2["FRIDAY"] = "FRIDAY";
-  DaysOfTheWeekEnum2["SATURDAY"] = "SATURDAY";
-  DaysOfTheWeekEnum2["SUNDAY"] = "SUNDAY";
-  return DaysOfTheWeekEnum2;
-})(DaysOfTheWeekEnum || {});
-var TimeSlotsEnum = /* @__PURE__ */ ((TimeSlotsEnum2) => {
-  TimeSlotsEnum2["T_06_00"] = "06:00";
-  TimeSlotsEnum2["T_06_30"] = "06:30";
-  TimeSlotsEnum2["T_07_00"] = "07:00";
-  TimeSlotsEnum2["T_07_30"] = "07:30";
-  TimeSlotsEnum2["T_08_00"] = "08:00";
-  TimeSlotsEnum2["T_08_30"] = "08:30";
-  TimeSlotsEnum2["T_09_00"] = "09:00";
-  TimeSlotsEnum2["T_09_30"] = "09:30";
-  TimeSlotsEnum2["T_10_00"] = "10:00";
-  TimeSlotsEnum2["T_10_30"] = "10:30";
-  TimeSlotsEnum2["T_11_00"] = "11:00";
-  TimeSlotsEnum2["T_11_30"] = "11:30";
-  TimeSlotsEnum2["T_12_00"] = "12:00";
-  TimeSlotsEnum2["T_12_30"] = "12:30";
-  TimeSlotsEnum2["T_13_00"] = "13:00";
-  TimeSlotsEnum2["T_13_30"] = "13:30";
-  TimeSlotsEnum2["T_14_00"] = "14:00";
-  TimeSlotsEnum2["T_14_30"] = "14:30";
-  TimeSlotsEnum2["T_15_00"] = "15:00";
-  TimeSlotsEnum2["T_15_30"] = "15:30";
-  TimeSlotsEnum2["T_16_00"] = "16:00";
-  TimeSlotsEnum2["T_16_30"] = "16:30";
-  TimeSlotsEnum2["T_17_00"] = "17:00";
-  TimeSlotsEnum2["T_17_30"] = "17:30";
-  TimeSlotsEnum2["T_18_00"] = "18:00";
-  TimeSlotsEnum2["T_18_30"] = "18:30";
-  TimeSlotsEnum2["T_19_00"] = "19:00";
-  TimeSlotsEnum2["T_19_30"] = "19:30";
-  TimeSlotsEnum2["T_20_00"] = "20:00";
-  TimeSlotsEnum2["T_20_30"] = "20:30";
-  TimeSlotsEnum2["T_21_00"] = "21:00";
-  TimeSlotsEnum2["T_21_30"] = "21:30";
-  TimeSlotsEnum2["T_22_00"] = "22:00";
-  return TimeSlotsEnum2;
-})(TimeSlotsEnum || {});
-var LanguageEnum = /* @__PURE__ */ ((LanguageEnum2) => {
-  LanguageEnum2["IT"] = "it";
-  LanguageEnum2["EN"] = "en";
-  return LanguageEnum2;
-})(LanguageEnum || {});
-var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
-  TrainingStatusEnum2["SCHEDULED"] = "SCHEDULED";
-  TrainingStatusEnum2["COMPLETED"] = "COMPLETED";
-  TrainingStatusEnum2["CANCELLED"] = "CANCELLED";
-  return TrainingStatusEnum2;
-})(TrainingStatusEnum || {});
-
-// src/models/MongoDB/user.model.ts
-var UserSchema = new Schema2(
-  {
-    athlete_bio: { type: String, required: false },
-    auth_id: { type: String, required: true },
-    city: { type: Schema2.Types.ObjectId, ref: "City", required: false },
-    completed_trainings: { type: Number, default: 0 },
-    date_of_birth: { type: Date, required: false },
-    email: { type: String, required: true, unique: true },
-    first_name: { type: String },
-    has_completed_onboarding: { type: Boolean, required: false },
-    image_url: { type: String, required: false },
-    last_name: { type: String },
-    last_onboarding_step: { type: String, required: false },
-    privacy_settings: { type: Boolean, default: false },
-    range_of_action: { type: Number },
-    sports: [
-      {
-        type: String,
-        enum: Object.values(SportsEnum)
-      }
-    ],
-    training_created: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
-    training_goal: [
-      {
-        type: String,
-        enum: Object.values(TrainingGoalEnum)
-      }
-    ],
-    training_join: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
-    training_level: {
-      type: String,
-      enum: Object.values(TrainingLevelEnum)
-    },
-    training_frequency: {
-      type: String,
-      enum: Object.values(TrainingFrequencyEnum)
-    },
-    training_partner_preference: { type: String },
-    training_time_slot: [
-      {
-        day: {
-          type: String,
-          enum: Object.values(DaysOfTheWeekEnum)
-        },
-        startTime: {
-          type: String,
-          enum: Object.values(TimeSlotsEnum)
-        },
-        endTime: {
-          type: String,
-          enum: Object.values(TimeSlotsEnum)
-        }
-      }
-    ],
-    training_points: { type: Number, default: 0 },
-    review_points: { type: Number, default: 0 },
-    username: { type: String, unique: true, sparse: true },
-    count_training_organized: { type: Number, default: 0 },
-    count_training_joined: { type: Number, default: 0 },
-    count_training_missed: { type: Number, default: 0 },
-    language: {
-      type: String,
-      enum: Object.values(LanguageEnum),
-      default: "it" /* IT */
-    }
-  },
-  {
-    timestamps: true
-  }
-);
-var UserModel = mongoose3.model("User", UserSchema);
-var user_model_default = UserModel;
-
-// src/services/user.service.ts
-var UserService = class extends BaseService {
-  constructor() {
-    super(user_model_default);
-  }
-};
-
-// src/models/MongoDB/comment.model.ts
-import mongoose4, { Schema as Schema3 } from "mongoose";
-var CommentSchema = new Schema3(
-  {
-    user: { type: Schema3.Types.ObjectId, ref: "User", required: true },
-    text: { type: String, required: true }
-  },
-  {
-    timestamps: true
-  }
-);
-var CommentModel = mongoose4.model("Comment", CommentSchema);
-var comment_model_default = CommentModel;
-
-// src/models/MongoDB/training.model.ts
-import mongoose5, { Schema as Schema4 } from "mongoose";
-var TrainingSchema = new Schema4(
-  {
-    title: { type: String, required: true },
-    description: { type: String, required: false },
-    date: { type: Date, required: true },
-    address: { type: String, required: true },
-    latitude: { type: String, required: true },
-    longitude: { type: String, required: true },
-    sport: {
-      type: String,
-      enum: Object.values(SportsEnum)
-    },
-    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
-    participantAttendance: [
-      {
-        participant: { type: Schema4.Types.ObjectId, ref: "User" },
-        attended: { type: Boolean, default: false }
-      }
-    ],
-    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
-    duration: { type: Number },
-    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
-    comments: [
-      {
-        type: Schema4.Types.ObjectId,
-        ref: "Comment"
-      }
-    ],
-    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
-    status: {
-      type: String,
-      enum: Object.values(TrainingStatusEnum),
-      default: "SCHEDULED" /* SCHEDULED */
-    }
-  },
-  {
-    timestamps: true
-  }
-);
-var TrainingModel = mongoose5.model(
-  "Training",
-  TrainingSchema
-);
-var training_model_default = TrainingModel;
-
-// src/models/MongoDB/review.model.ts
-import mongoose6, { Schema as Schema5 } from "mongoose";
-var ReviewSchema = new Schema5(
-  {
-    reviewer: { type: Schema5.Types.ObjectId, ref: "User", required: true },
-    rating: { type: Number, min: 1, max: 5, required: true },
-    comment: { type: String },
-    images: [{ type: String }],
-    createdAt: { type: Date, default: Date.now }
-  },
-  {
-    timestamps: true
-  }
-);
-var ReviewModel = mongoose6.model("Review", ReviewSchema);
-var review_model_default = ReviewModel;
-
-// src/services/training.service.ts
-var TrainingService = class extends BaseService {
-  constructor() {
-    super(training_model_default);
-  }
-  async create(entity) {
-    const { data: newTraining } = await super.create(entity);
-    if (newTraining && newTraining.creator) {
-      await user_model_default.findByIdAndUpdate(newTraining.creator, {
-        $inc: { count_training_organized: 1 }
-      });
-    }
-    return { data: newTraining };
-  }
-  async delete(id) {
-    const training = await this.model.findById(id);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    const creatorId = training.creator;
-    const { data: deleted } = await super.delete(id);
-    if (deleted && creatorId) {
-      await user_model_default.findByIdAndUpdate(creatorId, {
-        $inc: { count_training_organized: -1 }
-      });
-    }
-    return { data: deleted };
-  }
-  async addLike(id, userId) {
-    return this.model.findByIdAndUpdate(
-      id,
-      { $addToSet: { likes: userId } },
-      { new: true }
-    );
-  }
-  async removeLike(id, userId) {
-    return this.model.findByIdAndUpdate(
-      id,
-      { $pull: { likes: userId } },
-      { new: true }
-    );
-  }
-  async addParticipant(id, userId) {
-    const training = await this.model.findById(id);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    if (training.status !== "SCHEDULED" /* SCHEDULED */) {
-      throw new Error(
-        "Cannot add participant. Training is not in scheduled status."
-      );
-    }
-    const newParticipant = { participant: userId, attended: true };
-    return this.model.findByIdAndUpdate(
-      id,
-      { $addToSet: { participantAttendance: newParticipant } },
-      { new: true }
-    );
-  }
-  async removeParticipant(id, userId) {
-    const training = await this.model.findById(id);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    if (training.status !== "SCHEDULED" /* SCHEDULED */) {
-      throw new Error(
-        "Cannot remove participant. Training is not in scheduled status."
-      );
-    }
-    return this.model.findByIdAndUpdate(
-      id,
-      { $pull: { participantAttendance: { participant: userId } } },
-      { new: true }
-    );
-  }
-  async addComment(id, userId, text) {
-    const comment = await comment_model_default.create({ user: userId, text });
-    return this.model.findByIdAndUpdate(
-      id,
-      { $push: { comments: comment._id } },
-      { new: true }
-    );
-  }
-  async updateComment(commentId, text) {
-    return comment_model_default.findByIdAndUpdate(
-      commentId,
-      { text, updatedAt: /* @__PURE__ */ new Date() },
-      { new: true }
-    );
-  }
-  async removeComment(id, commentId) {
-    await comment_model_default.deleteOne({ _id: commentId });
-    return this.model.findByIdAndUpdate(
-      id,
-      { $pull: { comments: commentId } },
-      { new: true }
-    );
-  }
-  async changeStatus(id, userId, newStatus) {
-    const training = await this.model.findById(id);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    const validStatuses = [
-      "SCHEDULED" /* SCHEDULED */,
-      "COMPLETED" /* COMPLETED */,
-      "CANCELLED" /* CANCELLED */
-    ];
-    if (!validStatuses.includes(newStatus)) {
-      throw new Error(
-        "Invalid status. Must be one of: scheduled, completed, cancelled"
-      );
-    }
-    if (training.creator.toString() !== userId) {
-      throw new Error("Only the creator can change the status");
-    }
-    if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (training.participantAttendance && training.participantAttendance.length > 0) {
-        await user_model_default.findByIdAndUpdate(userId, {
-          $inc: { training_points: 5 }
-        });
-        for (const attendance of training.participantAttendance) {
-          if (attendance.attended) {
-            await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_joined: 1, training_points: 1 }
-            });
-          } else {
-            await user_model_default.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_missed: 1 }
-            });
-          }
-        }
-      }
-    }
-    if (newStatus === "CANCELLED" /* CANCELLED */ && training.status !== "CANCELLED" /* CANCELLED */) {
-      await user_model_default.findByIdAndUpdate(userId, {
-        $inc: { count_training_organized: -1 }
-      });
-    }
-    return this.model.findByIdAndUpdate(
-      id,
-      { status: newStatus },
-      { new: true }
-    );
-  }
-  async addReview(trainingId, reviewerId, rating, comment, images) {
-    const training = await this.model.findById(trainingId);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    if (training.status !== "COMPLETED" /* COMPLETED */) {
-      throw new Error("Training must be completed before it can be reviewed");
-    }
-    const isParticipant = training.participantAttendance && training.participantAttendance.some(
-      (attendance) => attendance.participant.toString() === reviewerId
-    );
-    if (!isParticipant) {
-      throw new Error("Only participants can add reviews");
-    }
-    if (rating < 1 || rating > 5) {
-      throw new Error("Rating must be between 1 and 5");
-    }
-    const existingReview = await review_model_default.findOne({
-      training: trainingId,
-      reviewer: reviewerId
-    });
-    if (existingReview) {
-      throw new Error("You have already reviewed this training");
-    }
-    const review = await review_model_default.create({
-      training: trainingId,
-      reviewer: reviewerId,
-      rating,
-      comment,
-      images
-    });
-    await this.model.findByIdAndUpdate(trainingId, {
-      $addToSet: { reviews: review._id }
-    });
-    await user_model_default.findByIdAndUpdate(training.creator, {
-      $inc: { review_points: rating }
-    });
-    return review;
-  }
-};
-
-// src/utils/validators/validateFileContent.ts
-import { fileTypeFromBuffer } from "file-type";
-var validateFileContent = async (fileBuffer) => {
-  const fileType = await fileTypeFromBuffer(fileBuffer);
-  return fileType ? fileType.mime.startsWith("image/") : false;
-};
-
 // src/utils/handleError.ts
-import mongoose7 from "mongoose";
-import chalk3 from "chalk";
 function handleError(res, error) {
-  console.error(chalk3.red("Error:", error));
+  console.error(chalk2.red("Error:", error));
   if (error instanceof BaseError) {
     return res.status(error.statusCode).json(error.toJSON());
   }
@@ -781,13 +144,13 @@ function handleError(res, error) {
   if (error instanceof DataCannotBeEmpty) {
     return res.status(400).json(error.toJSON());
   }
-  if (error instanceof mongoose7.Error.ValidationError) {
+  if (error instanceof mongoose2.Error.ValidationError) {
     return res.status(400).json(new MongoValidationError(error).toJSON());
   }
-  if (error instanceof mongoose7.Error.CastError) {
+  if (error instanceof mongoose2.Error.CastError) {
     return res.status(422).json(new MongoCastError(error).toJSON());
   }
-  if (error instanceof mongoose7.mongo.MongoServerError) {
+  if (error instanceof mongoose2.mongo.MongoServerError) {
     if (error.code === 11e3) {
       return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
     }
@@ -814,8 +177,8 @@ var BaseController = class {
     if (!token) {
       throw new Error("No token provided");
     }
-    const query = this.service.model.findOne({
-      auth_id: token.payload.user_id
+    const query = this.userService.model.findOne({
+      authId: token.payload.user_id
     });
     if (populate) {
       query.populate(populate);
@@ -909,67 +272,78 @@ var CityController = class extends BaseController {
   }
 };
 
-// src/controllers/upload.controller.ts
-import chalk4 from "chalk";
-import multer2 from "multer";
-import path from "path";
-import fs from "fs/promises";
-var UploadFile = async (req, res) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ message: "NO FILE UPLOADED" });
-      return;
-    }
-    const isValidateFileContent = await validateFileContent(req.file.buffer);
-    if (!isValidateFileContent) {
-      res.status(422).json({ message: "INVALID FILE CONTENT" });
-      return;
-    }
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const fileExtension = path.extname(req.file.originalname);
-    const fileName = `${req.file.fieldname}-${uniqueSuffix}${fileExtension}`;
-    const filePath = path.join("uploads", fileName);
-    await fs.writeFile(filePath, req.file.buffer);
-    console.info(chalk4.green(`File ${fileName} uploaded successfully`));
-    res.status(200).json({
-      message: "FILE UPLOADED SUCCESSFULLY",
-      file: {
-        filename: fileName,
-        path: filePath,
-        mimetype: req.file.mimetype,
-        size: req.file.size
+// src/controllers/cloudinary.controller.ts
+var CloudinaryController = class {
+  service;
+  constructor(cloudinaryService) {
+    this.service = cloudinaryService;
+  }
+  upload = async (req, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ message: "NO FILE UPLOADED" });
+        return;
       }
-    });
-  } catch (error) {
-    console.error(chalk4.red(error));
-    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    return;
-  }
-};
-var handleUploadError = (error, res, next) => {
-  if (error instanceof multer2.MulterError) {
-    if (error.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ message: "FILE TOO LARGE" });
-    } else {
-      res.status(400).json({ message: error.message });
+      const folder = req.body.folder;
+      const result = await this.service.upload(req.file, folder);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        message: "UPLOAD FAILED",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
-  } else if (error instanceof Error) {
-    res.status(400).json({ message: error.message });
-  } else {
-    next();
-  }
+  };
+  delete = async (req, res) => {
+    try {
+      const { public_id } = req.params;
+      if (!public_id) {
+        res.status(400).json({ message: "PUBLIC_ID IS REQUIRED" });
+        return;
+      }
+      await this.service.delete(public_id);
+      res.status(200).json();
+    } catch (error) {
+      res.status(500).json({
+        message: "DELETE FAILED",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  };
 };
 
-// src/controllers/user.controller.ts
-var UserController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(userService) {
-    super(userService);
+// src/controllers/geocode.controller.ts
+var GeocodeController = class {
+  service;
+  constructor(geocodeService) {
+    this.service = geocodeService;
   }
-  async getMe(req, res) {
+  async search(req, res) {
     try {
-      const user = await this.getUserFromToken(req);
-      res.json(user);
+      const { search } = req.query;
+      const language = req.headers["accept-language"]?.split(",")[0] || "it";
+      if (!search || typeof search !== "string") {
+        res.status(400).json({ message: "search parameter is required" });
+        return;
+      }
+      const results = await this.service.geocode(search, language);
+      res.json({ data: results });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async reverse(req, res) {
+    try {
+      const { lat, lon } = req.query;
+      const language = req.headers["accept-language"]?.split(",")[0] || "it";
+      if (!lat || !lon || typeof lat !== "string" || typeof lon !== "string") {
+        res.status(400).json({
+          message: "Latitude and longitude parameters are required"
+        });
+        return;
+      }
+      const result = await this.service.reverse(lat, lon, language);
+      res.json({ data: result });
     } catch (error) {
       handleError(res, error);
     }
@@ -1089,6 +463,685 @@ var TrainingController = class extends BaseController {
   }
 };
 
+// src/controllers/upload.controller.ts
+import chalk3 from "chalk";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
+
+// src/controllers/user.controller.ts
+var UserController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(userService) {
+    super(userService);
+  }
+  async getMe(req, res) {
+    try {
+      const user = await this.getUserFromToken(req);
+      res.json(user);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/services/base.service.ts
+import chalk4 from "chalk";
+var BaseService = class {
+  model;
+  constructor(model) {
+    this.model = model;
+  }
+  async get({
+    id,
+    populateFields
+  }) {
+    try {
+      let query = this.model.findById(id);
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const result = await query;
+      return { data: result };
+    } catch (error) {
+      console.error(chalk4.red("Error in get method:"), error);
+      throw error;
+    }
+  }
+  async list({
+    pageNum = 1,
+    pageSize = 10,
+    populateFields,
+    sort,
+    filters = {}
+  }) {
+    try {
+      const validPageNum = Math.max(1, pageNum);
+      const validPageSize = Math.max(1, pageSize);
+      const skips = validPageSize * (validPageNum - 1);
+      const totalItems = await this.model.countDocuments(filters);
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      let query = this.model.find(filters);
+      if (sort) {
+        query = query.sort(sort);
+      }
+      query = query.skip(skips).limit(validPageSize);
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const data = await query;
+      return {
+        data,
+        totalItems,
+        totalPages,
+        pageSize: validPageSize,
+        currentPage: validPageNum,
+        hasNextPage: validPageNum < totalPages,
+        hasPreviousPage: validPageNum > 1
+      };
+    } catch (error) {
+      console.error(chalk4.red("Error in list:"), chalk4.red(error));
+      throw error;
+    }
+  }
+  async create(entity) {
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Entity data cannot be empty");
+      }
+      const newEntity = await this.model.create(entity);
+      return { data: newEntity };
+    } catch (error) {
+      console.error(chalk4.red("Error in create:"), error);
+      throw error;
+    }
+  }
+  async update({
+    id,
+    entity,
+    populateFields
+  }) {
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Update data cannot be empty");
+      }
+      let query = this.model.findByIdAndUpdate(id, entity, {
+        new: true
+      });
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const updatedData = await query;
+      if (!updatedData) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: updatedData };
+    } catch (error) {
+      console.error(chalk4.red("Error in update:"), error);
+      throw error;
+    }
+  }
+  async delete(id) {
+    try {
+      const deleted = await this.model.findByIdAndDelete(id);
+      if (!deleted) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: !!deleted };
+    } catch (error) {
+      console.error(chalk4.red("Error in delete:"), error);
+      throw error;
+    }
+  }
+  buildPopulate(paths) {
+    const tree = {};
+    const pathArray = Array.isArray(paths) ? paths : [paths];
+    for (const path2 of pathArray) {
+      const parts = path2.split(".");
+      let current = tree;
+      for (const part of parts) {
+        if (!current[part]) current[part] = {};
+        current = current[part];
+      }
+    }
+    function convert(node) {
+      return Object.entries(node).map(([key, value]) => {
+        const populate = convert(value);
+        const result2 = { path: key };
+        if (populate.length > 0) {
+          result2.populate = populate.length === 1 ? populate[0] : populate;
+        }
+        return result2;
+      });
+    }
+    const result = convert(tree);
+    return result.length === 1 ? result[0] : result;
+  }
+};
+
+// src/models/MongoDB/city.model.ts
+import mongoose3, { Schema } from "mongoose";
+var CitySchema = new Schema(
+  {
+    id: { type: Number, required: true },
+    name: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    province: { type: String },
+    population: { type: Number }
+  },
+  {
+    timestamps: true
+  }
+);
+var CityModel = mongoose3.model("City", CitySchema);
+var city_model_default = CityModel;
+
+// src/services/city.service.ts
+var CityService = class extends BaseService {
+  constructor() {
+    super(city_model_default);
+  }
+};
+
+// src/services/cloudinary.service.ts
+import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
+var CloudinaryService = class {
+  async upload(file, folder) {
+    try {
+      return new Promise((resolve, reject) => {
+        const baseFolder = process.env.CLOUDINARY_BASE_FOLDER_UPLOAD;
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            asset_folder: baseFolder + (folder ? `/${folder}` : ""),
+            resource_type: "auto"
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            if (!result) return reject(new Error("No result from Cloudinary"));
+            resolve(result);
+          }
+        );
+        const bufferStream = Readable.from(file.buffer);
+        bufferStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to upload image: ${errorMessage}`);
+    }
+  }
+  async delete(publicId) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to delete image: ${errorMessage}`);
+    }
+  }
+};
+
+// src/services/geocode.service.ts
+import fetch from "node-fetch";
+var GeocodeService = class {
+  baseUrl = "https://nominatim.openstreetmap.org";
+  async geocode(search, language = "it") {
+    const url = `${this.baseUrl}/search?format=json&q=${encodeURIComponent(search)}&addressdetails=1&accept-language=${language}&countrycodes=it`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "TrainTribe API Server",
+        Referer: process.env.APP_URL || ""
+      }
+    });
+    return await response.json();
+  }
+  async reverse(lat, lon, language = "it") {
+    const url = `${this.baseUrl}/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=${language}`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "TrainTribe API Server",
+        Referer: process.env.APP_URL || ""
+      }
+    });
+    return await response.json();
+  }
+};
+
+// src/models/MongoDB/comment.model.ts
+import mongoose4, { Schema as Schema2 } from "mongoose";
+var CommentSchema = new Schema2(
+  {
+    user: { type: Schema2.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true }
+  },
+  {
+    timestamps: true
+  }
+);
+var CommentModel = mongoose4.model("Comment", CommentSchema);
+var comment_model_default = CommentModel;
+
+// src/models/MongoDB/review.model.ts
+import mongoose5, { Schema as Schema3 } from "mongoose";
+var ReviewSchema = new Schema3(
+  {
+    reviewer: { type: Schema3.Types.ObjectId, ref: "User", required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    comment: { type: String },
+    images: [{ type: Schema3.Types.Mixed }],
+    createdAt: { type: Date, default: Date.now }
+  },
+  {
+    timestamps: true
+  }
+);
+var ReviewModel = mongoose5.model("Review", ReviewSchema);
+var review_model_default = ReviewModel;
+
+// src/models/MongoDB/training.model.ts
+import mongoose6, { Schema as Schema4 } from "mongoose";
+
+// src/types/enums.ts
+var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
+  SportsEnum2["SWIMMING"] = "SWIMMING";
+  SportsEnum2["CYCLING"] = "CYCLING";
+  SportsEnum2["RUNNING"] = "RUNNING";
+  SportsEnum2["WALKING"] = "WALKING";
+  SportsEnum2["TRIATHLON"] = "TRIATHLON";
+  SportsEnum2["HYROX"] = "HYROX";
+  return SportsEnum2;
+})(SportsEnum || {});
+var TrainingLevelEnum = /* @__PURE__ */ ((TrainingLevelEnum2) => {
+  TrainingLevelEnum2["BEGINNER"] = "BEGINNER";
+  TrainingLevelEnum2["INTERMEDIATE"] = "INTERMEDIATE";
+  TrainingLevelEnum2["ADVANCED"] = "ADVANCED";
+  return TrainingLevelEnum2;
+})(TrainingLevelEnum || {});
+var TrainingGoalEnum = /* @__PURE__ */ ((TrainingGoalEnum2) => {
+  TrainingGoalEnum2["RACE"] = "RACE";
+  TrainingGoalEnum2["LOSE_WEIGHT"] = "LOSE_WEIGHT";
+  TrainingGoalEnum2["STAY_FIT"] = "STAY_FIT";
+  TrainingGoalEnum2["HAVE_FUN"] = "HAVE_FUN";
+  TrainingGoalEnum2["OTHER"] = "OTHER";
+  return TrainingGoalEnum2;
+})(TrainingGoalEnum || {});
+var TrainingFrequencyEnum = /* @__PURE__ */ ((TrainingFrequencyEnum2) => {
+  TrainingFrequencyEnum2["BEGINNER"] = "1_2_PER_WEEK";
+  TrainingFrequencyEnum2["INTERMEDIATE"] = "3_4_PER_WEEK";
+  TrainingFrequencyEnum2["ADVANCED"] = "5_PLUS_PER_WEEK";
+  return TrainingFrequencyEnum2;
+})(TrainingFrequencyEnum || {});
+var DaysOfTheWeekEnum = /* @__PURE__ */ ((DaysOfTheWeekEnum2) => {
+  DaysOfTheWeekEnum2["MONDAY"] = "MONDAY";
+  DaysOfTheWeekEnum2["TUESDAY"] = "TUESDAY";
+  DaysOfTheWeekEnum2["WEDNESDAY"] = "WEDNESDAY";
+  DaysOfTheWeekEnum2["THURSDAY"] = "THURSDAY";
+  DaysOfTheWeekEnum2["FRIDAY"] = "FRIDAY";
+  DaysOfTheWeekEnum2["SATURDAY"] = "SATURDAY";
+  DaysOfTheWeekEnum2["SUNDAY"] = "SUNDAY";
+  return DaysOfTheWeekEnum2;
+})(DaysOfTheWeekEnum || {});
+var TimeSlotsEnum = /* @__PURE__ */ ((TimeSlotsEnum2) => {
+  TimeSlotsEnum2["T_06_00"] = "06:00";
+  TimeSlotsEnum2["T_06_30"] = "06:30";
+  TimeSlotsEnum2["T_07_00"] = "07:00";
+  TimeSlotsEnum2["T_07_30"] = "07:30";
+  TimeSlotsEnum2["T_08_00"] = "08:00";
+  TimeSlotsEnum2["T_08_30"] = "08:30";
+  TimeSlotsEnum2["T_09_00"] = "09:00";
+  TimeSlotsEnum2["T_09_30"] = "09:30";
+  TimeSlotsEnum2["T_10_00"] = "10:00";
+  TimeSlotsEnum2["T_10_30"] = "10:30";
+  TimeSlotsEnum2["T_11_00"] = "11:00";
+  TimeSlotsEnum2["T_11_30"] = "11:30";
+  TimeSlotsEnum2["T_12_00"] = "12:00";
+  TimeSlotsEnum2["T_12_30"] = "12:30";
+  TimeSlotsEnum2["T_13_00"] = "13:00";
+  TimeSlotsEnum2["T_13_30"] = "13:30";
+  TimeSlotsEnum2["T_14_00"] = "14:00";
+  TimeSlotsEnum2["T_14_30"] = "14:30";
+  TimeSlotsEnum2["T_15_00"] = "15:00";
+  TimeSlotsEnum2["T_15_30"] = "15:30";
+  TimeSlotsEnum2["T_16_00"] = "16:00";
+  TimeSlotsEnum2["T_16_30"] = "16:30";
+  TimeSlotsEnum2["T_17_00"] = "17:00";
+  TimeSlotsEnum2["T_17_30"] = "17:30";
+  TimeSlotsEnum2["T_18_00"] = "18:00";
+  TimeSlotsEnum2["T_18_30"] = "18:30";
+  TimeSlotsEnum2["T_19_00"] = "19:00";
+  TimeSlotsEnum2["T_19_30"] = "19:30";
+  TimeSlotsEnum2["T_20_00"] = "20:00";
+  TimeSlotsEnum2["T_20_30"] = "20:30";
+  TimeSlotsEnum2["T_21_00"] = "21:00";
+  TimeSlotsEnum2["T_21_30"] = "21:30";
+  TimeSlotsEnum2["T_22_00"] = "22:00";
+  return TimeSlotsEnum2;
+})(TimeSlotsEnum || {});
+var LanguageEnum = /* @__PURE__ */ ((LanguageEnum2) => {
+  LanguageEnum2["IT"] = "it";
+  LanguageEnum2["EN"] = "en";
+  return LanguageEnum2;
+})(LanguageEnum || {});
+var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
+  TrainingStatusEnum2["SCHEDULED"] = "SCHEDULED";
+  TrainingStatusEnum2["COMPLETED"] = "COMPLETED";
+  TrainingStatusEnum2["CANCELLED"] = "CANCELLED";
+  return TrainingStatusEnum2;
+})(TrainingStatusEnum || {});
+
+// src/models/MongoDB/training.model.ts
+var TrainingSchema = new Schema4(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: false },
+    date: { type: Date, required: true },
+    address: { type: String, required: true },
+    latitude: { type: String, required: true },
+    longitude: { type: String, required: true },
+    sport: {
+      type: String,
+      enum: Object.values(SportsEnum)
+    },
+    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
+    participantAttendance: [
+      {
+        participant: { type: Schema4.Types.ObjectId, ref: "User" },
+        attended: { type: Boolean, default: false }
+      }
+    ],
+    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
+    duration: { type: Number },
+    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
+    comments: [
+      {
+        type: Schema4.Types.ObjectId,
+        ref: "Comment"
+      }
+    ],
+    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
+    status: {
+      type: String,
+      enum: Object.values(TrainingStatusEnum),
+      default: "SCHEDULED" /* SCHEDULED */
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+var TrainingModel = mongoose6.model(
+  "Training",
+  TrainingSchema
+);
+var training_model_default = TrainingModel;
+
+// src/models/MongoDB/user.model.ts
+import mongoose7, { Schema as Schema5 } from "mongoose";
+var UserSchema = new Schema5(
+  {
+    athleteBio: { type: String, required: false },
+    authId: { type: String, required: true },
+    city: { type: Schema5.Types.ObjectId, ref: "City", required: false },
+    completedTrainings: { type: Number, default: 0 },
+    dateOfBirth: { type: Date, required: false },
+    email: { type: String, required: true, unique: true },
+    firstName: { type: String },
+    hasCompletedOnboarding: { type: Boolean, required: false },
+    image: { type: Schema5.Types.Mixed, required: false },
+    lastName: { type: String },
+    lastOnboardingStep: { type: String, required: false },
+    privacySettings: { type: Boolean, default: false },
+    rangeOfAction: { type: Number },
+    sports: [
+      {
+        type: String,
+        enum: Object.values(SportsEnum)
+      }
+    ],
+    trainingGoal: [
+      {
+        type: String,
+        enum: Object.values(TrainingGoalEnum)
+      }
+    ],
+    trainingLevel: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    trainingFrequency: {
+      type: String,
+      enum: Object.values(TrainingFrequencyEnum)
+    },
+    trainingPartnerPreference: { type: String },
+    trainingTimeSlot: [
+      {
+        day: {
+          type: String,
+          enum: Object.values(DaysOfTheWeekEnum)
+        },
+        startTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        },
+        endTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        }
+      }
+    ],
+    trainingPoints: { type: Number, default: 0 },
+    reviewPoints: { type: Number, default: 0 },
+    username: { type: String, unique: true, sparse: true },
+    countTrainingOrganized: { type: Number, default: 0 },
+    countTrainingJoined: { type: Number, default: 0 },
+    countTrainingMissed: { type: Number, default: 0 },
+    language: {
+      type: String,
+      enum: Object.values(LanguageEnum),
+      default: "it" /* IT */
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+var UserModel = mongoose7.model("User", UserSchema);
+var user_model_default = UserModel;
+
+// src/services/training.service.ts
+var TrainingService = class extends BaseService {
+  constructor() {
+    super(training_model_default);
+  }
+  async create(entity) {
+    const { data: newTraining } = await super.create(entity);
+    if (newTraining && newTraining.creator) {
+      await user_model_default.findByIdAndUpdate(newTraining.creator, {
+        $inc: { countTrainingOrganized: 1 }
+      });
+    }
+    return { data: newTraining };
+  }
+  async delete(id) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    const creatorId = training.creator;
+    const { data: deleted } = await super.delete(id);
+    if (deleted && creatorId) {
+      await user_model_default.findByIdAndUpdate(creatorId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
+    }
+    return { data: deleted };
+  }
+  async addLike(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $addToSet: { likes: userId } },
+      { new: true }
+    );
+  }
+  async removeLike(id, userId) {
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { likes: userId } },
+      { new: true }
+    );
+  }
+  async addParticipant(id, userId) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    if (training.status !== "SCHEDULED" /* SCHEDULED */) {
+      throw new Error(
+        "Cannot add participant. Training is not in scheduled status."
+      );
+    }
+    const newParticipant = { participant: userId, attended: true };
+    return this.model.findByIdAndUpdate(
+      id,
+      { $addToSet: { participantAttendance: newParticipant } },
+      { new: true }
+    );
+  }
+  async removeParticipant(id, userId) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    if (training.status !== "SCHEDULED" /* SCHEDULED */) {
+      throw new Error(
+        "Cannot remove participant. Training is not in scheduled status."
+      );
+    }
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { participantAttendance: { participant: userId } } },
+      { new: true }
+    );
+  }
+  async addComment(id, userId, text) {
+    const comment = await comment_model_default.create({ user: userId, text });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $push: { comments: comment._id } },
+      { new: true }
+    );
+  }
+  async updateComment(commentId, text) {
+    return comment_model_default.findByIdAndUpdate(
+      commentId,
+      { text, updatedAt: /* @__PURE__ */ new Date() },
+      { new: true }
+    );
+  }
+  async removeComment(id, commentId) {
+    await comment_model_default.deleteOne({ _id: commentId });
+    return this.model.findByIdAndUpdate(
+      id,
+      { $pull: { comments: commentId } },
+      { new: true }
+    );
+  }
+  async changeStatus(id, userId, newStatus) {
+    const training = await this.model.findById(id);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    const validStatuses = [
+      "SCHEDULED" /* SCHEDULED */,
+      "COMPLETED" /* COMPLETED */,
+      "CANCELLED" /* CANCELLED */
+    ];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(
+        "Invalid status. Must be one of: scheduled, completed, cancelled"
+      );
+    }
+    if (training.creator.toString() !== userId) {
+      throw new Error("Only the creator can change the status");
+    }
+    if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
+      if (training.participantAttendance && training.participantAttendance.length > 0) {
+        await user_model_default.findByIdAndUpdate(userId, {
+          $inc: { trainingPoints: 5 }
+        });
+        for (const attendance of training.participantAttendance) {
+          if (attendance.attended) {
+            await user_model_default.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingJoined: 1, trainingPoints: 1 }
+            });
+          } else {
+            await user_model_default.findByIdAndUpdate(attendance.participant, {
+              $inc: { countTrainingMissed: 1 }
+            });
+          }
+        }
+      }
+    }
+    if (newStatus === "CANCELLED" /* CANCELLED */ && training.status !== "CANCELLED" /* CANCELLED */) {
+      await user_model_default.findByIdAndUpdate(userId, {
+        $inc: { countTrainingOrganized: -1 }
+      });
+    }
+    return this.model.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true }
+    );
+  }
+  async addReview(trainingId, reviewerId, rating, comment, images) {
+    const training = await this.model.findById(trainingId);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    if (training.status !== "COMPLETED" /* COMPLETED */) {
+      throw new Error("Training must be completed before it can be reviewed");
+    }
+    const isParticipant = training.participantAttendance && training.participantAttendance.some(
+      (attendance) => attendance.participant.toString() === reviewerId
+    );
+    if (!isParticipant) {
+      throw new Error("Only participants can add reviews");
+    }
+    if (rating < 1 || rating > 5) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+    const existingReview = await review_model_default.findOne({
+      training: trainingId,
+      reviewer: reviewerId
+    });
+    if (existingReview) {
+      throw new Error("You have already reviewed this training");
+    }
+    const review = await review_model_default.create({
+      training: trainingId,
+      reviewer: reviewerId,
+      rating,
+      comment,
+      images
+    });
+    await this.model.findByIdAndUpdate(trainingId, {
+      $addToSet: { reviews: review._id }
+    });
+    await user_model_default.findByIdAndUpdate(training.creator, {
+      $inc: { reviewPoints: rating }
+    });
+    return review;
+  }
+};
+
+// src/services/user.service.ts
+var UserService = class extends BaseService {
+  constructor() {
+    super(user_model_default);
+  }
+};
+
 // src/container.ts
 var container = createContainer({
   injectionMode: InjectionMode.CLASSIC
@@ -1096,124 +1149,60 @@ var container = createContainer({
 container.register({
   cityService: asClass(CityService),
   userService: asClass(UserService),
-  trainingService: asClass(TrainingService)
+  trainingService: asClass(TrainingService),
+  cloudinaryService: asClass(CloudinaryService),
+  geocodeService: asClass(GeocodeService)
 }).register({
   cityController: asClass(CityController),
   userController: asClass(UserController),
-  trainingController: asClass(TrainingController)
+  trainingController: asClass(TrainingController),
+  cloudinaryController: asClass(CloudinaryController),
+  geocodeController: asClass(GeocodeController)
 });
 var container_default = container;
 
-// src/validators/user.validator.ts
-import { body } from "express-validator";
-var validateUserCreation = [
-  body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").exists({ checkFalsy: true }).withMessage("AUTH_ID IS REQUIRED").isString().withMessage("AUTH_ID INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
-  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
-  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
-    (sports) => sports.every(
-      (sport) => Object.values(SportsEnum).includes(sport)
-    )
-  ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
-    (goals) => goals.every(
-      (goal) => Object.values(TrainingGoalEnum).includes(goal)
-    )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
-];
-var validateUserUpdate = [
-  body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
-  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
-  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
-    (sports) => sports.every(
-      (sport) => Object.values(SportsEnum).includes(sport)
-    )
-  ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
-    (goals) => goals.every(
-      (goal) => Object.values(TrainingGoalEnum).includes(goal)
-    )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
-];
+// src/middlewares/auth.middleware.ts
+import { auth } from "express-oauth2-jwt-bearer";
+var authenticate = auth({
+  audience: process.env.OAUTH_AUDIENCE,
+  issuerBaseURL: process.env.OAUTH_DOMAIN,
+  tokenSigningAlg: "RS256"
+});
 
-// src/routes/user.routes.ts
-var userRoute = express.Router();
-var userController = container_default.resolve("userController");
-userRoute.get(
-  "/me",
-  authenticate,
-  (req, res) => userController.getMe(req, res)
-);
-userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
-userRoute.post(
-  "/",
-  authenticate,
-  validateUserCreation,
-  handleValidationErrors,
-  (req, res) => userController.create(req, res)
-);
-userRoute.put(
-  "/:id",
-  authenticate,
-  validateUserUpdate,
-  handleValidationErrors,
-  (req, res) => userController.update(req, res)
-);
-userRoute.delete(
-  "/:id",
-  authenticate,
-  (req, res) => userController.delete(req, res)
-);
-var user_routes_default = userRoute;
+// src/middlewares/upload.middleware.ts
+import multer2 from "multer";
+var fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
+  }
+};
+var upload = multer2({
+  storage: multer2.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 2
+    // 2MB file size limit
+  }
+});
 
-// src/routes/upload.route.ts
-import express2 from "express";
-var uploadRoute = express2.Router({ mergeParams: true });
-uploadRoute.post(
-  "/",
-  authenticate,
-  upload.single("image"),
-  handleUploadError,
-  UploadFile
-);
-var upload_route_default = uploadRoute;
+// src/middlewares/validation.middleware.ts
+import { validationResult } from "express-validator";
+var handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({
+      errors: errors.array(),
+      message: "INVALID INPUTS TYPE"
+    });
+    return;
+  }
+  next();
+};
 
 // src/routes/city.routes.ts
-import express3 from "express";
-var cityRoute = express3.Router();
+var cityRoute = express.Router();
 var cityController = container_default.resolve("cityController");
 cityRoute.post(
   "/list",
@@ -1237,6 +1226,41 @@ cityRoute.delete(
   (req, res) => cityController.delete(req, res)
 );
 var city_routes_default = cityRoute;
+
+// src/routes/cloudinary.route.ts
+import express2 from "express";
+var cloudinaryRoute = express2.Router();
+var cloudinaryController = container_default.resolve(
+  "cloudinaryController"
+);
+cloudinaryRoute.post(
+  "/upload",
+  authenticate,
+  upload.single("file"),
+  (req, res) => cloudinaryController.upload(req, res)
+);
+cloudinaryRoute.delete(
+  "/:public_id",
+  authenticate,
+  (req, res) => cloudinaryController.delete(req, res)
+);
+var cloudinary_route_default = cloudinaryRoute;
+
+// src/routes/geocode.routes.ts
+import express3 from "express";
+var geocodeRoutes = express3.Router();
+var geocodeController = container_default.resolve("geocodeController");
+geocodeRoutes.get(
+  "/search",
+  authenticate,
+  (req, res) => geocodeController.search(req, res)
+);
+geocodeRoutes.get(
+  "/reverse",
+  authenticate,
+  (req, res) => geocodeController.reverse(req, res)
+);
+var geocode_routes_default = geocodeRoutes;
 
 // src/routes/training.routes.ts
 import express4 from "express";
@@ -1273,12 +1297,12 @@ trainingRoutes.post(
   (req, res) => trainingController.addParticipant(req, res)
 );
 trainingRoutes.delete(
-  "/:id/likeremove",
+  "/:id/like",
   authenticate,
   (req, res) => trainingController.removeLike(req, res)
 );
 trainingRoutes.delete(
-  "/:id/participants/:userId",
+  "/:id/participants",
   authenticate,
   (req, res) => trainingController.removeParticipant(req, res)
 );
@@ -1314,12 +1338,101 @@ trainingRoutes.post(
 );
 var training_routes_default = trainingRoutes;
 
+// src/routes/user.routes.ts
+import express5 from "express";
+
+// src/validators/user.validator.ts
+import { body } from "express-validator";
+var validateUserCreation = [
+  body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("authId").exists({ checkFalsy: true }).withMessage("authId IS REQUIRED").isString().withMessage("authId INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("dateOfBirth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("trainingLevel").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("trainingLevel NOT ALLOWED"),
+  body("trainingGoal").optional().isArray().withMessage("trainingGoal MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID trainingGoal VALUE"),
+  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
+  body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings").optional().isBoolean().withMessage("privacySettings MUST BE BOOLEAN")
+];
+var validateUserUpdate = [
+  body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("authId").optional().isString().withMessage("authId INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("dateOfBirth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("trainingLevel").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("trainingLevel NOT ALLOWED"),
+  body("trainingGoal").optional().isArray().withMessage("trainingGoal MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID trainingGoal VALUE"),
+  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
+  body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings").optional().isBoolean().withMessage("privacySettings MUST BE BOOLEAN")
+];
+
+// src/routes/user.routes.ts
+var userRoute = express5.Router();
+var userController = container_default.resolve("userController");
+userRoute.get(
+  "/me",
+  authenticate,
+  (req, res) => userController.getMe(req, res)
+);
+userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
+userRoute.post(
+  "/",
+  authenticate,
+  validateUserCreation,
+  handleValidationErrors,
+  (req, res) => userController.create(req, res)
+);
+userRoute.put(
+  "/:id",
+  authenticate,
+  validateUserUpdate,
+  handleValidationErrors,
+  (req, res) => userController.update(req, res)
+);
+userRoute.delete(
+  "/:id",
+  authenticate,
+  (req, res) => userController.delete(req, res)
+);
+var user_routes_default = userRoute;
+
 // src/routes/index.ts
-var router = express5.Router({ mergeParams: true });
-router.use("/user", user_routes_default);
-router.use("/upload", upload_route_default);
+var router = express6.Router();
 router.use("/city", city_routes_default);
+router.use("/cloudinary", cloudinary_route_default);
+router.use("/geocode", geocode_routes_default);
 router.use("/training", training_routes_default);
+router.use("/user", user_routes_default);
 var routes_default = router;
 
 // src/mock/citys.mock.ts
@@ -1000143,17 +1000256,17 @@ var swaggerOptions = {
         },
         User: {
           type: "object",
-          required: ["email", "auth_id"],
+          required: ["email", "authId"],
           properties: {
             _id: {
               type: "string",
               description: "The unique identifier of the user"
             },
-            athlete_bio: {
+            athleteBio: {
               type: "string",
               description: "User's athletic biography"
             },
-            auth_id: {
+            authId: {
               type: "string",
               description: "Authentication ID from the auth provider"
             },
@@ -1000161,26 +1000274,26 @@ var swaggerOptions = {
               type: "string",
               description: "Reference to the user's city (ObjectId)"
             },
-            completed_trainings: {
+            completedTrainings: {
               type: "integer",
               description: "Number of trainings the user has completed"
             },
-            count_training_organized: {
+            countTrainingOrganized: {
               type: "integer",
               description: "Number of trainings organized by the user",
               example: 0
             },
-            count_training_joined: {
+            countTrainingJoined: {
               type: "integer",
               description: "Number of trainings the user has joined and attended",
               example: 0
             },
-            count_training_missed: {
+            countTrainingMissed: {
               type: "integer",
               description: "Number of trainings the user was registered for but missed",
               example: 0
             },
-            date_of_birth: {
+            dateOfBirth: {
               type: "string",
               format: "date",
               description: "The user's date of birth"
@@ -1000189,31 +1000302,31 @@ var swaggerOptions = {
               type: "string",
               description: "The email of the user"
             },
-            first_name: {
+            firstName: {
               type: "string",
               description: "The first name of the user"
             },
-            has_completed_onboarding: {
+            hasCompletedOnboarding: {
               type: "boolean",
               description: "Whether the user has completed onboarding"
             },
-            image_url: {
-              type: "string",
-              description: "The image URL"
+            image: {
+              type: "object",
+              description: "Object of cloudinary image"
             },
-            last_name: {
+            lastName: {
               type: "string",
               description: "The last name of the user"
             },
-            last_onboarding_step: {
+            lastOnboardingStep: {
               type: "string",
               description: "The last completed onboarding step"
             },
-            privacy_settings: {
+            privacySettings: {
               type: "boolean",
               description: "User's privacy settings"
             },
-            range_of_action: {
+            rangeOfAction: {
               type: "number",
               description: "User's preferred range of action in kilometers"
             },
@@ -1000232,7 +1000345,7 @@ var swaggerOptions = {
               },
               description: "Trainings created by the user"
             },
-            training_goal: {
+            trainingGoal: {
               type: "array",
               items: {
                 type: "string",
@@ -1000240,28 +1000353,21 @@ var swaggerOptions = {
               },
               description: "User's training goals"
             },
-            training_join: {
-              type: "array",
-              items: {
-                type: "string"
-              },
-              description: "Trainings the user has joined"
-            },
-            training_level: {
+            trainingLevel: {
               type: "string",
               enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
               description: "User's training level"
             },
-            training_frequency: {
+            trainingFrequency: {
               type: "string",
               enum: ["1_2_PER_WEEK", "3_4_PER_WEEK", "5_PLUS_PER_WEEK"],
               description: "User's training frequency"
             },
-            training_partner_preference: {
+            trainingPartnerPreference: {
               type: "string",
               description: "User's preference for training partners"
             },
-            training_time_slot: {
+            trainingTimeSlot: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/TimeSlot"
@@ -1000311,17 +1000417,17 @@ REQUIRED_ENV_VARS.forEach((varName) => {
   }
 });
 var SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "666", 10);
-var appServer = express6();
+var appServer = express7();
 appServer.use(scopePerRequest(container_default));
-appServer.use(express6.json());
+appServer.use(express7.json());
 var corsOptions = {
   origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 appServer.use(cors(corsOptions));
 appServer.options("*", cors(corsOptions));
-appServer.use(express6.urlencoded({ extended: true }));
-appServer.use(express6.static("public"));
+appServer.use(express7.urlencoded({ extended: true }));
+appServer.use(express7.static("public"));
 appServer.get("/", (_req, res) => {
   res.sendFile("index.html", { root: "./public" });
 });

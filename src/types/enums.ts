@@ -84,4 +84,5 @@ export enum TrainingStatusEnum {
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED"
 }
+
 /* eslint-enable no-unused-vars */

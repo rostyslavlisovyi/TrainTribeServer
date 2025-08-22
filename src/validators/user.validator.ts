@@ -1,8 +1,8 @@
 import { body, ValidationChain } from "express-validator";
 import {
   SportsEnum,
-  TrainingLevelEnum,
-  TrainingGoalEnum
+  TrainingGoalEnum,
+  TrainingLevelEnum
 } from "../types/enums.ts";
 
 export const validateUserCreation: ValidationChain[] = [
@@ -13,20 +13,20 @@ export const validateUserCreation: ValidationChain[] = [
     .withMessage("EMAIL INVALID TYPE")
     .normalizeEmail(),
 
-  body("auth_id")
+  body("authId")
     .exists({ checkFalsy: true })
-    .withMessage("AUTH_ID IS REQUIRED")
+    .withMessage("authId IS REQUIRED")
     .isString()
-    .withMessage("AUTH_ID INVALID TYPE"),
+    .withMessage("authId INVALID TYPE"),
 
   body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name")
+  body("firstName")
     .optional()
     .isString()
     .withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth")
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("dateOfBirth")
     .optional()
     .isISO8601()
     .withMessage("DATE OF BIRTH INVALID TYPE"),
@@ -43,61 +43,44 @@ export const validateUserCreation: ValidationChain[] = [
     )
     .withMessage("INVALID SPORT VALUE"),
 
-  body("training_level")
+  body("trainingLevel")
     .optional()
     .isIn(Object.values(TrainingLevelEnum))
-    .withMessage("TRAINING_LEVEL NOT ALLOWED"),
+    .withMessage("trainingLevel NOT ALLOWED"),
 
-  body("training_goal")
+  body("trainingGoal")
     .optional()
     .isArray()
-    .withMessage("TRAINING_GOAL MUST BE AN ARRAY")
+    .withMessage("trainingGoal MUST BE AN ARRAY")
     .custom((goals) =>
       goals.every((goal: string) =>
         Object.values(TrainingGoalEnum).includes(goal as TrainingGoalEnum)
       )
     )
-    .withMessage("INVALID TRAINING_GOAL VALUE"),
+    .withMessage("INVALID trainingGoal VALUE"),
 
-  body("completed_trainings")
+  body("completedTrainings")
     .optional()
     .isInt({ min: 0 })
-    .withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number")
-    .optional()
-    .isString()
-    .withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio")
+    .withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio")
     .optional()
     .isString()
     .isLength({ max: 500 })
-    .withMessage("ATHLETE_BIO TOO LONG"),
+    .withMessage("athleteBio TOO LONG"),
 
-  body("training_created")
-    .optional()
-    .isArray()
-    .withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*")
-    .isMongoId()
-    .withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join")
-    .optional()
-    .isArray()
-    .withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-
-  body("last_onboarding_step")
+  body("lastOnboardingStep")
     .optional()
     .isString()
-    .withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding")
+    .withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding")
     .optional()
     .isBoolean()
-    .withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings")
+    .withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings")
     .optional()
     .isBoolean()
-    .withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+    .withMessage("privacySettings MUST BE BOOLEAN")
 ];
 
 export const validateUserUpdate: ValidationChain[] = [
@@ -106,15 +89,15 @@ export const validateUserUpdate: ValidationChain[] = [
     .isEmail()
     .withMessage("EMAIL INVALID TYPE")
     .normalizeEmail(),
-  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("authId").optional().isString().withMessage("authId INVALID TYPE"),
   body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name")
+  body("firstName")
     .optional()
     .isString()
     .withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth")
+  body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("dateOfBirth")
     .optional()
     .isISO8601()
     .withMessage("DATE OF BIRTH INVALID TYPE"),
@@ -131,58 +114,41 @@ export const validateUserUpdate: ValidationChain[] = [
     )
     .withMessage("INVALID SPORT VALUE"),
 
-  body("training_level")
+  body("trainingLevel")
     .optional()
     .isIn(Object.values(TrainingLevelEnum))
-    .withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal")
+    .withMessage("trainingLevel NOT ALLOWED"),
+  body("trainingGoal")
     .optional()
     .isArray()
-    .withMessage("TRAINING_GOAL MUST BE AN ARRAY")
+    .withMessage("trainingGoal MUST BE AN ARRAY")
     .custom((goals) =>
       goals.every((goal: string) =>
         Object.values(TrainingGoalEnum).includes(goal as TrainingGoalEnum)
       )
     )
-    .withMessage("INVALID TRAINING_GOAL VALUE"),
+    .withMessage("INVALID trainingGoal VALUE"),
 
-  body("completed_trainings")
+  body("completedTrainings")
     .optional()
     .isInt({ min: 0 })
-    .withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number")
-    .optional()
-    .isString()
-    .withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio")
+    .withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
+  body("athleteBio")
     .optional()
     .isString()
     .isLength({ max: 500 })
-    .withMessage("ATHLETE_BIO TOO LONG"),
+    .withMessage("athleteBio TOO LONG"),
 
-  body("training_created")
-    .optional()
-    .isArray()
-    .withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*")
-    .isMongoId()
-    .withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join")
-    .optional()
-    .isArray()
-    .withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-
-  body("last_onboarding_step")
+  body("lastOnboardingStep")
     .optional()
     .isString()
-    .withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding")
+    .withMessage("lastOnboardingStep INVALID TYPE"),
+  body("hasCompletedOnboarding")
     .optional()
     .isBoolean()
-    .withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings")
+    .withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
+  body("privacySettings")
     .optional()
     .isBoolean()
-    .withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+    .withMessage("privacySettings MUST BE BOOLEAN")
 ];

@@ -1,13 +1,16 @@
-import express from "express";
-import userRoutes from "./user.routes.ts";
-import uploadRoute from "./upload.route.ts";
-import cityRoutes from "./city.routes.ts";
-import trainingRoutes from "./training.routes.ts";
-const router = express.Router({ mergeParams: true });
+import express, { Router } from "express";
+import cityRoute from "./city.routes.js";
+import cloudinaryRoute from "./cloudinary.route.js";
+import geocodeRoutes from "./geocode.routes.js";
+import trainingRoutes from "./training.routes.js";
+import userRoute from "./user.routes.js";
 
-router.use("/user", userRoutes);
-router.use("/upload", uploadRoute);
-router.use("/city", cityRoutes);
+const router: Router = express.Router();
+
+router.use("/city", cityRoute);
+router.use("/cloudinary", cloudinaryRoute);
+router.use("/geocode", geocodeRoutes);
 router.use("/training", trainingRoutes);
+router.use("/user", userRoute);
 
 export default router;

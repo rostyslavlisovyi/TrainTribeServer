@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { Document, FilterQuery, SortOrder } from "mongoose";
-import { BaseService } from "../services/index.js";
-import { handleError } from "../utils/index.js";
-import { UserService } from "../services/user.service.js";
 import container from "../container.js";
 import { IUser } from "../interfaces/user.interface.js";
+import { BaseService } from "../services/index.js";
+import { UserService } from "../services/user.service.js";
+import { handleError } from "../utils/index.js";
 
 export abstract class BaseController<
   T extends Document,
@@ -25,9 +25,8 @@ export abstract class BaseController<
     if (!token) {
       throw new Error("No token provided");
     }
-
-    const query = this.service.model.findOne({
-      auth_id: token.payload.user_id
+    const query = this.userService.model.findOne({
+      authId: token.payload.user_id
     });
     if (populate) {
       query.populate(populate as string | string[]);

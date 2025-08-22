@@ -1,9 +1,7 @@
-import { Router } from "express";
-import { UserController } from "../controllers/index.js";
-import express from "express";
-import { authenticate } from "../middlewares/index.js";
+import express, { Router } from "express";
 import container from "../container.ts";
-import { handleValidationErrors } from "../middlewares/index.js";
+import { UserController } from "../controllers/index.js";
+import { authenticate, handleValidationErrors } from "../middlewares/index.js";
 import {
   validateUserCreation,
   validateUserUpdate
@@ -128,18 +126,17 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 type: string
  *                 description: The username of the user
  *                 example: testuser
- *               first_name:
+ *               firstName:
  *                 type: string
  *                 description: The first name of the user
  *                 example: John
- *               last_name:
+ *               lastName:
  *                 type: string
  *                 description: The last name of the user
  *                 example: Doe
- *               image_url:
- *                 type: string
- *                 description: The image URL
- *                 example: https://example.com/profile.jpg
+ *               image:
+ *                 type: object
+ *                 description: The image object containing Cloudinary data
  *               latitude:
  *                 type: number
  *                 description: The latitude of the user's location
@@ -182,14 +179,14 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 message:
  *                   type: string
  *                   enum:
- *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image_url, latitude, longitude, sport"
+ *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *                     - "EMAIL IS REQUIRED"
- *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image_url, latitude, longitude, sport"
+ *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *             examples:
  *               extraFields:
  *                 summary: Extra fields provided in request body
  *                 value:
- *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, first_name, last_name, image_url, latitude, longitude, sport"
+ *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
  *               missingEmail:
  *                 summary: Missing required email field
  *                 value:
@@ -277,18 +274,17 @@ userRoute.post(
  *                 type: string
  *                 description: The username of the user
  *                 example: test_user
- *               first_name:
+ *               firstName:
  *                 type: string
  *                 description: The first name of the user
  *                 example: John
- *               last_name:
+ *               lastName:
  *                 type: string
  *                 description: The last name of the user
  *                 example: Doe
- *               image_url:
- *                 type: string
- *                 description: The image URL
- *                 example: https://example.com/profile.jpg
+ *               image:
+ *                 type: object
+ *                 description: The image object containing Cloudinary data
  *               latitude:
  *                 type: number
  *                 description: The latitude of the user's location
@@ -300,18 +296,6 @@ userRoute.post(
  *               sport:
  *                 type: array
  *                 description: The sports associated with the user
- *                 items:
- *                   type: string
- *                   example: 67543795b67ad667d26e3bdc
- *               training_created:
- *                 type: array
- *                 description: The trainings created by the user
- *                 items:
- *                   type: string
- *                   example: 67543795b67ad667d26e3bdc
- *               training_join:
- *                 type: array
- *                 description: The trainings joined by the user
  *                 items:
  *                   type: string
  *                   example: 67543795b67ad667d26e3bdc

@@ -1,6 +1,6 @@
+import { Express } from "express";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { Express } from "express";
 
 const swaggerOptions = {
   definition: {
@@ -330,17 +330,17 @@ const swaggerOptions = {
         },
         User: {
           type: "object",
-          required: ["email", "auth_id"],
+          required: ["email", "authId"],
           properties: {
             _id: {
               type: "string",
               description: "The unique identifier of the user"
             },
-            athlete_bio: {
+            athleteBio: {
               type: "string",
               description: "User's athletic biography"
             },
-            auth_id: {
+            authId: {
               type: "string",
               description: "Authentication ID from the auth provider"
             },
@@ -348,28 +348,28 @@ const swaggerOptions = {
               type: "string",
               description: "Reference to the user's city (ObjectId)"
             },
-            completed_trainings: {
+            completedTrainings: {
               type: "integer",
               description: "Number of trainings the user has completed"
             },
-            count_training_organized: {
+            countTrainingOrganized: {
               type: "integer",
               description: "Number of trainings organized by the user",
               example: 0
             },
-            count_training_joined: {
+            countTrainingJoined: {
               type: "integer",
               description:
                 "Number of trainings the user has joined and attended",
               example: 0
             },
-            count_training_missed: {
+            countTrainingMissed: {
               type: "integer",
               description:
                 "Number of trainings the user was registered for but missed",
               example: 0
             },
-            date_of_birth: {
+            dateOfBirth: {
               type: "string",
               format: "date",
               description: "The user's date of birth"
@@ -378,31 +378,31 @@ const swaggerOptions = {
               type: "string",
               description: "The email of the user"
             },
-            first_name: {
+            firstName: {
               type: "string",
               description: "The first name of the user"
             },
-            has_completed_onboarding: {
+            hasCompletedOnboarding: {
               type: "boolean",
               description: "Whether the user has completed onboarding"
             },
-            image_url: {
-              type: "string",
-              description: "The image URL"
+            image: {
+              type: "object",
+              description: "Object of cloudinary image"
             },
-            last_name: {
+            lastName: {
               type: "string",
               description: "The last name of the user"
             },
-            last_onboarding_step: {
+            lastOnboardingStep: {
               type: "string",
               description: "The last completed onboarding step"
             },
-            privacy_settings: {
+            privacySettings: {
               type: "boolean",
               description: "User's privacy settings"
             },
-            range_of_action: {
+            rangeOfAction: {
               type: "number",
               description: "User's preferred range of action in kilometers"
             },
@@ -421,7 +421,7 @@ const swaggerOptions = {
               },
               description: "Trainings created by the user"
             },
-            training_goal: {
+            trainingGoal: {
               type: "array",
               items: {
                 type: "string",
@@ -429,28 +429,21 @@ const swaggerOptions = {
               },
               description: "User's training goals"
             },
-            training_join: {
-              type: "array",
-              items: {
-                type: "string"
-              },
-              description: "Trainings the user has joined"
-            },
-            training_level: {
+            trainingLevel: {
               type: "string",
               enum: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
               description: "User's training level"
             },
-            training_frequency: {
+            trainingFrequency: {
               type: "string",
               enum: ["1_2_PER_WEEK", "3_4_PER_WEEK", "5_PLUS_PER_WEEK"],
               description: "User's training frequency"
             },
-            training_partner_preference: {
+            trainingPartnerPreference: {
               type: "string",
               description: "User's preference for training partners"
             },
-            training_time_slot: {
+            trainingTimeSlot: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/TimeSlot"

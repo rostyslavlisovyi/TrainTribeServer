@@ -1,7 +1,6 @@
-import { Router } from "express";
-import { TrainingController } from "../controllers/index.js";
-import express from "express";
+import express, { Router } from "express";
 import container from "../container.js";
+import { TrainingController } from "../controllers/index.js";
 import { authenticate } from "../middlewares/index.js";
 
 const trainingRoutes: Router = express.Router({ mergeParams: true });
@@ -300,7 +299,7 @@ trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
 
 /**
  * @swagger
- * /training/{id}/likeremove:
+ * /training/{id}/like:
  *   delete:
  *     summary: Remove a like from a training
  *     tags: [Trainings]
@@ -331,7 +330,7 @@ trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/likeremove", authenticate, (req, res) =>
+trainingRoutes.delete("/:id/like", authenticate, (req, res) =>
   trainingController.removeLike(req, res)
 );
 
@@ -365,7 +364,7 @@ trainingRoutes.delete("/:id/likeremove", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/participants/:userId", authenticate, (req, res) =>
+trainingRoutes.delete("/:id/participants", authenticate, (req, res) =>
   trainingController.removeParticipant(req, res)
 );
 
@@ -545,7 +544,7 @@ trainingRoutes.patch("/:id/status", authenticate, (req, res) =>
  * /training/{id}/reviews:
  *   post:
  *     summary: Add a review to a training
- *     description: Only participants can add reviews. Updates creator's review_points with the rating stars.
+ *     description: Only participants can add reviews. Updates creator's reviewPoints with the rating stars.
  *     tags: [Trainings]
  *     parameters:
  *       - in: path
@@ -749,43 +748,33 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *       type: object
  *       required:
  *         - email
- *         - auth_id
+ *         - authId
  *       properties:
  *         _id:
  *           type: string
  *           description: The auto-generated ID of the user
- *         first_name:
+ *         firstName:
  *           type: string
  *           description: User's first name
- *         last_name:
+ *         lastName:
  *           type: string
  *           description: User's last name
  *         email:
  *           type: string
  *           description: User's email address
- *         auth_id:
+ *         authId:
  *           type: string
  *           description: Authentication ID from identity provider
  *         username:
  *           type: string
  *           description: User's username
- *         image_url:
- *           type: string
- *           description: URL to user's profile image
- *         training_created:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of training IDs created by the user
- *         training_join:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of training IDs user has joined
- *         training_points:
+ *         image:
+ *           type: object
+ *           description: The image object containing Cloudinary data
+ *         trainingPoints:
  *           type: number
  *           description: Points earned from creating and participating in trainings
- *         review_points:
+ *         reviewPoints:
  *           type: number
  *           description: Points earned from reviews (sum of ratings received)
  */

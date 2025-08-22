@@ -1,10 +1,10 @@
+import { IFileUpload, ITraining } from "../interfaces/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
-import { ITraining } from "../interfaces/index.js";
+import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
-import ReviewModel from "../models/MongoDB/review.model.js";
-import { BaseService } from "./base.service.js";
 import { TrainingStatusEnum } from "../types/index.js";
+import { BaseService } from "./base.service.js";
 
 export class TrainingService extends BaseService<ITraining> {
   constructor() {
@@ -15,7 +15,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (newTraining && newTraining.creator) {
       await UserModel.findByIdAndUpdate(newTraining.creator, {
-        $inc: { count_training_organized: 1 }
+        $inc: { countTrainingOrganized: 1 }
       });
     }
 
@@ -35,7 +35,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     if (deleted && creatorId) {
       await UserModel.findByIdAndUpdate(creatorId, {
-        $inc: { count_training_organized: -1 }
+        $inc: { countTrainingOrganized: -1 }
       });
     }
 
@@ -158,18 +158,18 @@ export class TrainingService extends BaseService<ITraining> {
       ) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
-          $inc: { training_points: 5 }
+          $inc: { trainingPoints: 5 }
         });
 
         // Award 1 point to each participant
         for (const attendance of training.participantAttendance) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_joined: 1, training_points: 1 }
+              $inc: { countTrainingJoined: 1, trainingPoints: 1 }
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { count_training_missed: 1 }
+              $inc: { countTrainingMissed: 1 }
             });
           }
         }
@@ -181,7 +181,7 @@ export class TrainingService extends BaseService<ITraining> {
       training.status !== TrainingStatusEnum.CANCELLED
     ) {
       await UserModel.findByIdAndUpdate(userId, {
-        $inc: { count_training_organized: -1 }
+        $inc: { countTrainingOrganized: -1 }
       });
     }
 
@@ -197,7 +197,7 @@ export class TrainingService extends BaseService<ITraining> {
     reviewerId: string,
     rating: number,
     comment?: string,
-    images?: string[]
+    images?: IFileUpload[]
   ) {
     // Find the training
     const training = await this.model.findById(trainingId);
@@ -246,9 +246,9 @@ export class TrainingService extends BaseService<ITraining> {
       $addToSet: { reviews: review._id }
     });
 
-    // Update creator's review_points
+    // Update creator's reviewPoints
     await UserModel.findByIdAndUpdate(training.creator, {
-      $inc: { review_points: rating }
+      $inc: { reviewPoints: rating }
     });
 
     return review;

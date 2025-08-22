@@ -1,40 +1,39 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
 import {
+  LanguageEnum,
   SportsEnum,
-  TrainingGoalEnum,
-  TrainingLevelEnum,
   TrainingFrequencyEnum,
-  LanguageEnum
+  TrainingGoalEnum,
+  TrainingLevelEnum
 } from "../types/index.js";
+import { IFileUpload } from "./index.ts";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document<ObjectId> {
-  athlete_bio?: string;
-  auth_id: string;
+  athleteBio?: string;
+  authId: string;
   city: ObjectId;
-  completed_trainings?: number;
-  date_of_birth?: Date;
+  completedTrainings?: number;
+  dateOfBirth?: Date;
   email: string;
-  first_name?: string;
-  has_completed_onboarding: boolean;
-  image_url?: string;
-  last_name?: string;
-  last_onboarding_step: string;
-  privacy_settings: boolean;
-  range_of_action: number;
+  firstName?: string;
+  hasCompletedOnboarding: boolean;
+  image?: IFileUpload;
+  lastName?: string;
+  lastOnboardingStep: string;
+  privacySettings: boolean;
+  rangeOfAction: number;
   sports?: SportsEnum[];
-  training_created?: ObjectId[];
-  training_goal?: TrainingGoalEnum[];
-  training_join?: ObjectId[];
-  training_level?: TrainingLevelEnum;
-  training_frequency: TrainingFrequencyEnum;
-  training_partner_preference: string;
-  training_time_slot: ITimeSlot[];
-  training_points: number;
-  review_points: number;
+  trainingGoal?: TrainingGoalEnum[];
+  trainingLevel?: TrainingLevelEnum;
+  trainingFrequency: TrainingFrequencyEnum;
+  trainingPartnerPreference: string;
+  trainingTimeSlot: ITimeSlot[];
+  trainingPoints: number;
+  reviewPoints: number;
   username?: string;
-  count_training_organized?: number;
-  count_training_joined?: number;
-  count_training_missed?: number;
+  countTrainingOrganized?: number;
+  countTrainingJoined?: number;
+  countTrainingMissed?: number;
   language: LanguageEnum;
 }
 
