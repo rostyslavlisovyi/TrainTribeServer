@@ -1,3 +1,5 @@
+import { UploadApiResponse } from "cloudinary";
+
 /* eslint-disable no-unused-vars */
 export enum SportsEnum {
   SWIMMING = "SWIMMING",
@@ -84,4 +86,6 @@ export enum TrainingStatusEnum {
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED"
 }
+
+export type FileUpload = UploadApiResponse;
 /* eslint-enable no-unused-vars */

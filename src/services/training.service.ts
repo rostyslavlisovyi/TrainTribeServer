@@ -1,10 +1,10 @@
-import CommentModel from "../models/MongoDB/comment.model.js";
 import { ITraining } from "../interfaces/index.js";
+import CommentModel from "../models/MongoDB/comment.model.js";
+import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
-import ReviewModel from "../models/MongoDB/review.model.js";
+import { FileUpload, TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
-import { TrainingStatusEnum } from "../types/index.js";
 
 export class TrainingService extends BaseService<ITraining> {
   constructor() {
@@ -197,7 +197,7 @@ export class TrainingService extends BaseService<ITraining> {
     reviewerId: string,
     rating: number,
     comment?: string,
-    images?: string[]
+    images?: FileUpload[]
   ) {
     // Find the training
     const training = await this.model.findById(trainingId);

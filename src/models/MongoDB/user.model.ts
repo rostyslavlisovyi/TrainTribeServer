@@ -20,7 +20,7 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     first_name: { type: String },
     has_completed_onboarding: { type: Boolean, required: false },
-    image_url: { type: String, required: false },
+    image: { type: Schema.Types.Mixed, required: false },
     last_name: { type: String },
     last_onboarding_step: { type: String, required: false },
     privacy_settings: { type: Boolean, default: false },

@@ -1,6 +1,6 @@
+import { Express } from "express";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { Express } from "express";
 
 const swaggerOptions = {
   definition: {
@@ -386,9 +386,9 @@ const swaggerOptions = {
               type: "boolean",
               description: "Whether the user has completed onboarding"
             },
-            image_url: {
-              type: "string",
-              description: "The image URL"
+            image: {
+              type: "object",
+              description: "Object of cloudinary image"
             },
             last_name: {
               type: "string",

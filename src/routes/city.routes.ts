@@ -1,7 +1,6 @@
-import { Router } from "express";
-import { CityController } from "../controllers/index.js";
-import express from "express";
+import express, { Router } from "express";
 import container from "../container.js";
+import { CityController } from "../controllers/index.js";
 import { authenticate } from "../middlewares/index.js";
 
 const cityRoute: Router = express.Router();

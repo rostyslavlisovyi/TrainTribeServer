@@ -1,7 +1,6 @@
-import { Router } from "express";
-import { TrainingController } from "../controllers/index.js";
-import express from "express";
+import express, { Router } from "express";
 import container from "../container.js";
+import { TrainingController } from "../controllers/index.js";
 import { authenticate } from "../middlewares/index.js";
 
 const trainingRoutes: Router = express.Router({ mergeParams: true });
@@ -300,7 +299,7 @@ trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
 
 /**
  * @swagger
- * /training/{id}/likeremove:
+ * /training/{id}/like:
  *   delete:
  *     summary: Remove a like from a training
  *     tags: [Trainings]
@@ -331,7 +330,7 @@ trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/likeremove", authenticate, (req, res) =>
+trainingRoutes.delete("/:id/like", authenticate, (req, res) =>
   trainingController.removeLike(req, res)
 );
 
@@ -365,7 +364,7 @@ trainingRoutes.delete("/:id/likeremove", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/participants/:userId", authenticate, (req, res) =>
+trainingRoutes.delete("/:id/participants", authenticate, (req, res) =>
   trainingController.removeParticipant(req, res)
 );
 
@@ -769,9 +768,9 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *         username:
  *           type: string
  *           description: User's username
- *         image_url:
- *           type: string
- *           description: URL to user's profile image
+ *         image:
+ *           type: object
+ *           description: The image object containing Cloudinary data
  *         training_created:
  *           type: array
  *           items:

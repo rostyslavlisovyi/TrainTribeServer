@@ -1,8 +1,8 @@
 import { body, ValidationChain } from "express-validator";
 import {
   SportsEnum,
-  TrainingLevelEnum,
-  TrainingGoalEnum
+  TrainingGoalEnum,
+  TrainingLevelEnum
 } from "../types/enums.ts";
 
 export const validateUserCreation: ValidationChain[] = [
@@ -25,7 +25,7 @@ export const validateUserCreation: ValidationChain[] = [
     .isString()
     .withMessage("FIRST NAME INVALID TYPE"),
   body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
   body("date_of_birth")
     .optional()
     .isISO8601()
@@ -113,7 +113,7 @@ export const validateUserUpdate: ValidationChain[] = [
     .isString()
     .withMessage("FIRST NAME INVALID TYPE"),
   body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
   body("date_of_birth")
     .optional()
     .isISO8601()

@@ -24,51 +24,18 @@ var database_default = connectDB;
 // src/routes/index.ts
 import express5 from "express";
 
-// src/routes/user.routes.ts
+// src/routes/city.routes.ts
 import express from "express";
-
-// src/middlewares/auth.middleware.ts
-import { auth } from "express-oauth2-jwt-bearer";
-var authenticate = auth({
-  audience: process.env.OAUTH_AUDIENCE,
-  issuerBaseURL: process.env.OAUTH_DOMAIN,
-  tokenSigningAlg: "RS256"
-});
-
-// src/middlewares/upload.middleware.ts
-import multer from "multer";
-var fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
-  }
-};
-var upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter,
-  limits: {
-    fileSize: 1024 * 1024 * 2
-    // 2MB file size limit
-  }
-});
-
-// src/middlewares/validation.middleware.ts
-import { validationResult } from "express-validator";
-var handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(422).json({
-      errors: errors.array(),
-      message: "INVALID INPUTS TYPE"
-    });
-    return;
-  }
-  next();
-};
 
 // src/container.ts
 import { asClass, createContainer, InjectionMode } from "awilix";
+
+// src/utils/validators/validateFileContent.ts
+import { fileTypeFromBuffer } from "file-type";
+
+// src/utils/handleError.ts
+import mongoose2 from "mongoose";
+import chalk2 from "chalk";
 
 // src/errors/baseError.ts
 var BaseError = class extends Error {
@@ -162,8 +129,326 @@ var InternalServerError = class extends BaseError {
   }
 };
 
+// src/utils/handleError.ts
+function handleError(res, error) {
+  console.error(chalk2.red("Error:", error));
+  if (error instanceof BaseError) {
+    return res.status(error.statusCode).json(error.toJSON());
+  }
+  if (error instanceof NotFoundError) {
+    return res.status(404).json(error.toJSON());
+  }
+  if (error instanceof BadRequestError) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof DataCannotBeEmpty) {
+    return res.status(400).json(error.toJSON());
+  }
+  if (error instanceof mongoose2.Error.ValidationError) {
+    return res.status(400).json(new MongoValidationError(error).toJSON());
+  }
+  if (error instanceof mongoose2.Error.CastError) {
+    return res.status(422).json(new MongoCastError(error).toJSON());
+  }
+  if (error instanceof mongoose2.mongo.MongoServerError) {
+    if (error.code === 11e3) {
+      return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
+    }
+  }
+  if (error instanceof Error) {
+    if (error.message.includes("network") || error.message.includes("connection")) {
+      return res.status(503).json(new DatabaseConnectionError(error.message).toJSON());
+    }
+  }
+  return res.status(500).json(new InternalServerError().toJSON());
+}
+
+// src/controllers/base.controller.ts
+var BaseController = class {
+  service;
+  userService;
+  constructor(service) {
+    this.service = service;
+    this.userService = container_default.resolve("userService");
+  }
+  async getUserFromToken(req) {
+    const token = req.auth;
+    const { populate } = req.query;
+    if (!token) {
+      throw new Error("No token provided");
+    }
+    const query = this.userService.model.findOne({
+      auth_id: token.payload.user_id
+    });
+    if (populate) {
+      query.populate(populate);
+    }
+    const user = await query;
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  }
+  async get(req, res) {
+    try {
+      const { id } = req.params;
+      const populateFields = req.query.populate;
+      const result = await this.service.get({
+        id,
+        populateFields
+      });
+      if (!result.data) {
+        res.status(404).json({ message: "Not Found" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async list(req, res) {
+    try {
+      const { pageNum, pageSize, sort, populate, filters } = req.body;
+      const parsedPageNum = parseInt(pageNum || "1", 10);
+      const parsedPageSize = parseInt(pageSize || "10", 10);
+      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
+        res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
+        return;
+      }
+      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
+        res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
+        return;
+      }
+      const result = await this.service.list({
+        pageNum: parsedPageNum,
+        pageSize: parsedPageSize,
+        populateFields: populate,
+        sort,
+        filters
+      });
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async create(req, res) {
+    try {
+      const result = await this.service.create(req.body);
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const populateFields = req.query.populate;
+      const result = await this.service.update({
+        id,
+        entity: req.body,
+        populateFields
+      });
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+      await this.service.delete(id);
+      res.status(204).send();
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/controllers/city.controller.ts
+var CityController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(cityService) {
+    super(cityService);
+  }
+};
+
+// src/controllers/cloudinary.controller.ts
+var CloudinaryController = class {
+  service;
+  constructor(cloudinaryService) {
+    this.service = cloudinaryService;
+  }
+  upload = async (req, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ message: "NO FILE UPLOADED" });
+        return;
+      }
+      const folder = req.body.folder;
+      const result = await this.service.upload(req.file, folder);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        message: "UPLOAD FAILED",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  };
+  delete = async (req, res) => {
+    try {
+      const { public_id } = req.params;
+      if (!public_id) {
+        res.status(400).json({ message: "PUBLIC_ID IS REQUIRED" });
+        return;
+      }
+      await this.service.delete(public_id);
+      res.status(200);
+    } catch (error) {
+      res.status(500).json({
+        message: "DELETE FAILED",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  };
+};
+
+// src/controllers/training.controller.ts
+var TrainingController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(trainingService) {
+    super(trainingService);
+  }
+  async addLike(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addLike(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async removeLike(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeLike(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async addParticipant(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addParticipant(id, user._id.toString());
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async removeParticipant(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.removeParticipant(
+        id,
+        user._id.toString()
+      );
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async addComment(req, res) {
+    try {
+      const { id } = req.params;
+      const { text } = req.body;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addComment(id, user._id.toString(), text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async updateComment(req, res) {
+    try {
+      const { commentId } = req.params;
+      const { text } = req.body;
+      const data = await this.service.updateComment(commentId, text);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async removeComment(req, res) {
+    try {
+      const { id, commentId } = req.params;
+      const data = await this.service.removeComment(id, commentId);
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async changeStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.changeStatus(
+        id,
+        user._id.toString(),
+        status
+      );
+      res.status(200).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async addReview(req, res) {
+    try {
+      const { id } = req.params;
+      const { rating, comment, images } = req.body;
+      const user = await this.getUserFromToken(req);
+      const data = await this.service.addReview(
+        id,
+        user._id.toString(),
+        rating,
+        comment,
+        images
+      );
+      res.status(201).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
+// src/controllers/upload.controller.ts
+import chalk3 from "chalk";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
+
+// src/controllers/user.controller.ts
+var UserController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(userService) {
+    super(userService);
+  }
+  async getMe(req, res) {
+    try {
+      const user = await this.getUserFromToken(req);
+      res.json(user);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
 // src/services/base.service.ts
-import chalk2 from "chalk";
+import chalk4 from "chalk";
 var BaseService = class {
   model;
   constructor(model) {
@@ -181,7 +466,7 @@ var BaseService = class {
       const result = await query;
       return { data: result };
     } catch (error) {
-      console.error(chalk2.red("Error in get method:"), error);
+      console.error(chalk4.red("Error in get method:"), error);
       throw error;
     }
   }
@@ -217,7 +502,7 @@ var BaseService = class {
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk2.red("Error in list:"), chalk2.red(error));
+      console.error(chalk4.red("Error in list:"), chalk4.red(error));
       throw error;
     }
   }
@@ -229,7 +514,7 @@ var BaseService = class {
       const newEntity = await this.model.create(entity);
       return { data: newEntity };
     } catch (error) {
-      console.error(chalk2.red("Error in create:"), error);
+      console.error(chalk4.red("Error in create:"), error);
       throw error;
     }
   }
@@ -254,7 +539,7 @@ var BaseService = class {
       }
       return { data: updatedData };
     } catch (error) {
-      console.error(chalk2.red("Error in update:"), error);
+      console.error(chalk4.red("Error in update:"), error);
       throw error;
     }
   }
@@ -266,7 +551,7 @@ var BaseService = class {
       }
       return { data: !!deleted };
     } catch (error) {
-      console.error(chalk2.red("Error in delete:"), error);
+      console.error(chalk4.red("Error in delete:"), error);
       throw error;
     }
   }
@@ -297,7 +582,7 @@ var BaseService = class {
 };
 
 // src/models/MongoDB/city.model.ts
-import mongoose2, { Schema } from "mongoose";
+import mongoose3, { Schema } from "mongoose";
 var CitySchema = new Schema(
   {
     id: { type: Number, required: true },
@@ -311,7 +596,7 @@ var CitySchema = new Schema(
     timestamps: true
   }
 );
-var CityModel = mongoose2.model("City", CitySchema);
+var CityModel = mongoose3.model("City", CitySchema);
 var city_model_default = CityModel;
 
 // src/services/city.service.ts
@@ -321,8 +606,77 @@ var CityService = class extends BaseService {
   }
 };
 
-// src/models/MongoDB/user.model.ts
-import mongoose3, { Schema as Schema2 } from "mongoose";
+// src/services/cloudinary.service.ts
+import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
+var CloudinaryService = class {
+  async upload(file, folder) {
+    try {
+      return new Promise((resolve, reject) => {
+        const baseFolder = process.env.CLOUDINARY_BASE_FOLDER_UPLOAD;
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            asset_folder: baseFolder + (folder ? `/${folder}` : ""),
+            resource_type: "auto"
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            if (!result) return reject(new Error("No result from Cloudinary"));
+            resolve(result);
+          }
+        );
+        const bufferStream = Readable.from(file.buffer);
+        bufferStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to upload image: ${errorMessage}`);
+    }
+  }
+  async delete(publicId) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to delete image: ${errorMessage}`);
+    }
+  }
+};
+
+// src/models/MongoDB/comment.model.ts
+import mongoose4, { Schema as Schema2 } from "mongoose";
+var CommentSchema = new Schema2(
+  {
+    user: { type: Schema2.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true }
+  },
+  {
+    timestamps: true
+  }
+);
+var CommentModel = mongoose4.model("Comment", CommentSchema);
+var comment_model_default = CommentModel;
+
+// src/models/MongoDB/review.model.ts
+import mongoose5, { Schema as Schema3 } from "mongoose";
+var ReviewSchema = new Schema3(
+  {
+    reviewer: { type: Schema3.Types.ObjectId, ref: "User", required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    comment: { type: String },
+    images: [{ type: Schema3.Types.Mixed }],
+    createdAt: { type: Date, default: Date.now }
+  },
+  {
+    timestamps: true
+  }
+);
+var ReviewModel = mongoose5.model("Review", ReviewSchema);
+var review_model_default = ReviewModel;
+
+// src/models/MongoDB/training.model.ts
+import mongoose6, { Schema as Schema4 } from "mongoose";
 
 // src/types/enums.ts
 var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
@@ -412,18 +766,65 @@ var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
   return TrainingStatusEnum2;
 })(TrainingStatusEnum || {});
 
+// src/models/MongoDB/training.model.ts
+var TrainingSchema = new Schema4(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: false },
+    date: { type: Date, required: true },
+    address: { type: String, required: true },
+    latitude: { type: String, required: true },
+    longitude: { type: String, required: true },
+    sport: {
+      type: String,
+      enum: Object.values(SportsEnum)
+    },
+    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
+    participantAttendance: [
+      {
+        participant: { type: Schema4.Types.ObjectId, ref: "User" },
+        attended: { type: Boolean, default: false }
+      }
+    ],
+    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
+    duration: { type: Number },
+    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
+    comments: [
+      {
+        type: Schema4.Types.ObjectId,
+        ref: "Comment"
+      }
+    ],
+    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
+    status: {
+      type: String,
+      enum: Object.values(TrainingStatusEnum),
+      default: "SCHEDULED" /* SCHEDULED */
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+var TrainingModel = mongoose6.model(
+  "Training",
+  TrainingSchema
+);
+var training_model_default = TrainingModel;
+
 // src/models/MongoDB/user.model.ts
-var UserSchema = new Schema2(
+import mongoose7, { Schema as Schema5 } from "mongoose";
+var UserSchema = new Schema5(
   {
     athlete_bio: { type: String, required: false },
     auth_id: { type: String, required: true },
-    city: { type: Schema2.Types.ObjectId, ref: "City", required: false },
+    city: { type: Schema5.Types.ObjectId, ref: "City", required: false },
     completed_trainings: { type: Number, default: 0 },
     date_of_birth: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
     first_name: { type: String },
     has_completed_onboarding: { type: Boolean, required: false },
-    image_url: { type: String, required: false },
+    image: { type: Schema5.Types.Mixed, required: false },
     last_name: { type: String },
     last_onboarding_step: { type: String, required: false },
     privacy_settings: { type: Boolean, default: false },
@@ -434,14 +835,14 @@ var UserSchema = new Schema2(
         enum: Object.values(SportsEnum)
       }
     ],
-    training_created: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
+    training_created: [{ type: Schema5.Types.ObjectId, ref: "Training" }],
     training_goal: [
       {
         type: String,
         enum: Object.values(TrainingGoalEnum)
       }
     ],
-    training_join: [{ type: Schema2.Types.ObjectId, ref: "Training" }],
+    training_join: [{ type: Schema5.Types.ObjectId, ref: "Training" }],
     training_level: {
       type: String,
       enum: Object.values(TrainingLevelEnum)
@@ -483,93 +884,8 @@ var UserSchema = new Schema2(
     timestamps: true
   }
 );
-var UserModel = mongoose3.model("User", UserSchema);
+var UserModel = mongoose7.model("User", UserSchema);
 var user_model_default = UserModel;
-
-// src/services/user.service.ts
-var UserService = class extends BaseService {
-  constructor() {
-    super(user_model_default);
-  }
-};
-
-// src/models/MongoDB/comment.model.ts
-import mongoose4, { Schema as Schema3 } from "mongoose";
-var CommentSchema = new Schema3(
-  {
-    user: { type: Schema3.Types.ObjectId, ref: "User", required: true },
-    text: { type: String, required: true }
-  },
-  {
-    timestamps: true
-  }
-);
-var CommentModel = mongoose4.model("Comment", CommentSchema);
-var comment_model_default = CommentModel;
-
-// src/models/MongoDB/training.model.ts
-import mongoose5, { Schema as Schema4 } from "mongoose";
-var TrainingSchema = new Schema4(
-  {
-    title: { type: String, required: true },
-    description: { type: String, required: false },
-    date: { type: Date, required: true },
-    address: { type: String, required: true },
-    latitude: { type: String, required: true },
-    longitude: { type: String, required: true },
-    sport: {
-      type: String,
-      enum: Object.values(SportsEnum)
-    },
-    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
-    participantAttendance: [
-      {
-        participant: { type: Schema4.Types.ObjectId, ref: "User" },
-        attended: { type: Boolean, default: false }
-      }
-    ],
-    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
-    duration: { type: Number },
-    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
-    comments: [
-      {
-        type: Schema4.Types.ObjectId,
-        ref: "Comment"
-      }
-    ],
-    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
-    status: {
-      type: String,
-      enum: Object.values(TrainingStatusEnum),
-      default: "SCHEDULED" /* SCHEDULED */
-    }
-  },
-  {
-    timestamps: true
-  }
-);
-var TrainingModel = mongoose5.model(
-  "Training",
-  TrainingSchema
-);
-var training_model_default = TrainingModel;
-
-// src/models/MongoDB/review.model.ts
-import mongoose6, { Schema as Schema5 } from "mongoose";
-var ReviewSchema = new Schema5(
-  {
-    reviewer: { type: Schema5.Types.ObjectId, ref: "User", required: true },
-    rating: { type: Number, min: 1, max: 5, required: true },
-    comment: { type: String },
-    images: [{ type: String }],
-    createdAt: { type: Date, default: Date.now }
-  },
-  {
-    timestamps: true
-  }
-);
-var ReviewModel = mongoose6.model("Review", ReviewSchema);
-var review_model_default = ReviewModel;
 
 // src/services/training.service.ts
 var TrainingService = class extends BaseService {
@@ -757,335 +1073,10 @@ var TrainingService = class extends BaseService {
   }
 };
 
-// src/utils/validators/validateFileContent.ts
-import { fileTypeFromBuffer } from "file-type";
-var validateFileContent = async (fileBuffer) => {
-  const fileType = await fileTypeFromBuffer(fileBuffer);
-  return fileType ? fileType.mime.startsWith("image/") : false;
-};
-
-// src/utils/handleError.ts
-import mongoose7 from "mongoose";
-import chalk3 from "chalk";
-function handleError(res, error) {
-  console.error(chalk3.red("Error:", error));
-  if (error instanceof BaseError) {
-    return res.status(error.statusCode).json(error.toJSON());
-  }
-  if (error instanceof NotFoundError) {
-    return res.status(404).json(error.toJSON());
-  }
-  if (error instanceof BadRequestError) {
-    return res.status(400).json(error.toJSON());
-  }
-  if (error instanceof DataCannotBeEmpty) {
-    return res.status(400).json(error.toJSON());
-  }
-  if (error instanceof mongoose7.Error.ValidationError) {
-    return res.status(400).json(new MongoValidationError(error).toJSON());
-  }
-  if (error instanceof mongoose7.Error.CastError) {
-    return res.status(422).json(new MongoCastError(error).toJSON());
-  }
-  if (error instanceof mongoose7.mongo.MongoServerError) {
-    if (error.code === 11e3) {
-      return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
-    }
-  }
-  if (error instanceof Error) {
-    if (error.message.includes("network") || error.message.includes("connection")) {
-      return res.status(503).json(new DatabaseConnectionError(error.message).toJSON());
-    }
-  }
-  return res.status(500).json(new InternalServerError().toJSON());
-}
-
-// src/controllers/base.controller.ts
-var BaseController = class {
-  service;
-  userService;
-  constructor(service) {
-    this.service = service;
-    this.userService = container_default.resolve("userService");
-  }
-  async getUserFromToken(req) {
-    const token = req.auth;
-    const { populate } = req.query;
-    if (!token) {
-      throw new Error("No token provided");
-    }
-    const query = this.service.model.findOne({
-      auth_id: token.payload.user_id
-    });
-    if (populate) {
-      query.populate(populate);
-    }
-    const user = await query;
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return user;
-  }
-  async get(req, res) {
-    try {
-      const { id } = req.params;
-      const populateFields = req.query.populate;
-      const result = await this.service.get({
-        id,
-        populateFields
-      });
-      if (!result.data) {
-        res.status(404).json({ message: "Not Found" });
-        return;
-      }
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async list(req, res) {
-    try {
-      const { pageNum, pageSize, sort, populate, filters } = req.body;
-      const parsedPageNum = parseInt(pageNum || "1", 10);
-      const parsedPageSize = parseInt(pageSize || "10", 10);
-      if (isNaN(parsedPageNum) || parsedPageNum < 1) {
-        res.status(400).json({ message: "Invalid pageNum. Must be a positive number." });
-        return;
-      }
-      if (isNaN(parsedPageSize) || parsedPageSize < 1) {
-        res.status(400).json({ message: "Invalid pageSize. Must be a positive number." });
-        return;
-      }
-      const result = await this.service.list({
-        pageNum: parsedPageNum,
-        pageSize: parsedPageSize,
-        populateFields: populate,
-        sort,
-        filters
-      });
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async create(req, res) {
-    try {
-      const result = await this.service.create(req.body);
-      res.status(201).json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const populateFields = req.query.populate;
-      const result = await this.service.update({
-        id,
-        entity: req.body,
-        populateFields
-      });
-      res.json(result);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async delete(req, res) {
-    try {
-      const { id } = req.params;
-      await this.service.delete(id);
-      res.status(204).send();
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-};
-
-// src/controllers/city.controller.ts
-var CityController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(cityService) {
-    super(cityService);
-  }
-};
-
-// src/controllers/upload.controller.ts
-import chalk4 from "chalk";
-import multer2 from "multer";
-import path from "path";
-import fs from "fs/promises";
-var UploadFile = async (req, res) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ message: "NO FILE UPLOADED" });
-      return;
-    }
-    const isValidateFileContent = await validateFileContent(req.file.buffer);
-    if (!isValidateFileContent) {
-      res.status(422).json({ message: "INVALID FILE CONTENT" });
-      return;
-    }
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const fileExtension = path.extname(req.file.originalname);
-    const fileName = `${req.file.fieldname}-${uniqueSuffix}${fileExtension}`;
-    const filePath = path.join("uploads", fileName);
-    await fs.writeFile(filePath, req.file.buffer);
-    console.info(chalk4.green(`File ${fileName} uploaded successfully`));
-    res.status(200).json({
-      message: "FILE UPLOADED SUCCESSFULLY",
-      file: {
-        filename: fileName,
-        path: filePath,
-        mimetype: req.file.mimetype,
-        size: req.file.size
-      }
-    });
-  } catch (error) {
-    console.error(chalk4.red(error));
-    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
-    return;
-  }
-};
-var handleUploadError = (error, res, next) => {
-  if (error instanceof multer2.MulterError) {
-    if (error.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ message: "FILE TOO LARGE" });
-    } else {
-      res.status(400).json({ message: error.message });
-    }
-  } else if (error instanceof Error) {
-    res.status(400).json({ message: error.message });
-  } else {
-    next();
-  }
-};
-
-// src/controllers/user.controller.ts
-var UserController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(userService) {
-    super(userService);
-  }
-  async getMe(req, res) {
-    try {
-      const user = await this.getUserFromToken(req);
-      res.json(user);
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-};
-
-// src/controllers/training.controller.ts
-var TrainingController = class extends BaseController {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(trainingService) {
-    super(trainingService);
-  }
-  async addLike(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addLike(id, user._id.toString());
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async removeLike(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.removeLike(id, user._id.toString());
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async addParticipant(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addParticipant(id, user._id.toString());
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async removeParticipant(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.removeParticipant(
-        id,
-        user._id.toString()
-      );
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async addComment(req, res) {
-    try {
-      const { id } = req.params;
-      const { text } = req.body;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addComment(id, user._id.toString(), text);
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async updateComment(req, res) {
-    try {
-      const { commentId } = req.params;
-      const { text } = req.body;
-      const data = await this.service.updateComment(commentId, text);
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async removeComment(req, res) {
-    try {
-      const { id, commentId } = req.params;
-      const data = await this.service.removeComment(id, commentId);
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async changeStatus(req, res) {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.changeStatus(
-        id,
-        user._id.toString(),
-        status
-      );
-      res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async addReview(req, res) {
-    try {
-      const { id } = req.params;
-      const { rating, comment, images } = req.body;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addReview(
-        id,
-        user._id.toString(),
-        rating,
-        comment,
-        images
-      );
-      res.status(201).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
+// src/services/user.service.ts
+var UserService = class extends BaseService {
+  constructor() {
+    super(user_model_default);
   }
 };
 
@@ -1096,124 +1087,58 @@ var container = createContainer({
 container.register({
   cityService: asClass(CityService),
   userService: asClass(UserService),
-  trainingService: asClass(TrainingService)
+  trainingService: asClass(TrainingService),
+  cloudinaryService: asClass(CloudinaryService)
 }).register({
   cityController: asClass(CityController),
   userController: asClass(UserController),
-  trainingController: asClass(TrainingController)
+  trainingController: asClass(TrainingController),
+  cloudinaryController: asClass(CloudinaryController)
 });
 var container_default = container;
 
-// src/validators/user.validator.ts
-import { body } from "express-validator";
-var validateUserCreation = [
-  body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").exists({ checkFalsy: true }).withMessage("AUTH_ID IS REQUIRED").isString().withMessage("AUTH_ID INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
-  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
-  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
-    (sports) => sports.every(
-      (sport) => Object.values(SportsEnum).includes(sport)
-    )
-  ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
-    (goals) => goals.every(
-      (goal) => Object.values(TrainingGoalEnum).includes(goal)
-    )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
-];
-var validateUserUpdate = [
-  body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
-  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
-  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
-  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
-  body("image_url").optional().isURL().withMessage("IMAGE_URL INVALID TYPE"),
-  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
-  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
-  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
-    (sports) => sports.every(
-      (sport) => Object.values(SportsEnum).includes(sport)
-    )
-  ).withMessage("INVALID SPORT VALUE"),
-  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
-  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
-    (goals) => goals.every(
-      (goal) => Object.values(TrainingGoalEnum).includes(goal)
-    )
-  ).withMessage("INVALID TRAINING_GOAL VALUE"),
-  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
-  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
-  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
-  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
-  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
-  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
-  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
-  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
-  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
-  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
-];
+// src/middlewares/auth.middleware.ts
+import { auth } from "express-oauth2-jwt-bearer";
+var authenticate = auth({
+  audience: process.env.OAUTH_AUDIENCE,
+  issuerBaseURL: process.env.OAUTH_DOMAIN,
+  tokenSigningAlg: "RS256"
+});
 
-// src/routes/user.routes.ts
-var userRoute = express.Router();
-var userController = container_default.resolve("userController");
-userRoute.get(
-  "/me",
-  authenticate,
-  (req, res) => userController.getMe(req, res)
-);
-userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
-userRoute.post(
-  "/",
-  authenticate,
-  validateUserCreation,
-  handleValidationErrors,
-  (req, res) => userController.create(req, res)
-);
-userRoute.put(
-  "/:id",
-  authenticate,
-  validateUserUpdate,
-  handleValidationErrors,
-  (req, res) => userController.update(req, res)
-);
-userRoute.delete(
-  "/:id",
-  authenticate,
-  (req, res) => userController.delete(req, res)
-);
-var user_routes_default = userRoute;
+// src/middlewares/upload.middleware.ts
+import multer2 from "multer";
+var fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("ONLY IMAGES ARE ALLOWED!"));
+  }
+};
+var upload = multer2({
+  storage: multer2.memoryStorage(),
+  fileFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 2
+    // 2MB file size limit
+  }
+});
 
-// src/routes/upload.route.ts
-import express2 from "express";
-var uploadRoute = express2.Router({ mergeParams: true });
-uploadRoute.post(
-  "/",
-  authenticate,
-  upload.single("image"),
-  handleUploadError,
-  UploadFile
-);
-var upload_route_default = uploadRoute;
+// src/middlewares/validation.middleware.ts
+import { validationResult } from "express-validator";
+var handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(422).json({
+      errors: errors.array(),
+      message: "INVALID INPUTS TYPE"
+    });
+    return;
+  }
+  next();
+};
 
 // src/routes/city.routes.ts
-import express3 from "express";
-var cityRoute = express3.Router();
+var cityRoute = express.Router();
 var cityController = container_default.resolve("cityController");
 cityRoute.post(
   "/list",
@@ -1238,9 +1163,28 @@ cityRoute.delete(
 );
 var city_routes_default = cityRoute;
 
+// src/routes/cloudinary.route.ts
+import express2 from "express";
+var cloudinaryRoute = express2.Router();
+var cloudinaryController = container_default.resolve(
+  "cloudinaryController"
+);
+cloudinaryRoute.post(
+  "/upload",
+  authenticate,
+  upload.single("file"),
+  (req, res) => cloudinaryController.upload(req, res)
+);
+cloudinaryRoute.delete(
+  "/:public_id",
+  authenticate,
+  (req, res) => cloudinaryController.delete(req, res)
+);
+var cloudinary_route_default = cloudinaryRoute;
+
 // src/routes/training.routes.ts
-import express4 from "express";
-var trainingRoutes = express4.Router({ mergeParams: true });
+import express3 from "express";
+var trainingRoutes = express3.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
 trainingRoutes.post(
   "/list",
@@ -1273,12 +1217,12 @@ trainingRoutes.post(
   (req, res) => trainingController.addParticipant(req, res)
 );
 trainingRoutes.delete(
-  "/:id/likeremove",
+  "/:id/like",
   authenticate,
   (req, res) => trainingController.removeLike(req, res)
 );
 trainingRoutes.delete(
-  "/:id/participants/:userId",
+  "/:id/participants",
   authenticate,
   (req, res) => trainingController.removeParticipant(req, res)
 );
@@ -1314,12 +1258,110 @@ trainingRoutes.post(
 );
 var training_routes_default = trainingRoutes;
 
+// src/routes/user.routes.ts
+import express4 from "express";
+
+// src/validators/user.validator.ts
+import { body } from "express-validator";
+var validateUserCreation = [
+  body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("auth_id").exists({ checkFalsy: true }).withMessage("AUTH_ID IS REQUIRED").isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
+  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID TRAINING_GOAL VALUE"),
+  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
+  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
+  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
+  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
+  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
+  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
+  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
+  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
+  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
+  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+];
+var validateUserUpdate = [
+  body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
+  body("auth_id").optional().isString().withMessage("AUTH_ID INVALID TYPE"),
+  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
+  body("first_name").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
+  body("last_name").optional().isString().withMessage("LAST NAME INVALID TYPE"),
+  body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
+  body("date_of_birth").optional().isISO8601().withMessage("DATE OF BIRTH INVALID TYPE"),
+  body("city").optional().isMongoId().withMessage("CITY INVALID ID"),
+  body("sports").optional().isArray().withMessage("SPORTS MUST BE AN ARRAY").custom(
+    (sports) => sports.every(
+      (sport) => Object.values(SportsEnum).includes(sport)
+    )
+  ).withMessage("INVALID SPORT VALUE"),
+  body("training_level").optional().isIn(Object.values(TrainingLevelEnum)).withMessage("TRAINING_LEVEL NOT ALLOWED"),
+  body("training_goal").optional().isArray().withMessage("TRAINING_GOAL MUST BE AN ARRAY").custom(
+    (goals) => goals.every(
+      (goal) => Object.values(TrainingGoalEnum).includes(goal)
+    )
+  ).withMessage("INVALID TRAINING_GOAL VALUE"),
+  body("completed_trainings").optional().isInt({ min: 0 }).withMessage("COMPLETED_TRAININGS MUST BE A NON-NEGATIVE INTEGER"),
+  body("social_number").optional().isString().withMessage("SOCIAL_NUMBER INVALID TYPE"),
+  body("athlete_bio").optional().isString().isLength({ max: 500 }).withMessage("ATHLETE_BIO TOO LONG"),
+  body("training_created").optional().isArray().withMessage("TRAINING_CREATED MUST BE AN ARRAY"),
+  body("training_created.*").isMongoId().withMessage("TRAINING_CREATED INVALID ID"),
+  body("training_join").optional().isArray().withMessage("TRAINING_JOIN MUST BE AN ARRAY"),
+  body("training_join.*").isMongoId().withMessage("TRAINING_JOIN INVALID ID"),
+  body("last_onboarding_step").optional().isString().withMessage("LAST_ONBOARDING_STEP INVALID TYPE"),
+  body("has_completed_onboarding").optional().isBoolean().withMessage("HAS_COMPLETED_ONBOARDING MUST BE BOOLEAN"),
+  body("privacy_settings").optional().isBoolean().withMessage("PRIVACY_SETTINGS MUST BE BOOLEAN")
+];
+
+// src/routes/user.routes.ts
+var userRoute = express4.Router();
+var userController = container_default.resolve("userController");
+userRoute.get(
+  "/me",
+  authenticate,
+  (req, res) => userController.getMe(req, res)
+);
+userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
+userRoute.post(
+  "/",
+  authenticate,
+  validateUserCreation,
+  handleValidationErrors,
+  (req, res) => userController.create(req, res)
+);
+userRoute.put(
+  "/:id",
+  authenticate,
+  validateUserUpdate,
+  handleValidationErrors,
+  (req, res) => userController.update(req, res)
+);
+userRoute.delete(
+  "/:id",
+  authenticate,
+  (req, res) => userController.delete(req, res)
+);
+var user_routes_default = userRoute;
+
 // src/routes/index.ts
 var router = express5.Router({ mergeParams: true });
 router.use("/user", user_routes_default);
-router.use("/upload", upload_route_default);
 router.use("/city", city_routes_default);
 router.use("/training", training_routes_default);
+router.use("/cloudinary", cloudinary_route_default);
 var routes_default = router;
 
 // src/mock/citys.mock.ts
@@ -1000197,9 +1000239,9 @@ var swaggerOptions = {
               type: "boolean",
               description: "Whether the user has completed onboarding"
             },
-            image_url: {
-              type: "string",
-              description: "The image URL"
+            image: {
+              type: "object",
+              description: "Object of cloudinary image"
             },
             last_name: {
               type: "string",
