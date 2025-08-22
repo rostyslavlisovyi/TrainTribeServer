@@ -1,5 +1,5 @@
 // src/appServer.ts
-import express6 from "express";
+import express7 from "express";
 import cors from "cors";
 import dotenv2 from "dotenv";
 
@@ -22,7 +22,7 @@ var connectDB = async () => {
 var database_default = connectDB;
 
 // src/routes/index.ts
-import express5 from "express";
+import express6 from "express";
 
 // src/routes/city.routes.ts
 import express from "express";
@@ -302,7 +302,7 @@ var CloudinaryController = class {
         return;
       }
       await this.service.delete(public_id);
-      res.status(200);
+      res.status(200).json();
     } catch (error) {
       res.status(500).json({
         message: "DELETE FAILED",
@@ -310,6 +310,44 @@ var CloudinaryController = class {
       });
     }
   };
+};
+
+// src/controllers/geocode.controller.ts
+var GeocodeController = class {
+  service;
+  constructor(geocodeService) {
+    this.service = geocodeService;
+  }
+  async search(req, res) {
+    try {
+      const { search } = req.query;
+      const language = req.headers["accept-language"]?.split(",")[0] || "it";
+      if (!search || typeof search !== "string") {
+        res.status(400).json({ message: "search parameter is required" });
+        return;
+      }
+      const results = await this.service.geocode(search, language);
+      res.json({ data: results });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  async reverse(req, res) {
+    try {
+      const { lat, lon } = req.query;
+      const language = req.headers["accept-language"]?.split(",")[0] || "it";
+      if (!lat || !lon || typeof lat !== "string" || typeof lon !== "string") {
+        res.status(400).json({
+          message: "Latitude and longitude parameters are required"
+        });
+        return;
+      }
+      const result = await this.service.reverse(lat, lon, language);
+      res.json({ data: result });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
 };
 
 // src/controllers/training.controller.ts
@@ -641,6 +679,32 @@ var CloudinaryService = class {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       throw new Error(`Failed to delete image: ${errorMessage}`);
     }
+  }
+};
+
+// src/services/geocode.service.ts
+import fetch from "node-fetch";
+var GeocodeService = class {
+  baseUrl = "https://nominatim.openstreetmap.org";
+  async geocode(search, language = "it") {
+    const url = `${this.baseUrl}/search?format=json&q=${encodeURIComponent(search)}&addressdetails=1&accept-language=${language}&countrycodes=it`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "TrainTribe API Server",
+        Referer: process.env.APP_URL || ""
+      }
+    });
+    return await response.json();
+  }
+  async reverse(lat, lon, language = "it") {
+    const url = `${this.baseUrl}/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=${language}`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "TrainTribe API Server",
+        Referer: process.env.APP_URL || ""
+      }
+    });
+    return await response.json();
   }
 };
 
@@ -1088,12 +1152,14 @@ container.register({
   cityService: asClass(CityService),
   userService: asClass(UserService),
   trainingService: asClass(TrainingService),
-  cloudinaryService: asClass(CloudinaryService)
+  cloudinaryService: asClass(CloudinaryService),
+  geocodeService: asClass(GeocodeService)
 }).register({
   cityController: asClass(CityController),
   userController: asClass(UserController),
   trainingController: asClass(TrainingController),
-  cloudinaryController: asClass(CloudinaryController)
+  cloudinaryController: asClass(CloudinaryController),
+  geocodeController: asClass(GeocodeController)
 });
 var container_default = container;
 
@@ -1182,9 +1248,25 @@ cloudinaryRoute.delete(
 );
 var cloudinary_route_default = cloudinaryRoute;
 
-// src/routes/training.routes.ts
+// src/routes/geocode.routes.ts
 import express3 from "express";
-var trainingRoutes = express3.Router({ mergeParams: true });
+var geocodeRoutes = express3.Router();
+var geocodeController = container_default.resolve("geocodeController");
+geocodeRoutes.get(
+  "/search",
+  authenticate,
+  (req, res) => geocodeController.search(req, res)
+);
+geocodeRoutes.get(
+  "/reverse",
+  authenticate,
+  (req, res) => geocodeController.reverse(req, res)
+);
+var geocode_routes_default = geocodeRoutes;
+
+// src/routes/training.routes.ts
+import express4 from "express";
+var trainingRoutes = express4.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
 trainingRoutes.post(
   "/list",
@@ -1259,7 +1341,7 @@ trainingRoutes.post(
 var training_routes_default = trainingRoutes;
 
 // src/routes/user.routes.ts
-import express4 from "express";
+import express5 from "express";
 
 // src/validators/user.validator.ts
 import { body } from "express-validator";
@@ -1327,7 +1409,7 @@ var validateUserUpdate = [
 ];
 
 // src/routes/user.routes.ts
-var userRoute = express4.Router();
+var userRoute = express5.Router();
 var userController = container_default.resolve("userController");
 userRoute.get(
   "/me",
@@ -1357,11 +1439,12 @@ userRoute.delete(
 var user_routes_default = userRoute;
 
 // src/routes/index.ts
-var router = express5.Router({ mergeParams: true });
-router.use("/user", user_routes_default);
+var router = express6.Router();
 router.use("/city", city_routes_default);
-router.use("/training", training_routes_default);
 router.use("/cloudinary", cloudinary_route_default);
+router.use("/geocode", geocode_routes_default);
+router.use("/training", training_routes_default);
+router.use("/user", user_routes_default);
 var routes_default = router;
 
 // src/mock/citys.mock.ts
@@ -1000353,17 +1000436,17 @@ REQUIRED_ENV_VARS.forEach((varName) => {
   }
 });
 var SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "666", 10);
-var appServer = express6();
+var appServer = express7();
 appServer.use(scopePerRequest(container_default));
-appServer.use(express6.json());
+appServer.use(express7.json());
 var corsOptions = {
   origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 appServer.use(cors(corsOptions));
 appServer.options("*", cors(corsOptions));
-appServer.use(express6.urlencoded({ extended: true }));
-appServer.use(express6.static("public"));
+appServer.use(express7.urlencoded({ extended: true }));
+appServer.use(express7.static("public"));
 appServer.get("/", (_req, res) => {
   res.sendFile("index.html", { root: "./public" });
 });

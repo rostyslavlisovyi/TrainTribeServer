@@ -1,10 +1,10 @@
 import { Document, Types } from "mongoose";
-import { FileUpload } from "types/enums.ts";
+import { IFileUpload } from "./index.ts";
 
 export interface IReview extends Document {
   reviewer: Types.ObjectId;
   rating: number;
   comment?: string;
-  images?: FileUpload[];
+  images?: IFileUpload[];
   createdAt: Date;
 }

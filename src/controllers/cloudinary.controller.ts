@@ -37,7 +37,7 @@ export class CloudinaryController {
 
       await this.service.delete(public_id);
 
-      res.status(200);
+      res.status(200).json();
     } catch (error: unknown) {
       res.status(500).json({
         message: "DELETE FAILED",

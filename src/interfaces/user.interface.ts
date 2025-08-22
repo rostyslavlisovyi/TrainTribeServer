@@ -1,12 +1,12 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
 import {
-  FileUpload,
   LanguageEnum,
   SportsEnum,
   TrainingFrequencyEnum,
   TrainingGoalEnum,
   TrainingLevelEnum
 } from "../types/index.js";
+import { IFileUpload } from "./index.ts";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document<ObjectId> {
   athlete_bio?: string;
@@ -17,7 +17,7 @@ export interface IUser extends Document<ObjectId> {
   email: string;
   first_name?: string;
   has_completed_onboarding: boolean;
-  image?: FileUpload;
+  image?: IFileUpload;
   last_name?: string;
   last_onboarding_step: string;
   privacy_settings: boolean;

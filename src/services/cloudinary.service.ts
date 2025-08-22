@@ -1,12 +1,12 @@
 import { v2 as cloudinary } from "cloudinary";
 import { Readable } from "stream";
-import { FileUpload } from "types/enums.ts";
+import { IFileUpload } from "../interfaces/index.ts";
 
 export class CloudinaryService {
   async upload(
     file: Express.Multer.File,
     folder?: string
-  ): Promise<FileUpload> {
+  ): Promise<IFileUpload> {
     try {
       return new Promise((resolve, reject) => {
         const baseFolder = process.env.CLOUDINARY_BASE_FOLDER_UPLOAD;

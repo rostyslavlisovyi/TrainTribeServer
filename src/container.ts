@@ -3,12 +3,14 @@ import { asClass, createContainer, InjectionMode } from "awilix";
 import {
   CityController,
   CloudinaryController,
+  GeocodeController,
   TrainingController,
   UserController
 } from "./controllers/index.js";
 import {
   CityService,
   CloudinaryService,
+  GeocodeService,
   TrainingService,
   UserService
 } from "./services/index.js";
@@ -22,13 +24,15 @@ container
     cityService: asClass(CityService),
     userService: asClass(UserService),
     trainingService: asClass(TrainingService),
-    cloudinaryService: asClass(CloudinaryService)
+    cloudinaryService: asClass(CloudinaryService),
+    geocodeService: asClass(GeocodeService)
   })
   .register({
     cityController: asClass(CityController),
     userController: asClass(UserController),
     trainingController: asClass(TrainingController),
-    cloudinaryController: asClass(CloudinaryController)
+    cloudinaryController: asClass(CloudinaryController),
+    geocodeController: asClass(GeocodeController)
   });
 
 export default container;
