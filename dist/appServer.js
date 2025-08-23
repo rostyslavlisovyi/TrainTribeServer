@@ -881,9 +881,8 @@ import mongoose7, { Schema as Schema5 } from "mongoose";
 var UserSchema = new Schema5(
   {
     athleteBio: { type: String, required: false },
-    authId: { type: String, required: true },
+    authId: { type: String, required: true, unique: true },
     city: { type: Schema5.Types.ObjectId, ref: "City", required: false },
-    completedTrainings: { type: Number, default: 0 },
     dateOfBirth: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
     firstName: { type: String },
@@ -932,7 +931,6 @@ var UserSchema = new Schema5(
     ],
     trainingPoints: { type: Number, default: 0 },
     reviewPoints: { type: Number, default: 0 },
-    username: { type: String, unique: true, sparse: true },
     countTrainingOrganized: { type: Number, default: 0 },
     countTrainingJoined: { type: Number, default: 0 },
     countTrainingMissed: { type: Number, default: 0 },
@@ -1346,7 +1344,6 @@ import { body } from "express-validator";
 var validateUserCreation = [
   body("email").exists({ checkFalsy: true }).withMessage("EMAIL IS REQUIRED").isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
   body("authId").exists({ checkFalsy: true }).withMessage("authId IS REQUIRED").isString().withMessage("authId INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
   body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
   body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
   body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
@@ -1363,7 +1360,6 @@ var validateUserCreation = [
       (goal) => Object.values(TrainingGoalEnum).includes(goal)
     )
   ).withMessage("INVALID trainingGoal VALUE"),
-  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
   body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
   body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
   body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
@@ -1372,7 +1368,6 @@ var validateUserCreation = [
 var validateUserUpdate = [
   body("email").optional().isEmail().withMessage("EMAIL INVALID TYPE").normalizeEmail(),
   body("authId").optional().isString().withMessage("authId INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
   body("firstName").optional().isString().withMessage("FIRST NAME INVALID TYPE"),
   body("lastName").optional().isString().withMessage("LAST NAME INVALID TYPE"),
   body("image").optional().isObject().withMessage("IMAGE INVALID TYPE"),
@@ -1389,7 +1384,6 @@ var validateUserUpdate = [
       (goal) => Object.values(TrainingGoalEnum).includes(goal)
     )
   ).withMessage("INVALID trainingGoal VALUE"),
-  body("completedTrainings").optional().isInt({ min: 0 }).withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
   body("athleteBio").optional().isString().isLength({ max: 500 }).withMessage("athleteBio TOO LONG"),
   body("lastOnboardingStep").optional().isString().withMessage("lastOnboardingStep INVALID TYPE"),
   body("hasCompletedOnboarding").optional().isBoolean().withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
@@ -1000274,10 +1000268,6 @@ var swaggerOptions = {
               type: "string",
               description: "Reference to the user's city (ObjectId)"
             },
-            completedTrainings: {
-              type: "integer",
-              description: "Number of trainings the user has completed"
-            },
             countTrainingOrganized: {
               type: "integer",
               description: "Number of trainings organized by the user",
@@ -1000373,10 +1000363,6 @@ var swaggerOptions = {
                 $ref: "#/components/schemas/TimeSlot"
               },
               description: "User's preferred training time slots"
-            },
-            username: {
-              type: "string",
-              description: "The username of the user"
             },
             language: {
               type: "string",

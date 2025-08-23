@@ -122,10 +122,6 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 type: string
  *                 description: The email of the user
  *                 example: test@test.com
- *               username:
- *                 type: string
- *                 description: The username of the user
- *                 example: testuser
  *               firstName:
  *                 type: string
  *                 description: The first name of the user
@@ -179,14 +175,14 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  *                 message:
  *                   type: string
  *                   enum:
- *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
+ *                     - "ONLY ALLOWED FIELDS ARE ACCEPTED: email, firstName, lastName, image, latitude, longitude, sport"
  *                     - "EMAIL IS REQUIRED"
- *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
+ *                   example: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, firstName, lastName, image, latitude, longitude, sport"
  *             examples:
  *               extraFields:
  *                 summary: Extra fields provided in request body
  *                 value:
- *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, username, firstName, lastName, image, latitude, longitude, sport"
+ *                   message: "ONLY ALLOWED FIELDS ARE ACCEPTED: email, firstName, lastName, image, latitude, longitude, sport"
  *               missingEmail:
  *                 summary: Missing required email field
  *                 value:
@@ -270,10 +266,6 @@ userRoute.post(
  *                 type: string
  *                 description: The email of the user
  *                 example: test@test.com
- *               username:
- *                 type: string
- *                 description: The username of the user
- *                 example: test_user
  *               firstName:
  *                 type: string
  *                 description: The first name of the user
