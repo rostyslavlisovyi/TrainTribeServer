@@ -14,5 +14,11 @@
       "src": "/(.*)",
       "dest": "dist/appServer.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/city/init?token=rXf2QBRzyzY6oeB_Dmn2kR90HRNQbdX3",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

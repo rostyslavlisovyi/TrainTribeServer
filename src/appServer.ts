@@ -1,13 +1,13 @@
-import express, { Express } from "express";
+import { scopePerRequest } from "awilix-express";
+import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
+import express, { Express } from "express";
 import connectDB from "./config/database.ts";
-import router from "./routes/index.ts";
-import syncMock from "./config/syncMock.ts";
+import initCity from "./config/initCity.ts";
 import { setupSwagger } from "./config/swagger.ts";
-import chalk from "chalk";
-import { scopePerRequest } from "awilix-express";
 import container from "./container.ts";
+import router from "./routes/index.ts";
 
 dotenv.config();
 
@@ -77,9 +77,8 @@ async function startServer(): Promise<void> {
     // Connect to database
     await connectDB();
 
-    // Sync mock data
-    await syncMock();
-    console.info(chalk.green("Mock data synced successfully."));
+    // Inizialize city data
+    await initCity();
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {

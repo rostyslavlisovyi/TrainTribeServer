@@ -13,9 +13,8 @@ import {
 const UserSchema: Schema = new Schema(
   {
     athleteBio: { type: String, required: false },
-    authId: { type: String, required: true },
+    authId: { type: String, required: true, unique: true },
     city: { type: Schema.Types.ObjectId, ref: "City", required: false },
-    completedTrainings: { type: Number, default: 0 },
     dateOfBirth: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
     firstName: { type: String },
@@ -64,7 +63,6 @@ const UserSchema: Schema = new Schema(
     ],
     trainingPoints: { type: Number, default: 0 },
     reviewPoints: { type: Number, default: 0 },
-    username: { type: String, unique: true, sparse: true },
     countTrainingOrganized: { type: Number, default: 0 },
     countTrainingJoined: { type: Number, default: 0 },
     countTrainingMissed: { type: Number, default: 0 },

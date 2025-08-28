@@ -201,14 +201,12 @@ The server provides the following API endpoints:
 | Field                       | Type       | Required | Unique | Description                                                                   |
 | --------------------------- | ---------- | -------- | ------ | ----------------------------------------------------------------------------- |
 | `_id`                       | `ObjectId` | Yes      | Yes    | User's id.                                                                    |
-| `username`                  | `String`   | No       | No     | User's display name.                                                          |
 | `firstName`                 | `String`   | No       | No     | User's first name.                                                            |
 | `lastName`                  | `String`   | No       | No     | User's last name.                                                             |
 | `email`                     | `String`   | Yes      | Yes    | User's email address (used for authentication and communication).             |
 | `sports`                    | `String[]` | Yes      | No     | Array of sports types from SportsEnum (e.g., RUNNING, CYCLING, SWIMMING)      |
 | `image`                     | `Object`   | No       | No     | Object to cloudinary upload api picture.                                      |
 | `city`                      | `ObjectId` | No       | No     | Reference to the user's city.                                                 |
-| `completedTrainings`        | `Number`   | No       | No     | Number of trainings the user has completed. Default is 0.                     |
 | `athleteBio`                | `String`   | No       | No     | User's athletic biography and background information.                         |
 | `authId`                    | `String`   | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
 | `lastOnboardingStep`        | `String`   | No       | No     | Indicates the last completed onboarding step.                                 |

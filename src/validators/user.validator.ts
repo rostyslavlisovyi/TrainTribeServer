@@ -19,7 +19,6 @@ export const validateUserCreation: ValidationChain[] = [
     .isString()
     .withMessage("authId INVALID TYPE"),
 
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
   body("firstName")
     .optional()
     .isString()
@@ -59,10 +58,6 @@ export const validateUserCreation: ValidationChain[] = [
     )
     .withMessage("INVALID trainingGoal VALUE"),
 
-  body("completedTrainings")
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
   body("athleteBio")
     .optional()
     .isString()
@@ -90,7 +85,6 @@ export const validateUserUpdate: ValidationChain[] = [
     .withMessage("EMAIL INVALID TYPE")
     .normalizeEmail(),
   body("authId").optional().isString().withMessage("authId INVALID TYPE"),
-  body("username").optional().isString().withMessage("USERNAME INVALID TYPE"),
   body("firstName")
     .optional()
     .isString()
@@ -129,10 +123,6 @@ export const validateUserUpdate: ValidationChain[] = [
     )
     .withMessage("INVALID trainingGoal VALUE"),
 
-  body("completedTrainings")
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage("completedTrainings MUST BE A NON-NEGATIVE INTEGER"),
   body("athleteBio")
     .optional()
     .isString()

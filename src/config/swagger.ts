@@ -348,10 +348,6 @@ const swaggerOptions = {
               type: "string",
               description: "Reference to the user's city (ObjectId)"
             },
-            completedTrainings: {
-              type: "integer",
-              description: "Number of trainings the user has completed"
-            },
             countTrainingOrganized: {
               type: "integer",
               description: "Number of trainings organized by the user",
@@ -449,10 +445,6 @@ const swaggerOptions = {
                 $ref: "#/components/schemas/TimeSlot"
               },
               description: "User's preferred training time slots"
-            },
-            username: {
-              type: "string",
-              description: "The username of the user"
             },
             language: {
               type: "string",

@@ -765,9 +765,6 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *         authId:
  *           type: string
  *           description: Authentication ID from identity provider
- *         username:
- *           type: string
- *           description: User's username
  *         image:
  *           type: object
  *           description: The image object containing Cloudinary data

@@ -12,7 +12,6 @@ export interface IUser extends Document<ObjectId> {
   athleteBio?: string;
   authId: string;
   city: ObjectId;
-  completedTrainings?: number;
   dateOfBirth?: Date;
   email: string;
   firstName?: string;
@@ -30,7 +29,6 @@ export interface IUser extends Document<ObjectId> {
   trainingTimeSlot: ITimeSlot[];
   trainingPoints: number;
   reviewPoints: number;
-  username?: string;
   countTrainingOrganized?: number;
   countTrainingJoined?: number;
   countTrainingMissed?: number;
