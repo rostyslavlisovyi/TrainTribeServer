@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+import initCity from "../config/initCity.ts";
 import container from "../container.js";
 import { CityController } from "../controllers/index.js";
 import { authenticate } from "../middlewares/index.js";
@@ -71,6 +72,19 @@ const cityController = container.resolve<CityController>("cityController");
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
+
+cityRoute.post("/init", async (req, res) => {
+  const CRON_SECRET = process.env.CRON_SECRET;
+  if (req.query.token !== CRON_SECRET) {
+    return res.status(403).json({ error: "Accesso negato" });
+  }
+  const result = await initCity({ forceUpdateData: true });
+  if (result instanceof Error) {
+    res.status(500).json({ message: result.message });
+    return;
+  }
+  res.json({ message: result });
+});
 
 cityRoute.post("/list", authenticate, (req, res) =>
   cityController.list(req, res)

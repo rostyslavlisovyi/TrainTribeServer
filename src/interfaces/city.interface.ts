@@ -1,12 +1,12 @@
 import { Document, HydratedDocument } from "mongoose";
 
 export interface ICity extends Document {
-  id: number;
-  name: string;
-  latitude: number;
-  longitude: number;
+  istatCode: string;
+  region: string;
   province: string;
-  population: number;
+  name: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type CityDocument = HydratedDocument<ICity>;
