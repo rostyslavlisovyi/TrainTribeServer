@@ -77,10 +77,13 @@ async function startServer(): Promise<void> {
     // Connect to database
     await connectDB();
 
-    const cityService = container.resolve<CityService>("cityService");
+    const shouldFetchCityOnStartup =
+      process.env.FETCH_CITY_ON_STARTUP === "true";
 
-    // Inizialize city data
-    await cityService.inizialize();
+    if (shouldFetchCityOnStartup) {
+      const cityService = container.resolve<CityService>("cityService");
+      await cityService.inizialize();
+    }
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {
