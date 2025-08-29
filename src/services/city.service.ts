@@ -9,17 +9,8 @@ export class CityService extends BaseService<ICity> {
     super(CityModel);
   }
 
-  inizialize = async (
-    options: { forceUpdateData: boolean } = { forceUpdateData: false }
-  ): Promise<void> => {
+  inizialize = async (): Promise<void> => {
     try {
-      const existingCitys = await this.model.find();
-
-      if (options.forceUpdateData === false && existingCitys.length > 0) {
-        console.log(chalk.green("Data is not empty, skipping initialization."));
-        return;
-      }
-
       console.log(chalk.yellow("Downloading Excel file..."));
       const urlInstat =
         "https://www.istat.it/wp-content/uploads/2024/09/Elenco-comuni-italiani.xlsx";
