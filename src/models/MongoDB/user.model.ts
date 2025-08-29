@@ -1,45 +1,76 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { IUser } from "../../interfaces/user.interface.ts";
+import { IUser } from "../../interfaces/index.js";
 import {
+  DaysOfTheWeekEnum,
+  LanguageEnum,
   SportsEnum,
+  TimeSlotsEnum,
+  TrainingFrequencyEnum,
   TrainingGoalEnum,
   TrainingLevelEnum
-} from "../../types/enums.ts";
+} from "../../types/enums.js";
 
 const UserSchema: Schema = new Schema(
   {
-    email: { type: String, required: true, unique: true },
-    username: { type: String },
-    first_name: { type: String },
-    last_name: { type: String },
-    image_url: { type: String, required: false },
-    date_of_birth: { type: Date, required: false },
+    athleteBio: { type: String, required: false },
+    authId: { type: String, required: true, unique: true },
     city: { type: Schema.Types.ObjectId, ref: "City", required: false },
+    dateOfBirth: { type: Date, required: false },
+    email: { type: String, required: true, unique: true },
+    firstName: { type: String },
+    hasCompletedOnboarding: { type: Boolean, required: false },
+    image: { type: Schema.Types.Mixed, required: false },
+    lastName: { type: String },
+    lastOnboardingStep: { type: String, required: false },
+    privacySettings: { type: Boolean, default: false },
+    rangeOfAction: { type: Number },
     sports: [
       {
         type: String,
         enum: Object.values(SportsEnum)
       }
     ],
-    training_level: {
-      type: String,
-      enum: Object.values(TrainingLevelEnum)
-    },
-    training_goal: [
+    trainingGoal: [
       {
         type: String,
         enum: Object.values(TrainingGoalEnum)
       }
     ],
-    completed_trainings: { type: Number, default: 0 },
-    social_number: { type: String, required: false },
-    athlete_bio: { type: String, required: false },
-    training_created: [{ type: Schema.Types.ObjectId, ref: "Training" }],
-    training_join: [{ type: Schema.Types.ObjectId, ref: "Training" }],
-    auth_id: { type: String, required: true },
-    last_onboarding_step: { type: String, required: false },
-    has_completed_onboarding: { type: Boolean, required: false },
-    privacy_settings: { type: Boolean, default: false }
+    trainingLevel: {
+      type: String,
+      enum: Object.values(TrainingLevelEnum)
+    },
+    trainingFrequency: {
+      type: String,
+      enum: Object.values(TrainingFrequencyEnum)
+    },
+    trainingPartnerPreference: { type: String },
+    trainingTimeSlot: [
+      {
+        day: {
+          type: String,
+          enum: Object.values(DaysOfTheWeekEnum)
+        },
+        startTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        },
+        endTime: {
+          type: String,
+          enum: Object.values(TimeSlotsEnum)
+        }
+      }
+    ],
+    trainingPoints: { type: Number, default: 0 },
+    reviewPoints: { type: Number, default: 0 },
+    countTrainingOrganized: { type: Number, default: 0 },
+    countTrainingJoined: { type: Number, default: 0 },
+    countTrainingMissed: { type: Number, default: 0 },
+    language: {
+      type: String,
+      enum: Object.values(LanguageEnum),
+      default: LanguageEnum.IT
+    }
   },
   {
     timestamps: true

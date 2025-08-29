@@ -1,25 +1,38 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
-import { SportsEnum, TrainingGoalEnum, TrainingLevelEnum } from "../types";
-export interface IUser extends Document {
-  email: string;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  date_of_birth?: Date;
-  image_url?: string;
+import {
+  LanguageEnum,
+  SportsEnum,
+  TrainingFrequencyEnum,
+  TrainingGoalEnum,
+  TrainingLevelEnum
+} from "../types/index.js";
+import { IFileUpload } from "./index.ts";
+import { ITimeSlot } from "./timeSlot.interface.js";
+export interface IUser extends Document<ObjectId> {
+  athleteBio?: string;
+  authId: string;
   city: ObjectId;
+  dateOfBirth?: Date;
+  email: string;
+  firstName?: string;
+  hasCompletedOnboarding: boolean;
+  image?: IFileUpload;
+  lastName?: string;
+  lastOnboardingStep: string;
+  privacySettings: boolean;
+  rangeOfAction: number;
   sports?: SportsEnum[];
-  training_level?: TrainingLevelEnum;
-  training_goal?: TrainingGoalEnum[];
-  completed_trainings?: number;
-  social_number?: string;
-  athlete_bio?: string;
-  training_created?: ObjectId[];
-  training_join?: ObjectId[];
-  auth_id: string;
-  last_onboarding_step: string;
-  has_completed_onboarding: boolean;
-  privacy_settings: boolean;
+  trainingGoal?: TrainingGoalEnum[];
+  trainingLevel?: TrainingLevelEnum;
+  trainingFrequency: TrainingFrequencyEnum;
+  trainingPartnerPreference: string;
+  trainingTimeSlot: ITimeSlot[];
+  trainingPoints: number;
+  reviewPoints: number;
+  countTrainingOrganized?: number;
+  countTrainingJoined?: number;
+  countTrainingMissed?: number;
+  language: LanguageEnum;
 }
 
 export type UserDocument = HydratedDocument<IUser>;

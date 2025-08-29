@@ -14,5 +14,11 @@
       "src": "/(.*)",
       "dest": "dist/appServer.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/city/inizialize",
+      "schedule": "0 0 1 * *"
+    }
   ]
 }

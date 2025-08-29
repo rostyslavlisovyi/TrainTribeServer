@@ -1,3 +1,4 @@
-export * from "./MongoDB/city.model";
-export * from "./MongoDB/training.model";
-export * from "./MongoDB/user.model";
+export * from "./MongoDB/city.model.js";
+export * from "./MongoDB/training.model.js";
+export * from "./MongoDB/user.model.js";
+export * from "./MongoDB/review.model.js";

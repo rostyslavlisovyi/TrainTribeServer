@@ -1,9 +1,21 @@
-import { Model, Document, FilterQuery } from "mongoose";
+import {
+  Model,
+  Document,
+  FilterQuery,
+  SortOrder,
+  PopulateOptions
+} from "mongoose";
+import { NotFoundError, DataCannotBeEmpty } from "../errors/index.js";
+import chalk from "chalk";
+
+interface PopulateTree {
+  [key: string]: PopulateTree;
+}
 
 export abstract class BaseService<T extends Document> {
   model: Model<T>;
 
-  constructor(model: Model<T>) {
+  protected constructor(model: Model<T>) {
     this.model = model;
   }
 
@@ -14,55 +26,87 @@ export abstract class BaseService<T extends Document> {
     id: string;
     populateFields?: string | string[];
   }): Promise<{ data: T | null }> {
-    let query = this.model.findById(id);
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      let query = this.model.findById(id);
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const result = await query;
+      return { data: result };
+    } catch (error) {
+      console.error(chalk.red("Error in get method:"), error);
+      throw error;
     }
-    return { data: await query };
   }
 
-  async getAll({
+  async list({
     pageNum = 1,
     pageSize = 10,
     populateFields,
+    sort,
     filters = {}
   }: {
     pageNum?: number;
     pageSize?: number;
     populateFields?: string | string[];
+    sort?: Record<string, SortOrder>;
     filters?: FilterQuery<T>;
   }): Promise<{
     data: T[];
     totalItems: number;
     totalPages: number;
+    pageSize: number;
     currentPage: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   }> {
-    const skips = pageSize * (pageNum - 1);
+    try {
+      const validPageNum = Math.max(1, pageNum);
+      const validPageSize = Math.max(1, pageSize);
+      const skips = validPageSize * (validPageNum - 1);
 
-    const totalItems = await this.model.countDocuments(filters);
-    const totalPages = Math.ceil(totalItems / pageSize);
+      const totalItems = await this.model.countDocuments(filters);
+      const totalPages =
+        totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
+      let query = this.model.find(filters);
 
-    let query = this.model.find(filters).skip(skips).limit(pageSize);
-    if (populateFields) {
-      query = query.populate(populateFields);
+      if (sort) {
+        query = query.sort(sort);
+      }
+      query = query.skip(skips).limit(validPageSize);
+
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const data = await query;
+      return {
+        data,
+        totalItems,
+        totalPages,
+        pageSize: validPageSize,
+        currentPage: validPageNum,
+        hasNextPage: validPageNum < totalPages,
+        hasPreviousPage: validPageNum > 1
+      };
+    } catch (error) {
+      console.error(chalk.red("Error in list:"), chalk.red(error));
+      throw error;
     }
-
-    const data = await query;
-
-    return {
-      data,
-      totalItems,
-      totalPages,
-      currentPage: pageNum,
-      hasNextPage: pageNum < totalPages,
-      hasPreviousPage: pageNum > 1
-    };
   }
 
-  async create(entity: Partial<T>): Promise<T> {
-    return await this.model.create(entity);
+  async create(entity: Partial<T>): Promise<{ data: T }> {
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Entity data cannot be empty");
+      }
+
+      const newEntity = await this.model.create(entity);
+
+      return { data: newEntity };
+    } catch (error) {
+      console.error(chalk.red("Error in create:"), error);
+      throw error;
+    }
   }
 
   async update({
@@ -74,17 +118,70 @@ export abstract class BaseService<T extends Document> {
     entity: Partial<T>;
     populateFields?: string | string[];
   }): Promise<{ data: T | null }> {
-    let query = this.model.findByIdAndUpdate(id, entity, {
-      new: true
-    });
-    if (populateFields) {
-      query = query.populate(populateFields);
+    try {
+      if (!entity || Object.keys(entity).length === 0) {
+        throw new DataCannotBeEmpty("Update data cannot be empty");
+      }
+      let query = this.model.findByIdAndUpdate(id, entity, {
+        new: true
+      });
+      if (populateFields) {
+        query = query.populate(this.buildPopulate(populateFields));
+      }
+      const updatedData = await query;
+      if (!updatedData) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+      return { data: updatedData };
+    } catch (error) {
+      console.error(chalk.red("Error in update:"), error);
+      throw error;
     }
-    return { data: await query };
   }
 
   async delete(id: string): Promise<{ data: boolean }> {
-    const deleted = await this.model.findByIdAndDelete(id);
-    return { data: !!deleted };
+    try {
+      const deleted = await this.model.findByIdAndDelete(id);
+
+      if (!deleted) {
+        throw new NotFoundError(`Data with id ${id} not found`);
+      }
+
+      return { data: !!deleted };
+    } catch (error) {
+      console.error(chalk.red("Error in delete:"), error);
+      throw error;
+    }
+  }
+
+  private buildPopulate(
+    paths: string | string[]
+  ): PopulateOptions | PopulateOptions[] {
+    const tree: Record<string, PopulateTree> = {};
+
+    const pathArray = Array.isArray(paths) ? paths : [paths];
+
+    for (const path of pathArray) {
+      const parts = path.split(".");
+      let current = tree;
+
+      for (const part of parts) {
+        if (!current[part]) current[part] = {};
+        current = current[part];
+      }
+    }
+
+    function convert(node: Record<string, PopulateTree>): PopulateOptions[] {
+      return Object.entries(node).map(([key, value]) => {
+        const populate = convert(value);
+        const result: PopulateOptions = { path: key };
+        if (populate.length > 0) {
+          result.populate = populate.length === 1 ? populate[0] : populate;
+        }
+        return result;
+      });
+    }
+    const result = convert(tree);
+    return result.length === 1 ? result[0] : result;
   }
 }

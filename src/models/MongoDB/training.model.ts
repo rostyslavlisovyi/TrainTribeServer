@@ -1,32 +1,54 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
-
-interface ITraining extends Document {
-  title: string;
-  description: string;
-  date: Date;
-  latitude: number;
-  longitude: number;
-  sport: Types.ObjectId;
-  creator: Types.ObjectId;
-  participants: Types.ObjectId[];
-}
+import mongoose, { Schema, Model } from "mongoose";
+import { ITraining } from "../../interfaces/index.js";
+import {
+  SportsEnum,
+  TrainingLevelEnum,
+  TrainingStatusEnum
+} from "../../types/index.js";
 
 const TrainingSchema = new Schema<ITraining>(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },
     date: { type: Date, required: true },
-    latitude: { type: Number, required: true },
-    longitude: { type: Number, required: true },
-    sport: { type: Schema.Types.ObjectId, ref: "Sport", required: true },
+    address: { type: String, required: true },
+    latitude: { type: String, required: true },
+    longitude: { type: String, required: true },
+    sport: {
+      type: String,
+      enum: Object.values(SportsEnum)
+    },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    participants: [{ type: Schema.Types.ObjectId, ref: "User" }]
+    participantAttendance: [
+      {
+        participant: { type: Schema.Types.ObjectId, ref: "User" },
+        attended: { type: Boolean, default: false }
+      }
+    ],
+    difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
+    duration: { type: Number },
+    likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    comments: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Comment"
+      }
+    ],
+    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    status: {
+      type: String,
+      enum: Object.values(TrainingStatusEnum),
+      default: TrainingStatusEnum.SCHEDULED
+    }
   },
   {
     timestamps: true
   }
 );
 
-const TrainingModel = mongoose.model<ITraining>("Training", TrainingSchema);
+const TrainingModel: Model<ITraining> = mongoose.model<ITraining>(
+  "Training",
+  TrainingSchema
+);
 
-module.exports = TrainingModel;
+export default TrainingModel;

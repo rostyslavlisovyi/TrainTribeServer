@@ -1,14 +1,14 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { ICity } from "../../interfaces/city.interface.ts";
+import { ICity } from "../../interfaces/index.js";
 
 const CitySchema: Schema = new Schema(
   {
-    id: { type: Number, required: true },
+    istatCode: { type: String, required: true, unique: true },
+    province: { type: String },
+    region: { type: String },
     name: { type: String },
     latitude: { type: Number },
-    longitude: { type: Number },
-    province: { type: String },
-    population: { type: Number }
+    longitude: { type: Number }
   },
   {
     timestamps: true

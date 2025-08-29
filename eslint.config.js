@@ -3,7 +3,7 @@ import globals from "globals";
 import tslint from "typescript-eslint";
 import eslintReact from "eslint-plugin-react";
 import prettierPlugin from "eslint-plugin-prettier";
-import eslintConfigPrettier from "eslint-plugin-prettier";
+// import eslintConfigPrettier from "eslint-plugin-prettier";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default tslint.config(
@@ -25,7 +25,8 @@ export default tslint.config(
       "coverage",
       "public",
       "eslint.config.js",
-      "jest.config.ts"
+      "jest.config.ts",
+      "migrate-mongo-config.js"
     ]
   },
   {
@@ -60,7 +61,7 @@ export default tslint.config(
       "max-len": [
         "error",
         {
-          code: 80,
+          code: 90,
           ignoreUrls: true,
           ignoreComments: true,
           ignoreTrailingComments: true

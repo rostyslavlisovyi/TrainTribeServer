@@ -1,3 +1,3 @@
-export * from "./auth.middleware";
-export * from "./upload.middleware";
-export * from "./validation.middleware";
+export * from "./auth.middleware.js";
+export * from "./upload.middleware.js";
+export * from "./validation.middleware.js";

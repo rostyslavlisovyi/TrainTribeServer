@@ -12,7 +12,7 @@ const config: Config = {
       }
     ]
   },
-  moduleFileExtensions: ["ts", "js", "json"],
+  moduleFileExtensions: ["ts", "js", "json","tsx","jsx","node"],
   moduleNameMapper: {
     "^#ansi-styles$": "ansi-styles/index.js",
     "^(\\.{1,2}/.*)\\.js$": "$1"

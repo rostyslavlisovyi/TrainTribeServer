@@ -1,24 +1,27 @@
-import { Document } from "mongoose";
+import { Document, ObjectId } from "mongoose";
+import { IParticipantAttendance } from "./participantAttendance.interface.js";
+import {
+  SportsEnum,
+  TrainingLevelEnum,
+  TrainingStatusEnum
+} from "../types/index.js";
+
 export interface ITraining extends Document {
   title: string;
-  sport: string;
-  date: string;
-  time: string;
-  distance: string;
-  location: object;
-  creator: string;
-  participants: string[];
+  description: string;
+  date: Date;
+  address: string;
+  latitude: string;
+  longitude: string;
+  sport: SportsEnum;
+  creator: ObjectId;
+  participantAttendance: IParticipantAttendance[];
+  difficultyLevel: TrainingLevelEnum;
+  duration: number;
+  likes: ObjectId[];
+  comments: ObjectId[];
+  reviews: ObjectId[];
+  status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;
-}
-export interface ITrainingInput {
-  external_id: string;
-  title: string;
-  sport: string;
-  date: string;
-  time: string;
-  distance: string;
-  location: object;
-  creator: string;
-  participants: string[];
 }

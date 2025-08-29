@@ -1,4 +1,2 @@
-export * from "./handleError";
-export * from "./handleMongooseError";
-export * from "./validateFileContent";
-export * from "./validationObjectId";
+export * from "./validators/validateFileContent.js";
+export * from "./handleError.js";
