@@ -72,9 +72,7 @@ const cityController = container.resolve<CityController>("cityController");
  *         $ref: '#/components/responses/InternalServerError'
  */
 
-cityRoute.post("/inizialize", (req, res) =>
-  cityController.inizialize(req, res)
-);
+cityRoute.get("/inizialize", (req, res) => cityController.inizialize(req, res));
 
 cityRoute.post("/list", authenticate, (req, res) =>
   cityController.list(req, res)
