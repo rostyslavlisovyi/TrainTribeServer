@@ -17,7 +17,7 @@
   ],
   "crons": [
     {
-      "path": "/api/city/inizialize?token=rXf2QBRzyzY6oeB_Dmn2kR90HRNQbdX3",
+      "path": "/api/city/inizialize",
       "schedule": "0 0 1 * *"
     }
   ]

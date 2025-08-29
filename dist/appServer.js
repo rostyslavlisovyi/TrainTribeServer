@@ -737,9 +737,10 @@ var CityController = class extends BaseController {
   }
   async inizialize(req, res) {
     try {
-      const CRON_SECRET = process.env.CRON_SECRET;
-      if (!req.query.token || req.query.token !== CRON_SECRET) {
-        res.status(401).json({ error: "Accesso negato" });
+      const authorization = req.headers.authorization || "";
+      if (authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+        res.status(401).end("Unauthorized");
+        return;
       }
       await this.service.inizialize({ forceUpdateData: true });
       res.json({ message: "Inizialize completed" });
