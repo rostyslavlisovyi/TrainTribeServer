@@ -1772,10 +1772,7 @@ var handleValidationErrors = (req, res, next) => {
 // src/routes/city.routes.ts
 var cityRoute = express.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post(
-  "/inizialize",
-  (req, res) => cityController.inizialize(req, res)
-);
+cityRoute.get("/inizialize", (req, res) => cityController.inizialize(req, res));
 cityRoute.post(
   "/list",
   authenticate,
