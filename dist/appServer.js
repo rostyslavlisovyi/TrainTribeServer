@@ -742,7 +742,7 @@ var CityController = class extends BaseController {
         res.status(401).end("Unauthorized");
         return;
       }
-      await this.service.inizialize({ forceUpdateData: true });
+      await this.service.inizialize();
       res.json({ message: "Inizialize completed" });
     } catch (error) {
       handleError(res, error);
@@ -1125,13 +1125,8 @@ var CityService = class extends BaseService {
   constructor() {
     super(city_model_default);
   }
-  inizialize = async (options = { forceUpdateData: false }) => {
+  inizialize = async () => {
     try {
-      const existingCitys = await this.model.find();
-      if (options.forceUpdateData === false && existingCitys.length > 0) {
-        console.log(chalk5.green("Data is not empty, skipping initialization."));
-        return;
-      }
       console.log(chalk5.yellow("Downloading Excel file..."));
       const urlInstat = "https://www.istat.it/wp-content/uploads/2024/09/Elenco-comuni-italiani.xlsx";
       const response = await axios({
@@ -2043,8 +2038,11 @@ async function gracefulShutdown(signal) {
 async function startServer() {
   try {
     await database_default();
-    const cityService = container_default.resolve("cityService");
-    await cityService.inizialize();
+    const shouldFetchCityOnStartup = process.env.FETCH_CITY_ON_STARTUP === "true";
+    if (shouldFetchCityOnStartup) {
+      const cityService = container_default.resolve("cityService");
+      await cityService.inizialize();
+    }
     appServer.listen(SERVER_PORT, () => {
       console.info(
         chalk6.green(`Server is running on http://localhost:${SERVER_PORT}`)

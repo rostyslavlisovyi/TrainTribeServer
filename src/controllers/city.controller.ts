@@ -18,7 +18,7 @@ export class CityController extends BaseController<ICity, CityService> {
         return;
       }
 
-      await this.service.inizialize({ forceUpdateData: true });
+      await this.service.inizialize();
 
       res.json({ message: "Inizialize completed" });
     } catch (error) {
