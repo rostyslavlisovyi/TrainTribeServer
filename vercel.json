@@ -17,7 +17,8 @@
   ],
   "crons": [
     {
-      "path": "/api/city/init?token=rXf2QBRzyzY6oeB_Dmn2kR90HRNQbdX3",
+      "path": "/api/city/inizialize?token=rXf2QBRzyzY6oeB_Dmn2kR90HRNQbdX3",
+      "method": "POST",
       "schedule": "0 0 1 * *"
     }
   ]

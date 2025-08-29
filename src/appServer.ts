@@ -3,8 +3,8 @@ import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express } from "express";
+import { CityService } from "services/city.service.ts";
 import connectDB from "./config/database.ts";
-import initCity from "./config/initCity.ts";
 import { setupSwagger } from "./config/swagger.ts";
 import container from "./container.ts";
 import router from "./routes/index.ts";
@@ -77,8 +77,10 @@ async function startServer(): Promise<void> {
     // Connect to database
     await connectDB();
 
+    const cityService = container.resolve<CityService>("cityService");
+
     // Inizialize city data
-    await initCity();
+    await cityService.inizialize();
 
     // Start listening
     appServer.listen(SERVER_PORT, () => {
