@@ -23,115 +23,6 @@ var connectDB = async () => {
 };
 var database_default = connectDB;
 
-// src/config/initCity.ts
-import axios from "axios";
-import chalk2 from "chalk";
-import * as XLSX from "xlsx";
-
-// src/models/MongoDB/city.model.ts
-import mongoose2, { Schema } from "mongoose";
-var CitySchema = new Schema(
-  {
-    istatCode: { type: String, required: true, unique: true },
-    province: { type: String },
-    region: { type: String },
-    name: { type: String },
-    latitude: { type: Number },
-    longitude: { type: Number }
-  },
-  {
-    timestamps: true
-  }
-);
-var CityModel = mongoose2.model("City", CitySchema);
-var city_model_default = CityModel;
-
-// src/config/initCity.ts
-var initCity = async (options = { forceUpdateData: false }) => {
-  try {
-    const existingCitys = await city_model_default.find();
-    if (options.forceUpdateData === false && existingCitys.length > 0) {
-      console.log(chalk2.green("Data is not empty, skipping initialization."));
-      return;
-    }
-    console.log(chalk2.yellow("Downloading Excel file..."));
-    const urlInstat = "https://www.istat.it/wp-content/uploads/2024/09/Elenco-comuni-italiani.xlsx";
-    const response = await axios({
-      method: "get",
-      url: urlInstat,
-      responseType: "arraybuffer"
-    });
-    console.log(chalk2.yellow("Parsing Excel file..."));
-    const workbook = XLSX.read(response.data, { type: "buffer" });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-    let cities = jsonData.map((row) => ({
-      istatCode: row["Codice Comune formato alfanumerico"],
-      region: row["Denominazione Regione"],
-      name: row["Denominazione in italiano"],
-      province: row[
-        // eslint-disable-next-line max-len
-        "Denominazione dell'Unit\xE0 territoriale sovracomunale \r\n(valida a fini statistici)"
-      ]
-    }));
-    console.log(chalk2.green(`Processed ${cities.length} cities`));
-    console.log(chalk2.yellow("Fetching coordinates from Wikidata..."));
-    const sparqlQuery = `
-      SELECT ?istat ?coordinate
-      WHERE {
-        ?item p:P31/ps:P31/wdt:P279* wd:Q747074.
-        OPTIONAL { ?item wdt:P635 ?istat. }
-        OPTIONAL { ?item wdt:P625 ?coordinate. }
-        
-      }
-`;
-    const sparqlUrl = `https://query.wikidata.org/sparql?query=${encodeURIComponent(
-      sparqlQuery
-    )}&format=json`;
-    const sparqlResponse = await axios.get(sparqlUrl, {
-      headers: {
-        "User-Agent": "NodeJS-App",
-        Accept: "application/json"
-      }
-    });
-    const results = sparqlResponse.data.results.bindings;
-    const wikidataMap = /* @__PURE__ */ new Map();
-    for (const r of results) {
-      const istat = r.istat?.value;
-      let latitude, longitude;
-      if (r.coordinate?.value) {
-        const coords = r.coordinate.value.replace("Point(", "").replace(")", "").split(" ");
-        longitude = parseFloat(coords[0]);
-        latitude = parseFloat(coords[1]);
-      }
-      if (istat) {
-        wikidataMap.set(istat, { latitude, longitude });
-      }
-    }
-    cities = cities.map((city) => {
-      const extra = wikidataMap.get(city.istatCode);
-      return extra ? { ...city, ...extra } : city;
-    });
-    console.log(chalk2.green("Dati arricchiti con Wikidata"));
-    console.log(
-      chalk2.yellow(
-        "Cities without coordinates:",
-        cities.filter((x) => !x.latitude || !x.longitude)
-      )
-    );
-    await city_model_default.deleteMany({});
-    console.log(chalk2.yellow("Old data cleared. Inserting new data..."));
-    await city_model_default.insertMany(cities);
-    console.log(chalk2.green("Inserted", cities.length, "cities"));
-    return "City data initialized successfully.";
-  } catch (error) {
-    console.error(chalk2.red("Error processing mock data:", error));
-    return error;
-  }
-};
-var initCity_default = initCity;
-
 // src/config/swagger.ts
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -608,8 +499,8 @@ import { asClass, createContainer, InjectionMode } from "awilix";
 import { fileTypeFromBuffer } from "file-type";
 
 // src/utils/handleError.ts
-import mongoose3 from "mongoose";
-import chalk3 from "chalk";
+import mongoose2 from "mongoose";
+import chalk2 from "chalk";
 
 // src/errors/baseError.ts
 var BaseError = class extends Error {
@@ -705,7 +596,7 @@ var InternalServerError = class extends BaseError {
 
 // src/utils/handleError.ts
 function handleError(res, error) {
-  console.error(chalk3.red("Error:", error));
+  console.error(chalk2.red("Error:", error));
   if (error instanceof BaseError) {
     return res.status(error.statusCode).json(error.toJSON());
   }
@@ -718,13 +609,13 @@ function handleError(res, error) {
   if (error instanceof DataCannotBeEmpty) {
     return res.status(400).json(error.toJSON());
   }
-  if (error instanceof mongoose3.Error.ValidationError) {
+  if (error instanceof mongoose2.Error.ValidationError) {
     return res.status(400).json(new MongoValidationError(error).toJSON());
   }
-  if (error instanceof mongoose3.Error.CastError) {
+  if (error instanceof mongoose2.Error.CastError) {
     return res.status(422).json(new MongoCastError(error).toJSON());
   }
-  if (error instanceof mongoose3.mongo.MongoServerError) {
+  if (error instanceof mongoose2.mongo.MongoServerError) {
     if (error.code === 11e3) {
       return res.status(409).json(new MongoDuplicateKeyError(error).toJSON());
     }
@@ -843,6 +734,18 @@ var CityController = class extends BaseController {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(cityService) {
     super(cityService);
+  }
+  async inizialize(req, res) {
+    try {
+      const CRON_SECRET = process.env.CRON_SECRET;
+      if (!req.query.token || req.query.token !== CRON_SECRET) {
+        res.status(401).json({ error: "Accesso negato" });
+      }
+      await this.service.inizialize({ forceUpdateData: true });
+      res.json({ message: "Inizialize completed" });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 };
 
@@ -1038,7 +941,7 @@ var TrainingController = class extends BaseController {
 };
 
 // src/controllers/upload.controller.ts
-import chalk4 from "chalk";
+import chalk3 from "chalk";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -1060,7 +963,7 @@ var UserController = class extends BaseController {
 };
 
 // src/services/base.service.ts
-import chalk5 from "chalk";
+import chalk4 from "chalk";
 var BaseService = class {
   model;
   constructor(model) {
@@ -1078,7 +981,7 @@ var BaseService = class {
       const result = await query;
       return { data: result };
     } catch (error) {
-      console.error(chalk5.red("Error in get method:"), error);
+      console.error(chalk4.red("Error in get method:"), error);
       throw error;
     }
   }
@@ -1114,7 +1017,7 @@ var BaseService = class {
         hasPreviousPage: validPageNum > 1
       };
     } catch (error) {
-      console.error(chalk5.red("Error in list:"), chalk5.red(error));
+      console.error(chalk4.red("Error in list:"), chalk4.red(error));
       throw error;
     }
   }
@@ -1126,7 +1029,7 @@ var BaseService = class {
       const newEntity = await this.model.create(entity);
       return { data: newEntity };
     } catch (error) {
-      console.error(chalk5.red("Error in create:"), error);
+      console.error(chalk4.red("Error in create:"), error);
       throw error;
     }
   }
@@ -1151,7 +1054,7 @@ var BaseService = class {
       }
       return { data: updatedData };
     } catch (error) {
-      console.error(chalk5.red("Error in update:"), error);
+      console.error(chalk4.red("Error in update:"), error);
       throw error;
     }
   }
@@ -1163,7 +1066,7 @@ var BaseService = class {
       }
       return { data: !!deleted };
     } catch (error) {
-      console.error(chalk5.red("Error in delete:"), error);
+      console.error(chalk4.red("Error in delete:"), error);
       throw error;
     }
   }
@@ -1194,10 +1097,115 @@ var BaseService = class {
 };
 
 // src/services/city.service.ts
+import axios from "axios";
+import chalk5 from "chalk";
+import * as XLSX from "xlsx";
+
+// src/models/MongoDB/city.model.ts
+import mongoose3, { Schema } from "mongoose";
+var CitySchema = new Schema(
+  {
+    istatCode: { type: String, required: true, unique: true },
+    province: { type: String },
+    region: { type: String },
+    name: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number }
+  },
+  {
+    timestamps: true
+  }
+);
+var CityModel = mongoose3.model("City", CitySchema);
+var city_model_default = CityModel;
+
+// src/services/city.service.ts
 var CityService = class extends BaseService {
   constructor() {
     super(city_model_default);
   }
+  inizialize = async (options = { forceUpdateData: false }) => {
+    try {
+      const existingCitys = await this.model.find();
+      if (options.forceUpdateData === false && existingCitys.length > 0) {
+        console.log(chalk5.green("Data is not empty, skipping initialization."));
+        return;
+      }
+      console.log(chalk5.yellow("Downloading Excel file..."));
+      const urlInstat = "https://www.istat.it/wp-content/uploads/2024/09/Elenco-comuni-italiani.xlsx";
+      const response = await axios({
+        method: "get",
+        url: urlInstat,
+        responseType: "arraybuffer"
+      });
+      console.log(chalk5.yellow("Parsing Excel file..."));
+      const workbook = XLSX.read(response.data, { type: "buffer" });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      let cities = jsonData.map((row) => ({
+        istatCode: row["Codice Comune formato alfanumerico"],
+        region: row["Denominazione Regione"],
+        name: row["Denominazione in italiano"],
+        province: row[
+          // eslint-disable-next-line max-len
+          "Denominazione dell'Unit\xE0 territoriale sovracomunale \r\n(valida a fini statistici)"
+        ]
+      }));
+      console.log(chalk5.green(`Processed ${cities.length} cities`));
+      console.log(chalk5.yellow("Fetching coordinates from Wikidata..."));
+      const sparqlQuery = `
+        SELECT ?istat ?coordinate
+        WHERE {
+          ?item p:P31/ps:P31/wdt:P279* wd:Q747074.
+          OPTIONAL { ?item wdt:P635 ?istat. }
+          OPTIONAL { ?item wdt:P625 ?coordinate. }
+          
+        }
+  `;
+      const sparqlUrl = `https://query.wikidata.org/sparql?query=${encodeURIComponent(
+        sparqlQuery
+      )}&format=json`;
+      const sparqlResponse = await axios.get(sparqlUrl, {
+        headers: {
+          "User-Agent": "NodeJS-App",
+          Accept: "application/json"
+        }
+      });
+      const results = sparqlResponse.data.results.bindings;
+      const wikidataMap = /* @__PURE__ */ new Map();
+      for (const r of results) {
+        const istat = r.istat?.value;
+        let latitude, longitude;
+        if (r.coordinate?.value) {
+          const coords = r.coordinate.value.replace("Point(", "").replace(")", "").split(" ");
+          longitude = parseFloat(coords[0]);
+          latitude = parseFloat(coords[1]);
+        }
+        if (istat) {
+          wikidataMap.set(istat, { latitude, longitude });
+        }
+      }
+      cities = cities.map((city) => {
+        const extra = wikidataMap.get(city.istatCode);
+        return extra ? { ...city, ...extra } : city;
+      });
+      console.log(chalk5.green("Dati arricchiti con Wikidata"));
+      console.log(
+        chalk5.yellow(
+          "Cities without coordinates:",
+          cities.filter((x) => !x.latitude || !x.longitude)
+        )
+      );
+      await this.model.deleteMany({});
+      console.log(chalk5.yellow("Old data cleared. Inserting new data..."));
+      await this.model.insertMany(cities);
+      console.log(chalk5.green("Inserted", cities.length, "cities"));
+    } catch (error) {
+      console.error(chalk5.red("Error processing inizialize cities:", error));
+      throw error;
+    }
+  };
 };
 
 // src/services/cloudinary.service.ts
@@ -1764,18 +1772,10 @@ var handleValidationErrors = (req, res, next) => {
 // src/routes/city.routes.ts
 var cityRoute = express.Router();
 var cityController = container_default.resolve("cityController");
-cityRoute.post("/init", async (req, res) => {
-  const CRON_SECRET = process.env.CRON_SECRET;
-  if (req.query.token !== CRON_SECRET) {
-    return res.status(403).json({ error: "Accesso negato" });
-  }
-  const result = await initCity_default({ forceUpdateData: true });
-  if (result instanceof Error) {
-    res.status(500).json({ message: result.message });
-    return;
-  }
-  res.json({ message: result });
-});
+cityRoute.post(
+  "/inizialize",
+  (req, res) => cityController.inizialize(req, res)
+);
 cityRoute.post(
   "/list",
   authenticate,
@@ -2045,7 +2045,8 @@ async function gracefulShutdown(signal) {
 async function startServer() {
   try {
     await database_default();
-    await initCity_default();
+    const cityService = container_default.resolve("cityService");
+    await cityService.inizialize();
     appServer.listen(SERVER_PORT, () => {
       console.info(
         chalk6.green(`Server is running on http://localhost:${SERVER_PORT}`)
