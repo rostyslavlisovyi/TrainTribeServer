@@ -636,9 +636,8 @@ var BaseController = class {
     this.service = service;
     this.userService = container_default.resolve("userService");
   }
-  async getUserFromToken(req) {
+  async getUserFromToken(req, populate) {
     const token = req.auth;
-    const { populate } = req.query;
     if (!token) {
       throw new Error("No token provided");
     }
@@ -834,6 +833,20 @@ var TrainingController = class extends BaseController {
   constructor(trainingService) {
     super(trainingService);
   }
+  async getRecommendedTrainings(req, res) {
+    try {
+      const user = await this.getUserFromToken(req, ["city"]);
+      console.log(user._id);
+      const populateFields = req.query.populate;
+      const result = await this.service.getRecommendedTrainings(
+        user,
+        populateFields
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
   async addLike(req, res) {
     try {
       const { id } = req.params;
@@ -955,7 +968,10 @@ var UserController = class extends BaseController {
   }
   async getMe(req, res) {
     try {
-      const user = await this.getUserFromToken(req);
+      const user = await this.getUserFromToken(
+        req,
+        req.query.populate
+      );
       res.json(user);
     } catch (error) {
       handleError(res, error);
@@ -1156,9 +1172,8 @@ var CityService = class extends BaseService {
           ?item p:P31/ps:P31/wdt:P279* wd:Q747074.
           OPTIONAL { ?item wdt:P635 ?istat. }
           OPTIONAL { ?item wdt:P625 ?coordinate. }
-          
         }
-  `;
+      `;
       const sparqlUrl = `https://query.wikidata.org/sparql?query=${encodeURIComponent(
         sparqlQuery
       )}&format=json`;
@@ -1190,13 +1205,26 @@ var CityService = class extends BaseService {
       console.log(
         chalk5.yellow(
           "Cities without coordinates:",
-          cities.filter((x) => !x.latitude || !x.longitude)
+          cities.filter((x) => !x.latitude || !x.longitude).length
         )
       );
-      await this.model.deleteMany({});
-      console.log(chalk5.yellow("Old data cleared. Inserting new data..."));
-      await this.model.insertMany(cities);
-      console.log(chalk5.green("Inserted", cities.length, "cities"));
+      const istatCodesFromExcel = cities.map((c) => c.istatCode);
+      const bulkOps = cities.map((city) => ({
+        updateOne: {
+          filter: { istatCode: city.istatCode },
+          update: { $set: city },
+          upsert: true
+        }
+      }));
+      const bulkResult = await this.model.bulkWrite(bulkOps);
+      const deleteResult = await this.model.deleteMany({
+        istatCode: { $nin: istatCodesFromExcel }
+      });
+      console.log(chalk5.green("Database sincronizzato correttamente"));
+      console.log(chalk5.green(`Inseriti: ${bulkResult.upsertedCount || 0}`));
+      console.log(chalk5.green(`Aggiornati: ${bulkResult.modifiedCount || 0}`));
+      console.log(chalk5.green(`Eliminati: ${deleteResult.deletedCount || 0}`));
+      console.log(chalk5.green("Database sincronizzato correttamente"));
     } catch (error) {
       console.error(chalk5.red("Error processing inizialize cities:", error));
       throw error;
@@ -1397,8 +1425,19 @@ var TrainingSchema = new Schema4(
     description: { type: String, required: false },
     date: { type: Date, required: true },
     address: { type: String, required: true },
-    latitude: { type: String, required: true },
-    longitude: { type: String, required: true },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+        default: "Point"
+      },
+      coordinates: {
+        type: [Number],
+        // [longitude, latitude]
+        required: true
+      }
+    },
     sport: {
       type: String,
       enum: Object.values(SportsEnum)
@@ -1430,6 +1469,10 @@ var TrainingSchema = new Schema4(
     timestamps: true
   }
 );
+TrainingSchema.index({ location: "2dsphere" });
+TrainingSchema.index({ date: 1, sport: 1, creator: 1 });
+TrainingSchema.index({ date: 1 });
+TrainingSchema.index({ creator: 1 });
 var TrainingModel = mongoose6.model(
   "Training",
   TrainingSchema
@@ -1534,6 +1577,118 @@ var TrainingService = class extends BaseService {
       });
     }
     return { data: deleted };
+  }
+  async getRecommendedTrainings(user, populateFields, maxDistanceKm = 40, limit = 10) {
+    const now = /* @__PURE__ */ new Date();
+    const userSports = user.sports || [];
+    const userLevel = user.trainingLevel;
+    const userTimeSlots = user.trainingTimeSlot || [];
+    const hasCityCoordinates = user.city && user.city.longitude !== void 0 && user.city.latitude !== void 0;
+    let idsWithDistance = [];
+    const minResults = limit / 2;
+    if (hasCityCoordinates) {
+      idsWithDistance = await this.model.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+            },
+            distanceField: "distance",
+            spherical: true,
+            maxDistance: maxDistanceKm * 1e3
+          }
+        },
+        {
+          $match: {
+            date: { $gte: now },
+            sport: { $in: userSports },
+            creator: { $ne: user._id }
+          }
+        },
+        { $project: { _id: 1, distance: 1 } },
+        { $limit: limit }
+      ]);
+      if (idsWithDistance.length < minResults) {
+        const extra = await this.model.aggregate([
+          {
+            $geoNear: {
+              near: {
+                type: "Point",
+                coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+              },
+              distanceField: "distance",
+              spherical: true,
+              maxDistance: maxDistanceKm * 5 * 1e3
+            }
+          },
+          {
+            $match: {
+              date: { $gte: now },
+              creator: { $ne: user._id }
+            }
+          },
+          { $project: { _id: 1, distance: 1 } },
+          { $limit: limit }
+        ]);
+        idsWithDistance = [
+          ...idsWithDistance,
+          ...extra.filter(
+            (e) => !idsWithDistance.find(
+              (t) => t._id.toString() === e._id.toString()
+            )
+          )
+        ];
+      }
+    }
+    if (idsWithDistance.length < limit) {
+      const fallback = await this.model.find({
+        date: { $gte: now },
+        creator: { $ne: user._id }
+      }).sort({ date: 1 }).limit(limit - idsWithDistance.length).select("_id").lean();
+      idsWithDistance = [
+        ...idsWithDistance,
+        ...fallback.filter(
+          (e) => !idsWithDistance.find((t) => t._id.toString() === e._id.toString())
+        )
+      ];
+    }
+    const ids = idsWithDistance.map((item) => item._id);
+    const { data } = await this.list({
+      pageNum: 1,
+      pageSize: limit,
+      filters: {
+        _id: { $in: ids },
+        creator: { $ne: user._id }
+      },
+      populateFields
+    });
+    const trainingsWithScore = data.map((training) => {
+      let score = 0;
+      if (training.sport && userSports.includes(training.sport)) score += 5;
+      if (userLevel && training.difficultyLevel === userLevel) score += 3;
+      if (userTimeSlots.length && training.date) {
+        const trainingHour = new Date(training.date).getHours();
+        const trainingDay = new Date(training.date).getDay();
+        const slotMatch = userTimeSlots.some((slot) => {
+          const start = parseInt(slot.startTime.split(":")[0], 10);
+          const end = parseInt(slot.endTime.split(":")[0], 10);
+          return trainingHour >= start && trainingHour <= end && parseInt(slot.day, 10) === trainingDay;
+        });
+        if (slotMatch) score += 2;
+      }
+      const distanceObj = idsWithDistance.find(
+        (i) => i._id.toString() === training._id.toString()
+      );
+      if (distanceObj?.distance) {
+        const distKm = distanceObj.distance / 1e3;
+        if (distKm <= maxDistanceKm) score += 5;
+        else if (distKm <= maxDistanceKm * 2) score += 2;
+      }
+      return { training, score };
+    });
+    trainingsWithScore.sort((a, b) => b.score - a.score);
+    return trainingsWithScore.map((item) => item.training).slice(0, limit);
   }
   async addLike(id, userId) {
     return this.model.findByIdAndUpdate(
@@ -1835,6 +1990,11 @@ trainingRoutes.post(
   "/list",
   authenticate,
   (req, res) => trainingController.list(req, res)
+);
+trainingRoutes.get(
+  "/recommended",
+  authenticate,
+  (req, res) => trainingController.getRecommendedTrainings(req, res)
 );
 trainingRoutes.get(
   "/:id",

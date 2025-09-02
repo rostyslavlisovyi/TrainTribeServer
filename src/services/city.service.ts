@@ -26,6 +26,7 @@ export class CityService extends BaseService<ICity> {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let cities: Partial<ICity>[] = jsonData.map((row: any) => ({
         istatCode: row["Codice Comune formato alfanumerico"],
@@ -48,9 +49,8 @@ export class CityService extends BaseService<ICity> {
           ?item p:P31/ps:P31/wdt:P279* wd:Q747074.
           OPTIONAL { ?item wdt:P635 ?istat. }
           OPTIONAL { ?item wdt:P625 ?coordinate. }
-          
         }
-  `;
+      `;
       const sparqlUrl = `https://query.wikidata.org/sparql?query=${encodeURIComponent(
         sparqlQuery
       )}&format=json`;
@@ -85,6 +85,7 @@ export class CityService extends BaseService<ICity> {
           wikidataMap.set(istat, { latitude, longitude });
         }
       }
+
       cities = cities.map((city) => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const extra = wikidataMap.get(city.istatCode!);
@@ -95,13 +96,36 @@ export class CityService extends BaseService<ICity> {
       console.log(
         chalk.yellow(
           "Cities without coordinates:",
-          cities.filter((x) => !x.latitude || !x.longitude)
+          cities.filter((x) => !x.latitude || !x.longitude).length
         )
       );
-      await this.model.deleteMany({});
-      console.log(chalk.yellow("Old data cleared. Inserting new data..."));
-      await this.model.insertMany(cities);
-      console.log(chalk.green("Inserted", cities.length, "cities"));
+
+      // SINCRONIZZAZIONE DEL DB
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const istatCodesFromExcel = cities.map((c) => c.istatCode!);
+
+      // 1️⃣ Bulk upsert
+      const bulkOps = cities.map((city) => ({
+        updateOne: {
+          filter: { istatCode: city.istatCode },
+          update: { $set: city },
+          upsert: true
+        }
+      }));
+
+      const bulkResult = await this.model.bulkWrite(bulkOps);
+
+      // 2️⃣ Eliminazione record non più presenti
+      const deleteResult = await this.model.deleteMany({
+        istatCode: { $nin: istatCodesFromExcel }
+      });
+
+      console.log(chalk.green("Database sincronizzato correttamente"));
+      console.log(chalk.green(`Inseriti: ${bulkResult.upsertedCount || 0}`));
+      console.log(chalk.green(`Aggiornati: ${bulkResult.modifiedCount || 0}`));
+      console.log(chalk.green(`Eliminati: ${deleteResult.deletedCount || 0}`));
+
+      console.log(chalk.green("Database sincronizzato correttamente"));
     } catch (error) {
       console.error(chalk.red("Error processing inizialize cities:", error));
       throw error;
