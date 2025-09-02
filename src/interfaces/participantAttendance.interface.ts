@@ -1,5 +1,5 @@
-import { ObjectId } from "mongoose";
+import { IUser } from "./user.interface.ts";
 export interface IParticipantAttendance {
-  participant: ObjectId;
+  participant: IUser;
   attended: boolean;
 }

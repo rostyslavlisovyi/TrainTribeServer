@@ -1,9 +1,9 @@
-import { ITraining } from "../interfaces/index.js";
-import { BaseController } from "./base.controller.js";
-import { TrainingService } from "../services/training.service.js";
 import { Request, Response } from "express";
-import { handleError } from "../utils/handleError.js";
+import { ITraining } from "../interfaces/index.js";
+import { TrainingService } from "../services/training.service.js";
 import { TrainingStatusEnum } from "../types/index.js";
+import { handleError } from "../utils/handleError.js";
+import { BaseController } from "./base.controller.js";
 
 export class TrainingController extends BaseController<
   ITraining,
@@ -12,6 +12,21 @@ export class TrainingController extends BaseController<
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(trainingService: TrainingService) {
     super(trainingService);
+  }
+
+  async getRecommendedTrainings(req: Request, res: Response): Promise<void> {
+    try {
+      const user = await this.getUserFromToken(req, ["city"]);
+      console.log(user._id);
+      const populateFields = req.query.populate as string | string[];
+      const result = await this.service.getRecommendedTrainings(
+        user,
+        populateFields
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
   }
 
   async addLike(req: Request, res: Response) {

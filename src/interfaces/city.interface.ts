@@ -1,6 +1,6 @@
-import { Document, HydratedDocument } from "mongoose";
+import { Document, HydratedDocument, ObjectId } from "mongoose";
 
-export interface ICity extends Document {
+export interface ICity extends Document<ObjectId> {
   istatCode: string;
   region: string;
   province: string;
