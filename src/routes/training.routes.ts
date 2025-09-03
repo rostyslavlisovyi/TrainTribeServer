@@ -39,6 +39,10 @@ trainingRoutes.post("/list", authenticate, (req, res) =>
   trainingController.list(req, res)
 );
 
+trainingRoutes.get("/recommended", authenticate, (req, res) =>
+  trainingController.getRecommendedTrainings(req, res)
+);
+
 /**
  * @swagger
  * /training/{id}:

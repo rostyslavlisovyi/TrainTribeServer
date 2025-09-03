@@ -18,10 +18,11 @@ export abstract class BaseController<
     this.userService = container.resolve<UserService>("userService");
   }
 
-  protected async getUserFromToken(req: Request): Promise<IUser> {
+  protected async getUserFromToken(
+    req: Request,
+    populate?: string | string[]
+  ): Promise<IUser> {
     const token = req.auth;
-    const { populate } = req.query;
-
     if (!token) {
       throw new Error("No token provided");
     }
@@ -29,7 +30,7 @@ export abstract class BaseController<
       authId: token.payload.user_id
     });
     if (populate) {
-      query.populate(populate as string | string[]);
+      query.populate(populate);
     }
     const user = (await query) as unknown as IUser;
     if (!user) {

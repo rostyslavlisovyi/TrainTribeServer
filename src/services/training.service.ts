@@ -1,4 +1,5 @@
-import { IFileUpload, ITraining } from "../interfaces/index.js";
+import { ObjectId } from "mongoose";
+import { IFileUpload, ITraining, IUser } from "../interfaces/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
@@ -40,6 +41,159 @@ export class TrainingService extends BaseService<ITraining> {
     }
 
     return { data: deleted };
+  }
+
+  async getRecommendedTrainings(
+    user: IUser,
+    populateFields: string | string[],
+    maxDistanceKm = 40,
+    limit = 10
+  ) {
+    const now = new Date();
+    const userSports = user.sports || [];
+    const userLevel = user.trainingLevel;
+    const userTimeSlots = user.trainingTimeSlot || [];
+
+    const hasCityCoordinates =
+      user.city &&
+      user.city.longitude !== undefined &&
+      user.city.latitude !== undefined;
+
+    let idsWithDistance: { _id: ObjectId; distance?: number }[] = [];
+
+    const minResults = limit / 2;
+
+    if (hasCityCoordinates) {
+      // distance and sports
+      idsWithDistance = await this.model.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+            },
+            distanceField: "distance",
+            spherical: true,
+            maxDistance: maxDistanceKm * 1000
+          }
+        },
+        {
+          $match: {
+            date: { $gte: now },
+            sport: { $in: userSports },
+            creator: { $ne: user._id }
+          }
+        },
+        { $project: { _id: 1, distance: 1 } },
+        { $limit: limit }
+      ]);
+
+      // increase distance and remove sport filter
+      if (idsWithDistance.length < minResults) {
+        const extra = await this.model.aggregate([
+          {
+            $geoNear: {
+              near: {
+                type: "Point",
+                coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+              },
+              distanceField: "distance",
+              spherical: true,
+              maxDistance: maxDistanceKm * 5 * 1000
+            }
+          },
+          {
+            $match: {
+              date: { $gte: now },
+              creator: { $ne: user._id }
+            }
+          },
+          { $project: { _id: 1, distance: 1 } },
+          { $limit: limit }
+        ]);
+
+        // no duplicates
+        idsWithDistance = [
+          ...idsWithDistance,
+          ...extra.filter(
+            (e) =>
+              !idsWithDistance.find(
+                (t) => t._id.toString() === e._id.toString()
+              )
+          )
+        ];
+      }
+    }
+
+    // Fallback
+    if (idsWithDistance.length < limit) {
+      const fallback = await this.model
+        .find({
+          date: { $gte: now },
+          creator: { $ne: user._id }
+        })
+        .sort({ date: 1 })
+        .limit(limit - idsWithDistance.length)
+        .select("_id")
+        .lean();
+
+      idsWithDistance = [
+        ...idsWithDistance,
+        ...fallback.filter(
+          (e) =>
+            !idsWithDistance.find((t) => t._id.toString() === e._id.toString())
+        )
+      ];
+    }
+    const ids = idsWithDistance.map((item) => item._id);
+
+    const { data } = await this.list({
+      pageNum: 1,
+      pageSize: limit,
+      filters: {
+        _id: { $in: ids },
+        creator: { $ne: user._id }
+      },
+      populateFields
+    });
+
+    // score
+    const trainingsWithScore = data.map((training) => {
+      let score = 0;
+
+      if (training.sport && userSports.includes(training.sport)) score += 5;
+      if (userLevel && training.difficultyLevel === userLevel) score += 3;
+
+      if (userTimeSlots.length && training.date) {
+        const trainingHour = new Date(training.date).getHours();
+        const trainingDay = new Date(training.date).getDay();
+        const slotMatch = userTimeSlots.some((slot) => {
+          const start = parseInt(slot.startTime.split(":")[0], 10);
+          const end = parseInt(slot.endTime.split(":")[0], 10);
+          return (
+            trainingHour >= start &&
+            trainingHour <= end &&
+            parseInt(slot.day, 10) === trainingDay
+          );
+        });
+        if (slotMatch) score += 2;
+      }
+
+      const distanceObj = idsWithDistance.find(
+        (i) => i._id.toString() === training._id.toString()
+      );
+      if (distanceObj?.distance) {
+        const distKm = distanceObj.distance / 1000;
+        if (distKm <= maxDistanceKm) score += 5;
+        else if (distKm <= maxDistanceKm * 2) score += 2;
+      }
+
+      return { training, score };
+    });
+
+    trainingsWithScore.sort((a, b) => b.score - a.score);
+
+    return trainingsWithScore.map((item) => item.training).slice(0, limit);
   }
 
   async addLike(id: string, userId: string) {

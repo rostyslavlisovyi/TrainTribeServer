@@ -6,12 +6,12 @@ import {
   TrainingGoalEnum,
   TrainingLevelEnum
 } from "../types/index.js";
-import { IFileUpload } from "./index.ts";
+import { ICity, IFileUpload } from "./index.ts";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document<ObjectId> {
   athleteBio?: string;
   authId: string;
-  city: ObjectId;
+  city: ICity;
   dateOfBirth?: Date;
   email: string;
   firstName?: string;

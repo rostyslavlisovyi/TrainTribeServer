@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import { ITraining } from "../../interfaces/index.js";
 import {
   SportsEnum,
@@ -12,8 +12,18 @@ const TrainingSchema = new Schema<ITraining>(
     description: { type: String, required: false },
     date: { type: Date, required: true },
     address: { type: String, required: true },
-    latitude: { type: String, required: true },
-    longitude: { type: String, required: true },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+        default: "Point"
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true
+      }
+    },
     sport: {
       type: String,
       enum: Object.values(SportsEnum)
@@ -45,6 +55,11 @@ const TrainingSchema = new Schema<ITraining>(
     timestamps: true
   }
 );
+
+TrainingSchema.index({ location: "2dsphere" });
+TrainingSchema.index({ date: 1, sport: 1, creator: 1 });
+TrainingSchema.index({ date: 1 });
+TrainingSchema.index({ creator: 1 });
 
 const TrainingModel: Model<ITraining> = mongoose.model<ITraining>(
   "Training",
