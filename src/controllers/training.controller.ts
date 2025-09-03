@@ -17,7 +17,6 @@ export class TrainingController extends BaseController<
   async getRecommendedTrainings(req: Request, res: Response): Promise<void> {
     try {
       const user = await this.getUserFromToken(req, ["city"]);
-      console.log(user._id);
       const populateFields = req.query.populate as string | string[];
       const result = await this.service.getRecommendedTrainings(
         user,
