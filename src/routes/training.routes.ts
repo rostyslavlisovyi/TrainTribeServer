@@ -545,92 +545,9 @@ trainingRoutes.patch("/:id/status", authenticate, (req, res) =>
 
 /**
  * @swagger
- * /training/{id}/reviews:
- *   post:
- *     summary: Add a review to a training
- *     description: Only participants can add reviews. Updates creator's reviewPoints with the rating stars.
- *     tags: [Trainings]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Training ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [userId, rating]
- *             properties:
- *               userId:
- *                 type: string
- *                 description: ID of the reviewer (must be a participant)
- *               rating:
- *                 type: number
- *                 minimum: 1
- *                 maximum: 5
- *                 description: Rating value between 1 and 5
- *               comment:
- *                 type: string
- *                 description: Optional review comment
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                 description: Optional image URLs
- *     responses:
- *       201:
- *         description: Review added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     training:
- *                       type: string
- *                     reviewer:
- *                       type: string
- *                     rating:
- *                       type: number
- *                     comment:
- *                       type: string
- *                     images:
- *                       type: array
- *                       items:
- *                         type: string
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *       400:
- *         description: Bad request or unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Only participants can add reviews"
- *       404:
- *         $ref: '#/components/responses/NotFound'
- */
-trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
-  trainingController.addReview(req, res)
-);
-
-/**
- * @swagger
  * components:
  *   schemas:
- *     Training:end
+ *     Training:
  *       type: object
  *       required:
  *         - title
@@ -676,8 +593,18 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *         participants:
  *           type: array
  *           items:
- *             type: string
- *           description: Array of user IDs who are participating in the training
+ *             type: object
+ *             properties:
+ *               participant:
+ *                 type: string
+ *                 description: ID of the participant user
+ *               attended:
+ *                 type: boolean
+ *                 description: Whether the participant attended the training
+ *               hasLeftReview:
+ *                 type: boolean
+ *                 description: Whether the participant has left a review
+ *           description: Array of participant attendance records
  *         difficultyLevel:
  *           type: string
  *           enum: [BEGINNER, INTERMEDIATE, ADVANCED]
@@ -707,14 +634,6 @@ trainingRoutes.post("/:id/reviews", authenticate, (req, res) =>
  *           type: string
  *           enum: [scheduled, completed, cancelled]
  *           description: Current status of the training
- *         reviews:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of review IDs associated with the training
- *         averageRating:
- *           type: number
- *           description: Average rating of the training calculated from reviews
  *     Review:
  *       type: object
  *       required:

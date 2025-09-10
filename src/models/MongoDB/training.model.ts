@@ -29,10 +29,11 @@ const TrainingSchema = new Schema<ITraining>(
       enum: Object.values(SportsEnum)
     },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    participantAttendance: [
+    participants: [
       {
         participant: { type: Schema.Types.ObjectId, ref: "User" },
-        attended: { type: Boolean, default: false }
+        attended: { type: Boolean, default: false },
+        hasLeftReview: { type: Boolean, default: false }
       }
     ],
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
@@ -44,7 +45,6 @@ const TrainingSchema = new Schema<ITraining>(
         ref: "Comment"
       }
     ],
-    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
     status: {
       type: String,
       enum: Object.values(TrainingStatusEnum),

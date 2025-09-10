@@ -4,10 +4,7 @@ import {
   TrainingLevelEnum,
   TrainingStatusEnum
 } from "../types/index.js";
-import { IComment } from "./comment.interface.ts";
-import { IParticipantAttendance } from "./participantAttendance.interface.js";
-import { IReview } from "./review.interface.ts";
-import { IUser } from "./user.interface.ts";
+import { ITrainingParticipant } from "./trainingParticipant.interface.ts";
 
 export interface ITraining extends Document<ObjectId> {
   title: string;
@@ -17,12 +14,11 @@ export interface ITraining extends Document<ObjectId> {
   location: GeoLocation;
   sport: SportsEnum;
   creator: ObjectId;
-  participantAttendance: IParticipantAttendance[];
+  participants: ITrainingParticipant[];
   difficultyLevel: TrainingLevelEnum;
   duration: number;
-  likes: IUser[];
-  comments: IComment[];
-  reviews: IReview[];
+  likes: ObjectId[];
+  comments: ObjectId[];
   status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;

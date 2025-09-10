@@ -1,7 +1,6 @@
 import { ObjectId } from "mongoose";
-import { IFileUpload, ITraining, IUser } from "../interfaces/index.js";
+import { ITraining, IUser } from "../interfaces/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
-import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
@@ -227,7 +226,7 @@ export class TrainingService extends BaseService<ITraining> {
     const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participantAttendance: newParticipant } },
+      { $addToSet: { participants: newParticipant } },
       { new: true }
     );
   }
@@ -245,7 +244,7 @@ export class TrainingService extends BaseService<ITraining> {
     }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participantAttendance: { participant: userId } } },
+      { $pull: { participants: { participant: userId } } },
       { new: true }
     );
   }
@@ -306,17 +305,14 @@ export class TrainingService extends BaseService<ITraining> {
       training.status !== TrainingStatusEnum.COMPLETED
     ) {
       // Only award points if there's at least one participant besides the creator
-      if (
-        training.participantAttendance &&
-        training.participantAttendance.length > 0
-      ) {
+      if (training.participants && training.participants.length > 0) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
           $inc: { trainingPoints: 5 }
         });
 
         // Award 1 point to each participant
-        for (const attendance of training.participantAttendance) {
+        for (const attendance of training.participants) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
               $inc: { countTrainingJoined: 1, trainingPoints: 1 }
@@ -344,67 +340,5 @@ export class TrainingService extends BaseService<ITraining> {
       { status: newStatus },
       { new: true }
     );
-  }
-
-  async addReview(
-    trainingId: string,
-    reviewerId: string,
-    rating: number,
-    comment?: string,
-    images?: IFileUpload[]
-  ) {
-    // Find the training
-    const training = await this.model.findById(trainingId);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    // Check training status
-    if (training.status !== TrainingStatusEnum.COMPLETED) {
-      throw new Error("Training must be completed before it can be reviewed");
-    }
-    // Check if the reviewer is a participant
-    const isParticipant =
-      training.participantAttendance &&
-      training.participantAttendance.some(
-        (attendance) => attendance.participant.toString() === reviewerId
-      );
-    if (!isParticipant) {
-      throw new Error("Only participants can add reviews");
-    }
-    // Validate rating
-    if (rating < 1 || rating > 5) {
-      throw new Error("Rating must be between 1 and 5");
-    }
-
-    // Check if the reviewer has already reviewed this training
-    const existingReview = await ReviewModel.findOne({
-      training: trainingId,
-      reviewer: reviewerId
-    });
-
-    if (existingReview) {
-      throw new Error("You have already reviewed this training");
-    }
-
-    // Create the review
-    const review = await ReviewModel.create({
-      training: trainingId,
-      reviewer: reviewerId,
-      rating,
-      comment,
-      images
-    });
-
-    // Add review to training
-    await this.model.findByIdAndUpdate(trainingId, {
-      $addToSet: { reviews: review._id }
-    });
-
-    // Update creator's reviewPoints
-    await UserModel.findByIdAndUpdate(training.creator, {
-      $inc: { reviewPoints: rating }
-    });
-
-    return review;
   }
 }

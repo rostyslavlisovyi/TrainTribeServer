@@ -5,14 +5,16 @@ import {
   CloudinaryController,
   GeocodeController,
   TrainingController,
-  UserController
+  UserController,
+  ReviewController
 } from "./controllers/index.js";
 import {
   CityService,
   CloudinaryService,
   GeocodeService,
   TrainingService,
-  UserService
+  UserService,
+  ReviewService
 } from "./services/index.js";
 
 const container = createContainer({
@@ -25,14 +27,16 @@ container
     userService: asClass(UserService),
     trainingService: asClass(TrainingService),
     cloudinaryService: asClass(CloudinaryService),
-    geocodeService: asClass(GeocodeService)
+    geocodeService: asClass(GeocodeService),
+    reviewService: asClass(ReviewService)
   })
   .register({
     cityController: asClass(CityController),
     userController: asClass(UserController),
     trainingController: asClass(TrainingController),
     cloudinaryController: asClass(CloudinaryController),
-    geocodeController: asClass(GeocodeController)
+    geocodeController: asClass(GeocodeController),
+    reviewController: asClass(ReviewController)
   });
 
 export default container;

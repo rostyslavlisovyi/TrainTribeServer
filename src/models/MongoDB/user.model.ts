@@ -70,6 +70,12 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: Object.values(LanguageEnum),
       default: LanguageEnum.IT
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
     }
   },
   {

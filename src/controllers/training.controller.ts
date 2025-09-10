@@ -125,22 +125,4 @@ export class TrainingController extends BaseController<
       handleError(res, error);
     }
   }
-
-  async addReview(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { rating, comment, images } = req.body;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addReview(
-        id,
-        user._id.toString(),
-        rating,
-        comment,
-        images
-      );
-      res.status(201).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
 }
