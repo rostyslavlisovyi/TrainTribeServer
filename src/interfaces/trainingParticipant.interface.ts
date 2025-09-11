@@ -1,5 +1,6 @@
 import { ObjectId } from "mongoose";
-export interface IParticipantAttendance {
+export interface ITrainingParticipant {
   participant: ObjectId;
   attended: boolean;
+  hasLeftReview: boolean;
 }

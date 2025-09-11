@@ -1,27 +1,30 @@
 import { Document, ObjectId } from "mongoose";
-import { IParticipantAttendance } from "./participantAttendance.interface.js";
 import {
   SportsEnum,
   TrainingLevelEnum,
   TrainingStatusEnum
 } from "../types/index.js";
+import { ITrainingParticipant } from "./trainingParticipant.interface.ts";
 
-export interface ITraining extends Document {
+export interface ITraining extends Document<ObjectId> {
   title: string;
   description: string;
   date: Date;
   address: string;
-  latitude: string;
-  longitude: string;
+  location: GeoLocation;
   sport: SportsEnum;
   creator: ObjectId;
-  participantAttendance: IParticipantAttendance[];
+  participants: ITrainingParticipant[];
   difficultyLevel: TrainingLevelEnum;
   duration: number;
   likes: ObjectId[];
   comments: ObjectId[];
-  reviews: ObjectId[];
   status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface GeoLocation {
+  type: "Point";
+  coordinates: [number, number]; // [longitude, latitude]
 }

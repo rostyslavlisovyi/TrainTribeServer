@@ -218,7 +218,7 @@ const swaggerOptions = {
             }
           }
         },
-        ParticipantAttendance: {
+        participants: {
           type: "object",
           properties: {
             participant: {
@@ -276,10 +276,10 @@ const swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            participantAttendance: {
+            participants: {
               type: "array",
               items: {
-                $ref: "#/components/schemas/ParticipantAttendance"
+                $ref: "#/components/schemas/participants"
               },
               description: "Array of objects tracking participant attendance"
             },
@@ -451,6 +451,16 @@ const swaggerOptions = {
               enum: ["it", "en"],
               description: "User's preferred language"
             },
+            trainingPoints: {
+              type: "integer",
+              description: "Points earned from training activities",
+              example: 0
+            },
+            reviewPoints: {
+              type: "integer",
+              description: "Points earned from reviews (sum of stars received)",
+              example: 0
+            },
             createdAt: {
               type: "string",
               format: "date-time",
@@ -460,6 +470,56 @@ const swaggerOptions = {
               type: "string",
               format: "date-time",
               description: "The date the user was last updated"
+            }
+          }
+        },
+        Review: {
+          type: "object",
+          required: ["training", "reviewer", "reviewedUser", "stars"],
+          properties: {
+            _id: {
+              type: "string",
+              description: "The unique identifier of the review"
+            },
+            training: {
+              type: "string",
+              description: "Reference to the training being reviewed (ObjectId)"
+            },
+            reviewer: {
+              type: "string",
+              description:
+                "Reference to the user who wrote the review (ObjectId)"
+            },
+            reviewedUser: {
+              type: "string",
+              description: "Reference to the user being reviewed (ObjectId)"
+            },
+            stars: {
+              type: "integer",
+              minimum: 1,
+              maximum: 5,
+              description: "Star rating from 1 to 5"
+            },
+            comment: {
+              type: "string",
+              description: "Optional comment text"
+            },
+            images: {
+              type: "array",
+              items: {
+                type: "object"
+              },
+              description: "Array of cloudinary image objects"
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "The date the review was created"
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "The date the review was last updated"
             }
           }
         }
