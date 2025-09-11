@@ -3,11 +3,11 @@ import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express } from "express";
-import { CityService } from "services/city.service.ts";
-import connectDB from "./config/database.ts";
-import { setupSwagger } from "./config/swagger.ts";
-import container from "./container.ts";
-import router from "./routes/index.ts";
+import { CityService } from "services/city.service.js";
+import connectDB from "./config/database.js";
+import { setupSwagger } from "./config/swagger.js";
+import container from "./container.js";
+import router from "./routes/index.js";
 
 dotenv.config();
 

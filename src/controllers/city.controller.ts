@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ICity } from "../interfaces/index.js";
 import { CityService } from "../services/index.js";
-import { handleError } from "../utils/handleError.ts";
+import { handleError } from "../utils/handleError.js";
 import { BaseController } from "./base.controller.js";
 
 export class CityController extends BaseController<ICity, CityService> {

@@ -3,7 +3,7 @@ import {
   SportsEnum,
   TrainingGoalEnum,
   TrainingLevelEnum
-} from "../types/enums.ts";
+} from "../types/enums.js";
 
 export const validateUserCreation: ValidationChain[] = [
   body("email")

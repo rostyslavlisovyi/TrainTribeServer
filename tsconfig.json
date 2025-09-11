@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "baseUrl": "./src",
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
