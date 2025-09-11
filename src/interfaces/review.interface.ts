@@ -1,10 +1,13 @@
-import { Document, ObjectId } from "mongoose";
-import { IFileUpload, IUser } from "./index.ts";
+import { Document, Types } from "mongoose";
+import { IFileUpload } from "./index.js";
 
-export interface IReview extends Document<ObjectId> {
-  reviewer: IUser;
-  rating: number;
-  comment?: string;
+export interface IReview extends Document {
+  training: Types.ObjectId;
+  reviewer: Types.ObjectId;
+  reviewedUser: Types.ObjectId;
+  stars: number;
+  comment: string;
   images?: IFileUpload[];
   createdAt: Date;
+  updatedAt: Date;
 }
