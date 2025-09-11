@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { Readable } from "stream";
-import { IFileUpload } from "../interfaces/index.ts";
+import { IFileUpload } from "../interfaces/index.js";
 
 export class CloudinaryService {
   async upload(

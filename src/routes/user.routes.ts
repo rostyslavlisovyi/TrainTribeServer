@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import container from "../container.ts";
+import container from "../container.js";
 import { UserController } from "../controllers/index.js";
 import { authenticate, handleValidationErrors } from "../middlewares/index.js";
 import {
