@@ -3,7 +3,7 @@ import { scopePerRequest } from "awilix-express";
 import chalk6 from "chalk";
 import cors from "cors";
 import dotenv2 from "dotenv";
-import express7 from "express";
+import express8 from "express";
 
 // src/config/database.ts
 import dotenv from "dotenv";
@@ -239,7 +239,7 @@ var swaggerOptions = {
             }
           }
         },
-        ParticipantAttendance: {
+        participants: {
           type: "object",
           properties: {
             participant: {
@@ -297,10 +297,10 @@ var swaggerOptions = {
               type: "string",
               description: "The user ID of the creator"
             },
-            participantAttendance: {
+            participants: {
               type: "array",
               items: {
-                $ref: "#/components/schemas/ParticipantAttendance"
+                $ref: "#/components/schemas/participants"
               },
               description: "Array of objects tracking participant attendance"
             },
@@ -470,6 +470,16 @@ var swaggerOptions = {
               enum: ["it", "en"],
               description: "User's preferred language"
             },
+            trainingPoints: {
+              type: "integer",
+              description: "Points earned from training activities",
+              example: 0
+            },
+            reviewPoints: {
+              type: "integer",
+              description: "Points earned from reviews (sum of stars received)",
+              example: 0
+            },
             createdAt: {
               type: "string",
               format: "date-time",
@@ -479,6 +489,55 @@ var swaggerOptions = {
               type: "string",
               format: "date-time",
               description: "The date the user was last updated"
+            }
+          }
+        },
+        Review: {
+          type: "object",
+          required: ["training", "reviewer", "reviewedUser", "stars"],
+          properties: {
+            _id: {
+              type: "string",
+              description: "The unique identifier of the review"
+            },
+            training: {
+              type: "string",
+              description: "Reference to the training being reviewed (ObjectId)"
+            },
+            reviewer: {
+              type: "string",
+              description: "Reference to the user who wrote the review (ObjectId)"
+            },
+            reviewedUser: {
+              type: "string",
+              description: "Reference to the user being reviewed (ObjectId)"
+            },
+            stars: {
+              type: "integer",
+              minimum: 1,
+              maximum: 5,
+              description: "Star rating from 1 to 5"
+            },
+            comment: {
+              type: "string",
+              description: "Optional comment text"
+            },
+            images: {
+              type: "array",
+              items: {
+                type: "object"
+              },
+              description: "Array of cloudinary image objects"
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "The date the review was created"
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "The date the review was last updated"
             }
           }
         }
@@ -827,6 +886,54 @@ var GeocodeController = class {
   }
 };
 
+// src/controllers/review.controller.ts
+var ReviewController = class extends BaseController {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(reviewService) {
+    super(reviewService);
+  }
+  // Create review
+  async create(req, res) {
+    try {
+      const user = await this.getUserFromToken(req);
+      const reviewData = {
+        ...req.body,
+        reviewer: user._id
+      };
+      const result = await this.service.create(reviewData);
+      res.status(201).json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  // Update review with authorization
+  async updateReview(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      const updatedReview = await this.service.updateReview(
+        id,
+        req.body,
+        user._id.toString()
+      );
+      res.status(200).json({ data: updatedReview });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+  // Delete review with authorization
+  async deleteReview(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await this.getUserFromToken(req);
+      await this.service.deleteReview(id, user._id.toString());
+      res.status(200).json({ message: "Review deleted successfully" });
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+};
+
 // src/controllers/training.controller.ts
 var TrainingController = class extends BaseController {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -930,23 +1037,6 @@ var TrainingController = class extends BaseController {
         status
       );
       res.status(200).json({ data });
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-  async addReview(req, res) {
-    try {
-      const { id } = req.params;
-      const { rating, comment, images } = req.body;
-      const user = await this.getUserFromToken(req);
-      const data = await this.service.addReview(
-        id,
-        user._id.toString(),
-        rating,
-        comment,
-        images
-      );
-      res.status(201).json({ data });
     } catch (error) {
       handleError(res, error);
     }
@@ -1295,39 +1385,60 @@ var GeocodeService = class {
   }
 };
 
-// src/models/MongoDB/comment.model.ts
-import mongoose4, { Schema as Schema2 } from "mongoose";
-var CommentSchema = new Schema2(
-  {
-    user: { type: Schema2.Types.ObjectId, ref: "User", required: true },
-    text: { type: String, required: true }
-  },
-  {
-    timestamps: true
-  }
-);
-var CommentModel = mongoose4.model("Comment", CommentSchema);
-var comment_model_default = CommentModel;
-
 // src/models/MongoDB/review.model.ts
-import mongoose5, { Schema as Schema3 } from "mongoose";
-var ReviewSchema = new Schema3(
+import mongoose4, { Schema as Schema2 } from "mongoose";
+var ReviewSchema = new Schema2(
   {
-    reviewer: { type: Schema3.Types.ObjectId, ref: "User", required: true },
-    rating: { type: Number, min: 1, max: 5, required: true },
-    comment: { type: String },
-    images: [{ type: Schema3.Types.Mixed }],
-    createdAt: { type: Date, default: Date.now }
+    training: { type: Schema2.Types.ObjectId, ref: "Training", required: true },
+    reviewer: { type: Schema2.Types.ObjectId, ref: "User", required: true },
+    reviewedUser: { type: Schema2.Types.ObjectId, ref: "User", required: true },
+    stars: { type: Number, min: 1, max: 5, required: true },
+    comment: { type: String, required: true },
+    images: [{ type: Schema2.Types.Mixed }]
   },
   {
     timestamps: true
   }
 );
-var ReviewModel = mongoose5.model("Review", ReviewSchema);
+ReviewSchema.index(
+  { training: 1, reviewer: 1, reviewedUser: 1 },
+  { unique: true }
+);
+async function updateUserAverageRating(userId) {
+  const UserModel2 = mongoose4.model("User");
+  const result = await ReviewModel.aggregate([
+    { $match: { reviewedUser: userId } },
+    {
+      $group: {
+        _id: "$reviewedUser",
+        averageRating: { $avg: "$stars" },
+        totalReviews: { $sum: 1 }
+      }
+    }
+  ]);
+  const averageRating = result.length > 0 ? Math.round(result[0].averageRating * 10) / 10 : 0;
+  await UserModel2.findByIdAndUpdate(userId, {
+    averageRating
+  });
+}
+ReviewSchema.post("save", async function() {
+  await updateUserAverageRating(this.reviewedUser);
+});
+ReviewSchema.post("findOneAndDelete", async function(doc) {
+  if (doc) {
+    await updateUserAverageRating(doc.reviewedUser);
+  }
+});
+ReviewSchema.post("findOneAndUpdate", async function(doc) {
+  if (doc) {
+    await updateUserAverageRating(doc.reviewedUser);
+  }
+});
+var ReviewModel = mongoose4.model("Review", ReviewSchema);
 var review_model_default = ReviewModel;
 
 // src/models/MongoDB/training.model.ts
-import mongoose6, { Schema as Schema4 } from "mongoose";
+import mongoose5, { Schema as Schema3 } from "mongoose";
 
 // src/types/enums.ts
 var SportsEnum = /* @__PURE__ */ ((SportsEnum2) => {
@@ -1418,7 +1529,7 @@ var TrainingStatusEnum = /* @__PURE__ */ ((TrainingStatusEnum2) => {
 })(TrainingStatusEnum || {});
 
 // src/models/MongoDB/training.model.ts
-var TrainingSchema = new Schema4(
+var TrainingSchema = new Schema3(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },
@@ -1441,23 +1552,23 @@ var TrainingSchema = new Schema4(
       type: String,
       enum: Object.values(SportsEnum)
     },
-    creator: { type: Schema4.Types.ObjectId, ref: "User", required: true },
-    participantAttendance: [
+    creator: { type: Schema3.Types.ObjectId, ref: "User", required: true },
+    participants: [
       {
-        participant: { type: Schema4.Types.ObjectId, ref: "User" },
-        attended: { type: Boolean, default: false }
+        participant: { type: Schema3.Types.ObjectId, ref: "User" },
+        attended: { type: Boolean, default: false },
+        hasLeftReview: { type: Boolean, default: false }
       }
     ],
     difficultyLevel: { type: String, enum: Object.values(TrainingLevelEnum) },
     duration: { type: Number },
-    likes: [{ type: Schema4.Types.ObjectId, ref: "User" }],
+    likes: [{ type: Schema3.Types.ObjectId, ref: "User" }],
     comments: [
       {
-        type: Schema4.Types.ObjectId,
+        type: Schema3.Types.ObjectId,
         ref: "Comment"
       }
     ],
-    reviews: [{ type: Schema4.Types.ObjectId, ref: "Review" }],
     status: {
       type: String,
       enum: Object.values(TrainingStatusEnum),
@@ -1472,24 +1583,24 @@ TrainingSchema.index({ location: "2dsphere" });
 TrainingSchema.index({ date: 1, sport: 1, creator: 1 });
 TrainingSchema.index({ date: 1 });
 TrainingSchema.index({ creator: 1 });
-var TrainingModel = mongoose6.model(
+var TrainingModel = mongoose5.model(
   "Training",
   TrainingSchema
 );
 var training_model_default = TrainingModel;
 
 // src/models/MongoDB/user.model.ts
-import mongoose7, { Schema as Schema5 } from "mongoose";
-var UserSchema = new Schema5(
+import mongoose6, { Schema as Schema4 } from "mongoose";
+var UserSchema = new Schema4(
   {
     athleteBio: { type: String, required: false },
     authId: { type: String, required: true, unique: true },
-    city: { type: Schema5.Types.ObjectId, ref: "City", required: false },
+    city: { type: Schema4.Types.ObjectId, ref: "City", required: false },
     dateOfBirth: { type: Date, required: false },
     email: { type: String, required: true, unique: true },
     firstName: { type: String },
     hasCompletedOnboarding: { type: Boolean, required: false },
-    image: { type: Schema5.Types.Mixed, required: false },
+    image: { type: Schema4.Types.Mixed, required: false },
     lastName: { type: String },
     lastOnboardingStep: { type: String, required: false },
     privacySettings: { type: Boolean, default: false },
@@ -1540,14 +1651,139 @@ var UserSchema = new Schema5(
       type: String,
       enum: Object.values(LanguageEnum),
       default: "it" /* IT */
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
     }
   },
   {
     timestamps: true
   }
 );
-var UserModel = mongoose7.model("User", UserSchema);
+var UserModel = mongoose6.model("User", UserSchema);
 var user_model_default = UserModel;
+
+// src/services/review.service.ts
+var ReviewService = class extends BaseService {
+  constructor() {
+    super(review_model_default);
+  }
+  //Create review
+  async create(entity) {
+    const { training: trainingId, reviewedUser, stars } = entity;
+    const training = await training_model_default.findById(trainingId);
+    if (!training) {
+      throw new Error("Training not found");
+    }
+    if (training.status !== "COMPLETED" /* COMPLETED */) {
+      throw new Error("Training must be completed before it can be reviewed");
+    }
+    const isParticipant = training.participants && training.participants.some(
+      (attendance) => attendance.participant.toString() === entity.reviewer?.toString()
+    );
+    if (!isParticipant) {
+      throw new Error("Only participants can add reviews");
+    }
+    if (!stars || stars < 1 || stars > 5) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+    const existingReview = await review_model_default.findOne({
+      training: trainingId,
+      reviewer: entity.reviewer
+    });
+    if (existingReview) {
+      throw new Error("You have already reviewed this training");
+    }
+    const { data: newReview } = await super.create(entity);
+    if (stars && stars > 0) {
+      await user_model_default.findByIdAndUpdate(
+        reviewedUser,
+        { $inc: { reviewPoints: stars } },
+        { new: true }
+      );
+    }
+    await training_model_default.findOneAndUpdate(
+      {
+        _id: trainingId,
+        "participants.participant": entity.reviewer
+      },
+      {
+        $set: { "participants.$.hasLeftReview": true }
+      }
+    );
+    return { data: newReview };
+  }
+  //Delete method to remove points
+  async delete(id) {
+    const review = await this.model.findById(id);
+    if (!review) {
+      throw new Error("Review not found");
+    }
+    if (review.stars && review.stars > 0) {
+      await user_model_default.findByIdAndUpdate(
+        review.reviewedUser,
+        { $inc: { reviewPoints: -review.stars } },
+        { new: true }
+      );
+    }
+    const result = await super.delete(id);
+    return result;
+  }
+  // Update a review with authorization check
+  async updateReview(reviewId, updateData, userId) {
+    const review = await this.model.findById(reviewId);
+    if (!review) {
+      throw new Error("Review not found");
+    }
+    if (review.reviewer.toString() !== userId) {
+      throw new Error("Not authorized to update this review");
+    }
+    if (updateData.stars !== void 0 && updateData.stars !== review.stars) {
+      const pointDiff = updateData.stars - (review.stars || 0);
+      if (pointDiff !== 0) {
+        await user_model_default.findByIdAndUpdate(
+          review.reviewedUser,
+          { $inc: { reviewPoints: pointDiff } },
+          { new: true }
+        );
+      }
+    }
+    const updatedReview = await this.model.findByIdAndUpdate(
+      reviewId,
+      updateData,
+      { new: true }
+    );
+    return updatedReview;
+  }
+  //Delete a review with authorization check
+  async deleteReview(reviewId, userId) {
+    const review = await this.model.findById(reviewId);
+    if (!review) {
+      throw new Error("Review not found");
+    }
+    if (review.reviewer.toString() !== userId) {
+      throw new Error("Not authorized to delete this review");
+    }
+    await this.delete(reviewId);
+  }
+};
+
+// src/models/MongoDB/comment.model.ts
+import mongoose7, { Schema as Schema5 } from "mongoose";
+var CommentSchema = new Schema5(
+  {
+    user: { type: Schema5.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true }
+  },
+  {
+    timestamps: true
+  }
+);
+var CommentModel = mongoose7.model("Comment", CommentSchema);
+var comment_model_default = CommentModel;
 
 // src/services/training.service.ts
 var TrainingService = class extends BaseService {
@@ -1716,7 +1952,7 @@ var TrainingService = class extends BaseService {
     const newParticipant = { participant: userId, attended: true };
     return this.model.findByIdAndUpdate(
       id,
-      { $addToSet: { participantAttendance: newParticipant } },
+      { $addToSet: { participants: newParticipant } },
       { new: true }
     );
   }
@@ -1732,7 +1968,7 @@ var TrainingService = class extends BaseService {
     }
     return this.model.findByIdAndUpdate(
       id,
-      { $pull: { participantAttendance: { participant: userId } } },
+      { $pull: { participants: { participant: userId } } },
       { new: true }
     );
   }
@@ -1778,11 +2014,11 @@ var TrainingService = class extends BaseService {
       throw new Error("Only the creator can change the status");
     }
     if (newStatus === "COMPLETED" /* COMPLETED */ && training.status !== "COMPLETED" /* COMPLETED */) {
-      if (training.participantAttendance && training.participantAttendance.length > 0) {
+      if (training.participants && training.participants.length > 0) {
         await user_model_default.findByIdAndUpdate(userId, {
           $inc: { trainingPoints: 5 }
         });
-        for (const attendance of training.participantAttendance) {
+        for (const attendance of training.participants) {
           if (attendance.attended) {
             await user_model_default.findByIdAndUpdate(attendance.participant, {
               $inc: { countTrainingJoined: 1, trainingPoints: 1 }
@@ -1806,45 +2042,6 @@ var TrainingService = class extends BaseService {
       { new: true }
     );
   }
-  async addReview(trainingId, reviewerId, rating, comment, images) {
-    const training = await this.model.findById(trainingId);
-    if (!training) {
-      throw new Error("Training not found");
-    }
-    if (training.status !== "COMPLETED" /* COMPLETED */) {
-      throw new Error("Training must be completed before it can be reviewed");
-    }
-    const isParticipant = training.participantAttendance && training.participantAttendance.some(
-      (attendance) => attendance.participant.toString() === reviewerId
-    );
-    if (!isParticipant) {
-      throw new Error("Only participants can add reviews");
-    }
-    if (rating < 1 || rating > 5) {
-      throw new Error("Rating must be between 1 and 5");
-    }
-    const existingReview = await review_model_default.findOne({
-      training: trainingId,
-      reviewer: reviewerId
-    });
-    if (existingReview) {
-      throw new Error("You have already reviewed this training");
-    }
-    const review = await review_model_default.create({
-      training: trainingId,
-      reviewer: reviewerId,
-      rating,
-      comment,
-      images
-    });
-    await this.model.findByIdAndUpdate(trainingId, {
-      $addToSet: { reviews: review._id }
-    });
-    await user_model_default.findByIdAndUpdate(training.creator, {
-      $inc: { reviewPoints: rating }
-    });
-    return review;
-  }
 };
 
 // src/services/user.service.ts
@@ -1863,18 +2060,20 @@ container.register({
   userService: asClass(UserService),
   trainingService: asClass(TrainingService),
   cloudinaryService: asClass(CloudinaryService),
-  geocodeService: asClass(GeocodeService)
+  geocodeService: asClass(GeocodeService),
+  reviewService: asClass(ReviewService)
 }).register({
   cityController: asClass(CityController),
   userController: asClass(UserController),
   trainingController: asClass(TrainingController),
   cloudinaryController: asClass(CloudinaryController),
-  geocodeController: asClass(GeocodeController)
+  geocodeController: asClass(GeocodeController),
+  reviewController: asClass(ReviewController)
 });
 var container_default = container;
 
 // src/routes/index.ts
-import express6 from "express";
+import express7 from "express";
 
 // src/routes/city.routes.ts
 import express from "express";
@@ -1981,9 +2180,35 @@ geocodeRoutes.get(
 );
 var geocode_routes_default = geocodeRoutes;
 
-// src/routes/training.routes.ts
+// src/routes/review.routes.ts
 import express4 from "express";
-var trainingRoutes = express4.Router({ mergeParams: true });
+var reviewRoutes = express4.Router({ mergeParams: true });
+var reviewController = container_default.resolve("reviewController");
+reviewRoutes.post(
+  "/list",
+  authenticate,
+  (req, res) => reviewController.list(req, res)
+);
+reviewRoutes.post(
+  "/",
+  authenticate,
+  (req, res) => reviewController.create(req, res)
+);
+reviewRoutes.put(
+  "/:id",
+  authenticate,
+  (req, res) => reviewController.updateReview(req, res)
+);
+reviewRoutes.delete(
+  "/:id",
+  authenticate,
+  (req, res) => reviewController.deleteReview(req, res)
+);
+var review_routes_default = reviewRoutes;
+
+// src/routes/training.routes.ts
+import express5 from "express";
+var trainingRoutes = express5.Router({ mergeParams: true });
 var trainingController = container_default.resolve("trainingController");
 trainingRoutes.post(
   "/list",
@@ -2041,7 +2266,7 @@ trainingRoutes.post(
   (req, res) => trainingController.addComment(req, res)
 );
 trainingRoutes.put(
-  "/comments/:commentId",
+  "/:id/comments/:commentId",
   authenticate,
   (req, res) => trainingController.updateComment(req, res)
 );
@@ -2055,15 +2280,10 @@ trainingRoutes.patch(
   authenticate,
   (req, res) => trainingController.changeStatus(req, res)
 );
-trainingRoutes.post(
-  "/:id/reviews",
-  authenticate,
-  (req, res) => trainingController.addReview(req, res)
-);
 var training_routes_default = trainingRoutes;
 
 // src/routes/user.routes.ts
-import express5 from "express";
+import express6 from "express";
 
 // src/validators/user.validator.ts
 import { body } from "express-validator";
@@ -2117,7 +2337,7 @@ var validateUserUpdate = [
 ];
 
 // src/routes/user.routes.ts
-var userRoute = express5.Router();
+var userRoute = express6.Router();
 var userController = container_default.resolve("userController");
 userRoute.get(
   "/me",
@@ -2147,12 +2367,13 @@ userRoute.delete(
 var user_routes_default = userRoute;
 
 // src/routes/index.ts
-var router = express6.Router();
+var router = express7.Router();
 router.use("/city", city_routes_default);
 router.use("/cloudinary", cloudinary_route_default);
 router.use("/geocode", geocode_routes_default);
 router.use("/training", training_routes_default);
 router.use("/user", user_routes_default);
+router.use("/review", review_routes_default);
 var routes_default = router;
 
 // src/appServer.ts
@@ -2165,17 +2386,17 @@ REQUIRED_ENV_VARS.forEach((varName) => {
   }
 });
 var SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "666", 10);
-var appServer = express7();
+var appServer = express8();
 appServer.use(scopePerRequest(container_default));
-appServer.use(express7.json());
+appServer.use(express8.json());
 var corsOptions = {
   origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 appServer.use(cors(corsOptions));
 appServer.options("*", cors(corsOptions));
-appServer.use(express7.urlencoded({ extended: true }));
-appServer.use(express7.static("public"));
+appServer.use(express8.urlencoded({ extended: true }));
+appServer.use(express8.static("public"));
 appServer.get("/", (_req, res) => {
   res.sendFile("index.html", { root: "./public" });
 });

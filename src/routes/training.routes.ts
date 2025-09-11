@@ -449,7 +449,7 @@ trainingRoutes.post("/:id/comments", authenticate, (req, res) =>
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-trainingRoutes.put("/comments/:commentId", authenticate, (req, res) =>
+trainingRoutes.put("/:id/comments/:commentId", authenticate, (req, res) =>
   trainingController.updateComment(req, res)
 );
 
