@@ -405,4 +405,4 @@ FodyWeavers.xsd
 .vercel
 
 
-.dist
+.dist/
