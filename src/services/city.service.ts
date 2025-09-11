@@ -2,8 +2,8 @@ import axios from "axios";
 import chalk from "chalk";
 import * as XLSX from "xlsx";
 import { ICity } from "../interfaces/index.js";
-import CityModel from "../models/MongoDB/city.model.ts";
-import { BaseService } from "./base.service.ts";
+import CityModel from "../models/MongoDB/city.model.js";
+import { BaseService } from "./base.service.js";
 export class CityService extends BaseService<ICity> {
   constructor() {
     super(CityModel);

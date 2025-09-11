@@ -6,7 +6,7 @@ import {
   TrainingGoalEnum,
   TrainingLevelEnum
 } from "../types/index.js";
-import { ICity, IFileUpload } from "./index.ts";
+import { ICity, IFileUpload } from "./index.js";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document<ObjectId> {
   athleteBio?: string;

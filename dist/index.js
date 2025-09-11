@@ -1,4 +1,4 @@
-// src/appServer.ts
+// src/index.ts
 import { scopePerRequest } from "awilix-express";
 import chalk6 from "chalk";
 import cors from "cors";
@@ -2376,7 +2376,7 @@ router.use("/user", user_routes_default);
 router.use("/review", review_routes_default);
 var routes_default = router;
 
-// src/appServer.ts
+// src/index.ts
 dotenv2.config();
 var REQUIRED_ENV_VARS = ["SERVER_PORT", "MONGODB_URI"];
 REQUIRED_ENV_VARS.forEach((varName) => {
