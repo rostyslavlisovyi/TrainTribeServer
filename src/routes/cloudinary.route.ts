@@ -1,12 +1,11 @@
-import express, { Router } from "express";
-import container from "../container.js";
+import express, { Request, Router } from "express";
 import { CloudinaryController } from "../controllers/index.js";
-import { authenticate, upload } from "../middlewares/index.js";
+import { upload } from "../middlewares/index.js";
 
 const cloudinaryRoute: Router = express.Router();
-const cloudinaryController = container.resolve<CloudinaryController>(
-  "cloudinaryController"
-);
+
+const controller = (req: Request) =>
+  req.container.resolve<CloudinaryController>("cloudinaryController");
 
 /**
  * @swagger
@@ -55,9 +54,9 @@ const cloudinaryController = container.resolve<CloudinaryController>(
  */
 cloudinaryRoute.post(
   "/upload",
-  authenticate,
+
   upload.single("file"),
-  (req, res) => cloudinaryController.upload(req, res)
+  (req, res) => controller(req).upload(req, res)
 );
 
 /**
@@ -88,7 +87,7 @@ cloudinaryRoute.post(
  *                   type: string
  *                   example: FILE DELETED SUCCESSFULLY
  */
-cloudinaryRoute.delete("/:public_id", authenticate, (req, res) =>
-  cloudinaryController.delete(req, res)
+cloudinaryRoute.delete("/:public_id", (req, res) =>
+  controller(req).delete(req, res)
 );
 export default cloudinaryRoute;

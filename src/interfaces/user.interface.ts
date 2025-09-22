@@ -1,6 +1,7 @@
 import { Document, HydratedDocument, ObjectId } from "mongoose";
 import {
   LanguageEnum,
+  NotificationEnum,
   SportsEnum,
   TrainingFrequencyEnum,
   TrainingGoalEnum,
@@ -33,6 +34,12 @@ export interface IUser extends Document<ObjectId> {
   countTrainingJoined?: number;
   countTrainingMissed?: number;
   language: LanguageEnum;
+  averageRating: number;
+  fcmToken?: string;
+  fcmTokenUpdatedAt?: Date;
+  settings: {
+    notifications: Record<NotificationEnum, boolean>;
+  };
 }
 
 export type UserDocument = HydratedDocument<IUser>;

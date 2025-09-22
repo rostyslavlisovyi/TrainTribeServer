@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { GeocodeService } from "../services/geocode.service.js";
+import { BaseResponse } from "../models/index.js";
+import { GeocodeService } from "../services/index.js";
 import { handleError } from "../utils/handleError.js";
 
 export class GeocodeController {
@@ -19,8 +20,8 @@ export class GeocodeController {
         return;
       }
 
-      const results = await this.service.geocode(search, language);
-      res.json({ data: results });
+      const data = await this.service.geocode(search, language);
+      res.status(200).json(new BaseResponse(data));
     } catch (error) {
       handleError(res, error);
     }
@@ -38,8 +39,8 @@ export class GeocodeController {
         return;
       }
 
-      const result = await this.service.reverse(lat, lon, language);
-      res.json({ data: result });
+      const data = await this.service.reverse(lat, lon, language);
+      res.status(200).json(new BaseResponse(data));
     } catch (error) {
       handleError(res, error);
     }

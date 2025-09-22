@@ -1,17 +1,16 @@
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import { ObjectId } from "mongoose";
 import { ITraining, IUser } from "../interfaces/index.js";
-import CommentModel from "../models/MongoDB/comment.model.js";
-import TrainingModel from "../models/MongoDB/training.model.js";
-import UserModel from "../models/MongoDB/user.model.js";
+import { CommentModel, TrainingModel, UserModel } from "../models/index.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
 export class TrainingService extends BaseService<ITraining> {
-  constructor() {
-    super(TrainingModel);
+  constructor(auth?: AuthResult) {
+    super(TrainingModel, auth);
   }
-  async create(entity: Partial<ITraining>): Promise<{ data: ITraining }> {
-    const { data: newTraining } = await super.create(entity);
+  async create(entity: Partial<ITraining>): Promise<ITraining> {
+    const newTraining = await super.create(entity);
 
     if (newTraining && newTraining.creator) {
       await UserModel.findByIdAndUpdate(newTraining.creator, {
@@ -19,10 +18,10 @@ export class TrainingService extends BaseService<ITraining> {
       });
     }
 
-    return { data: newTraining };
+    return newTraining;
   }
 
-  async delete(id: string): Promise<{ data: boolean }> {
+  async delete(id: string): Promise<boolean> {
     const training = await this.model.findById(id);
 
     if (!training) {
@@ -31,7 +30,7 @@ export class TrainingService extends BaseService<ITraining> {
 
     const creatorId = training.creator;
 
-    const { data: deleted } = await super.delete(id);
+    const deleted = await super.delete(id);
 
     if (deleted && creatorId) {
       await UserModel.findByIdAndUpdate(creatorId, {
@@ -39,7 +38,7 @@ export class TrainingService extends BaseService<ITraining> {
       });
     }
 
-    return { data: deleted };
+    return deleted;
   }
 
   async getRecommendedTrainings(
@@ -195,20 +194,54 @@ export class TrainingService extends BaseService<ITraining> {
     return trainingsWithScore.map((item) => item.training).slice(0, limit);
   }
 
+  async getPotentialParticipants(training: ITraining, maxDistanceKm = 40) {
+    if (!training.location?.coordinates) {
+      throw new Error("Training has no location coordinates");
+    }
+
+    const [lng, lat] = training.location.coordinates;
+
+    const nearbyUsers = await UserModel.aggregate([
+      {
+        $geoNear: {
+          near: { type: "Point", coordinates: [lng, lat] },
+          distanceField: "distance",
+          spherical: true,
+          maxDistance: maxDistanceKm * 1000
+        }
+      },
+      {
+        $match: {
+          _id: { $ne: training.creator },
+          sports: training.sport
+        }
+      },
+      { $project: { _id: 1 } }
+    ]);
+
+    const users = await UserModel.find({
+      _id: { $in: nearbyUsers.map((u) => u._id) }
+    });
+
+    return users;
+  }
+
   async addLike(id: string, userId: string) {
-    return this.model.findByIdAndUpdate(
+    const model = this.model.findByIdAndUpdate(
       id,
       { $addToSet: { likes: userId } },
       { new: true }
     );
+    return model;
   }
 
   async removeLike(id: string, userId: string) {
-    return this.model.findByIdAndUpdate(
+    const model = this.model.findByIdAndUpdate(
       id,
       { $pull: { likes: userId } },
       { new: true }
     );
+    return model;
   }
 
   async addParticipant(id: string, userId: string) {
@@ -223,14 +256,13 @@ export class TrainingService extends BaseService<ITraining> {
       );
     }
 
-    const newParticipant = { participant: userId, attended: true };
-    return this.model.findByIdAndUpdate(
-      id,
-      { $addToSet: { participants: newParticipant } },
+    const result = this.model.findOneAndUpdate(
+      { _id: id, "participants.participant": { $ne: userId } },
+      { $push: { participants: { participant: userId, attended: true } } },
       { new: true }
     );
+    return result as unknown as ITraining;
   }
-
   async removeParticipant(id: string, userId: string) {
     const training = await this.model.findById(id);
     if (!training) {
@@ -242,37 +274,41 @@ export class TrainingService extends BaseService<ITraining> {
         "Cannot remove participant. Training is not in scheduled status."
       );
     }
-    return this.model.findByIdAndUpdate(
+    const result = this.model.findByIdAndUpdate(
       id,
       { $pull: { participants: { participant: userId } } },
       { new: true }
     );
+    return result as unknown as ITraining;
   }
 
   async addComment(id: string, userId: string, text: string) {
     const comment = await CommentModel.create({ user: userId, text });
-    return this.model.findByIdAndUpdate(
+    const result = this.model.findByIdAndUpdate(
       id,
       { $push: { comments: comment._id } },
       { new: true }
     );
+    return result as unknown as ITraining;
   }
 
   async updateComment(commentId: string, text: string) {
-    return CommentModel.findByIdAndUpdate(
+    const result = CommentModel.findByIdAndUpdate(
       commentId,
       { text, updatedAt: new Date() },
       { new: true }
     );
+    return result as unknown as ITraining;
   }
 
   async removeComment(id: string, commentId: string) {
     await CommentModel.deleteOne({ _id: commentId });
-    return this.model.findByIdAndUpdate(
+    const result = this.model.findByIdAndUpdate(
       id,
       { $pull: { comments: commentId } },
       { new: true }
     );
+    return result as unknown as ITraining;
   }
   async changeStatus(
     id: string,
@@ -335,10 +371,12 @@ export class TrainingService extends BaseService<ITraining> {
       });
     }
 
-    return this.model.findByIdAndUpdate(
+    const result = this.model.findByIdAndUpdate(
       id,
       { status: newStatus },
       { new: true }
     );
+
+    return result as unknown as ITraining;
   }
 }
