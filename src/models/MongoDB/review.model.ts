@@ -1,4 +1,4 @@
-import mongoose, { Model, Schema } from "mongoose";
+import mongoose, { Model, ObjectId, Schema } from "mongoose";
 import { IReview } from "../../interfaces/review.interface.js";
 
 const ReviewSchema = new Schema<IReview>(
@@ -22,7 +22,7 @@ ReviewSchema.index(
 );
 
 // Function to update user's average rating
-async function updateUserAverageRating(userId: mongoose.Types.ObjectId) {
+async function updateUserAverageRating(userId: ObjectId) {
   const UserModel = mongoose.model("User");
 
   const result = await ReviewModel.aggregate([

@@ -1,12 +1,14 @@
 import axios from "axios";
 import chalk from "chalk";
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import * as XLSX from "xlsx";
 import { ICity } from "../interfaces/index.js";
-import CityModel from "../models/MongoDB/city.model.js";
+import { CityModel } from "../models/index.js";
 import { BaseService } from "./base.service.js";
+
 export class CityService extends BaseService<ICity> {
-  constructor() {
-    super(CityModel);
+  constructor(auth?: AuthResult) {
+    super(CityModel, auth);
   }
 
   inizialize = async (): Promise<void> => {

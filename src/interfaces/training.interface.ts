@@ -4,7 +4,7 @@ import {
   TrainingLevelEnum,
   TrainingStatusEnum
 } from "../types/index.js";
-import { ITrainingParticipant } from "./trainingParticipant.interface.js";
+import { ITrainingParticipant } from "./index.js";
 
 export interface ITraining extends Document<ObjectId> {
   title: string;

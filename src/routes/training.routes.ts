@@ -1,12 +1,10 @@
-import express, { Router } from "express";
-import container from "../container.js";
+import express, { Request, Router } from "express";
 import { TrainingController } from "../controllers/index.js";
-import { authenticate } from "../middlewares/index.js";
 
 const trainingRoutes: Router = express.Router({ mergeParams: true });
 
-const trainingController =
-  container.resolve<TrainingController>("trainingController");
+const controller = (req: Request) =>
+  req.container.resolve<TrainingController>("trainingController");
 
 /**
  * @swagger
@@ -35,12 +33,10 @@ const trainingController =
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.post("/list", authenticate, (req, res) =>
-  trainingController.list(req, res)
-);
+trainingRoutes.post("/list", (req, res) => controller(req).list(req, res));
 
-trainingRoutes.get("/recommended", authenticate, (req, res) =>
-  trainingController.getRecommendedTrainings(req, res)
+trainingRoutes.get("/recommended", (req, res) =>
+  controller(req).getRecommendedTrainings(req, res)
 );
 
 /**
@@ -76,9 +72,7 @@ trainingRoutes.get("/recommended", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.get("/:id", authenticate, (req, res) =>
-  trainingController.get(req, res)
-);
+trainingRoutes.get("/:id", (req, res) => controller(req).get(req, res));
 
 /**
  * @swagger
@@ -147,9 +141,7 @@ trainingRoutes.get("/:id", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.post("/", authenticate, (req, res) =>
-  trainingController.create(req, res)
-);
+trainingRoutes.post("/", (req, res) => controller(req).create(req, res));
 
 /**
  * @swagger
@@ -223,9 +215,7 @@ trainingRoutes.post("/", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.put("/:id", authenticate, (req, res) =>
-  trainingController.update(req, res)
-);
+trainingRoutes.put("/:id", (req, res) => controller(req).update(req, res));
 
 /**
  * @swagger
@@ -260,8 +250,8 @@ trainingRoutes.put("/:id", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.post("/:id/like", authenticate, (req, res) =>
-  trainingController.addLike(req, res)
+trainingRoutes.post("/:id/like", (req, res) =>
+  controller(req).addLike(req, res)
 );
 
 /**
@@ -297,8 +287,8 @@ trainingRoutes.post("/:id/like", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
-  trainingController.addParticipant(req, res)
+trainingRoutes.post("/:id/participants", (req, res) =>
+  controller(req).addParticipant(req, res)
 );
 
 /**
@@ -334,8 +324,8 @@ trainingRoutes.post("/:id/participants", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/like", authenticate, (req, res) =>
-  trainingController.removeLike(req, res)
+trainingRoutes.delete("/:id/like", (req, res) =>
+  controller(req).removeLike(req, res)
 );
 
 /**
@@ -368,8 +358,8 @@ trainingRoutes.delete("/:id/like", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/participants", authenticate, (req, res) =>
-  trainingController.removeParticipant(req, res)
+trainingRoutes.delete("/:id/participants", (req, res) =>
+  controller(req).removeParticipant(req, res)
 );
 
 /**
@@ -404,12 +394,10 @@ trainingRoutes.delete("/:id/participants", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-trainingRoutes.delete("/:id", authenticate, (req, res) =>
-  trainingController.delete(req, res)
-);
+trainingRoutes.delete("/:id", (req, res) => controller(req).delete(req, res));
 
-trainingRoutes.post("/:id/comments", authenticate, (req, res) =>
-  trainingController.addComment(req, res)
+trainingRoutes.post("/:id/comments", (req, res) =>
+  controller(req).addComment(req, res)
 );
 
 /**
@@ -449,8 +437,8 @@ trainingRoutes.post("/:id/comments", authenticate, (req, res) =>
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-trainingRoutes.put("/:id/comments/:commentId", authenticate, (req, res) =>
-  trainingController.updateComment(req, res)
+trainingRoutes.put("/:id/comments/:commentId", (req, res) =>
+  controller(req).updateComment(req, res)
 );
 
 /**
@@ -483,8 +471,8 @@ trainingRoutes.put("/:id/comments/:commentId", authenticate, (req, res) =>
  *                 data:
  *                   $ref: '#/components/schemas/Training'
  */
-trainingRoutes.delete("/:id/comments/:commentId", authenticate, (req, res) =>
-  trainingController.removeComment(req, res)
+trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
+  controller(req).removeComment(req, res)
 );
 
 /**
@@ -539,8 +527,8 @@ trainingRoutes.delete("/:id/comments/:commentId", authenticate, (req, res) =>
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-trainingRoutes.patch("/:id/status", authenticate, (req, res) =>
-  trainingController.changeStatus(req, res)
+trainingRoutes.patch("/:id/status", (req, res) =>
+  controller(req).changeStatus(req, res)
 );
 
 /**
