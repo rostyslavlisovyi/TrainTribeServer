@@ -1,7 +1,11 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { ObjectId } from "mongoose";
+import { CONSTANTS } from "../config/app.config.js";
 import { ITraining, IUser } from "../interfaces/index.js";
-import { CommentModel, TrainingModel, UserModel } from "../models/index.js";
+import CommentModel from "../models/MongoDB/comment.model.js";
+import TrainingModel from "../models/MongoDB/training.model.js";
+import UserModel from "../models/MongoDB/user.model.js";
+import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
@@ -344,14 +348,27 @@ export class TrainingService extends BaseService<ITraining> {
       if (training.participants && training.participants.length > 0) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
-          $inc: { trainingPoints: 5 }
+          $inc: { trainingPoints: CONSTANTS.POINT_CREATOR_TRAINING }
+        });
+        // Log points for leaderboard
+        await UserLeaderboardModel.create({
+          user: userId,
+          points: CONSTANTS.POINT_CREATOR_TRAINING
         });
 
         // Award 1 point to each participant
         for (const attendance of training.participants) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1, trainingPoints: 1 }
+              $inc: {
+                countTrainingJoined: 1,
+                trainingPoints: CONSTANTS.POINT_JOIN_TRAINING
+              }
+            });
+            // Log points for leaderboard
+            await UserLeaderboardModel.create({
+              user: attendance.participant,
+              points: CONSTANTS.POINT_JOIN_TRAINING
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {

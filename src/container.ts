@@ -5,6 +5,7 @@ import {
   CloudinaryController,
   CronJobController,
   GeocodeController,
+  LeaderboardController,
   NotificationController,
   ReviewController,
   TrainingController,
@@ -15,6 +16,7 @@ import {
   CloudinaryService,
   CronJobService,
   GeocodeService,
+  LeaderboardService,
   NotificationService,
   ReviewService,
   TrainingService,
@@ -34,7 +36,8 @@ container
     geocodeService: asClass(GeocodeService).scoped(),
     reviewService: asClass(ReviewService).scoped(),
     notificationService: asClass(NotificationService).scoped(),
-    cronJobService: asClass(CronJobService).scoped()
+    cronJobService: asClass(CronJobService).scoped(),
+    leaderboardService: asClass(LeaderboardService).scoped()
   })
   .register({
     cityController: asClass(CityController).scoped(),
@@ -44,7 +47,8 @@ container
     geocodeController: asClass(GeocodeController).scoped(),
     reviewController: asClass(ReviewController).scoped(),
     notificationController: asClass(NotificationController).scoped(),
-    cronJobController: asClass(CronJobController).scoped()
+    cronJobController: asClass(CronJobController).scoped(),
+    leaderboardController: asClass(LeaderboardController).scoped()
   });
 
 export default container;

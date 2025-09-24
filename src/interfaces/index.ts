@@ -8,3 +8,4 @@ export * from "./timeSlot.interface.js";
 export * from "./training.interface.js";
 export * from "./trainingParticipant.interface.js";
 export * from "./user.interface.js";
+export * from "./userLeaderboard.interface.js";

@@ -526,7 +526,7 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ["./src/routes/*.ts"]
+  apis: ["./src/routes/*.js"]
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);

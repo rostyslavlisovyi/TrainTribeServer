@@ -1,6 +1,9 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
-import { IReview } from "../interfaces/index.js";
-import { ReviewModel, TrainingModel, UserModel } from "../models/index.js";
+import { IReview } from "../interfaces/review.interface.js";
+import ReviewModel from "../models/MongoDB/review.model.js";
+import TrainingModel from "../models/MongoDB/training.model.js";
+import UserModel from "../models/MongoDB/user.model.js";
+import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
@@ -61,6 +64,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: stars } },
         { new: true }
       );
+      // Log points for leaderboard
+      await UserLeaderboardModel.create({
+        user: reviewedUser,
+        points: stars
+      });
     }
 
     // Update hasLeftReview for the participant
@@ -91,6 +99,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: -review.stars } },
         { new: true }
       );
+      // Log negative points for leaderboard
+      await UserLeaderboardModel.create({
+        user: review.reviewedUser,
+        points: -review.stars
+      });
     }
 
     const result = await super.delete(id);
@@ -125,6 +138,11 @@ export class ReviewService extends BaseService<IReview> {
           { $inc: { reviewPoints: pointDiff } },
           { new: true }
         );
+        // Log points change for leaderboard
+        await UserLeaderboardModel.create({
+          userId: review.reviewedUser,
+          points: pointDiff
+        });
       }
     }
 

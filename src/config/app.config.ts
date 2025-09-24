@@ -15,3 +15,8 @@ export const BADGE_TRAINING_THRESHOLDS: Record<number, number> = {
   4: 1000, // 3 -> 4: 1000 trainings
   5: 3000 // 4 -> 5: more than 3000 trainings
 };
+
+export const CONSTANTS = {
+  POINT_CREATOR_TRAINING: 5,
+  POINT_JOIN_TRAINING: 1
+};

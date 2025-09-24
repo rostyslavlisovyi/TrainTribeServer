@@ -8,3 +8,4 @@ export * from "./review.controller.js";
 export * from "./training.controller.js";
 export * from "./upload.controller.js";
 export * from "./user.controller.js";
+export * from "./leaderboard.controller.js";
