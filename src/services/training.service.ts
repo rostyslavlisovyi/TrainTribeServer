@@ -1,7 +1,12 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { ObjectId } from "mongoose";
+import { CONSTANTS } from "../config/app.config.js";
 import { ITraining, IUser } from "../interfaces/index.js";
-import { CommentModel, TrainingModel, UserModel } from "../models/index.js";
+import { CityModel } from "../models/index.js";
+import CommentModel from "../models/MongoDB/comment.model.js";
+import TrainingModel from "../models/MongoDB/training.model.js";
+import UserModel from "../models/MongoDB/user.model.js";
+import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
@@ -9,9 +14,9 @@ export class TrainingService extends BaseService<ITraining> {
   constructor(auth?: AuthResult) {
     super(TrainingModel, auth);
   }
-  async create(entity: Partial<ITraining>): Promise<ITraining> {
-    const newTraining = await super.create(entity);
 
+  override async create(entity: Partial<ITraining>): Promise<ITraining> {
+    const newTraining = await super.create(entity);
     if (newTraining && newTraining.creator) {
       await UserModel.findByIdAndUpdate(newTraining.creator, {
         $inc: { countTrainingOrganized: 1 }
@@ -21,7 +26,7 @@ export class TrainingService extends BaseService<ITraining> {
     return newTraining;
   }
 
-  async delete(id: string): Promise<boolean> {
+  override async delete(id: string): Promise<boolean> {
     const training = await this.model.findById(id);
 
     if (!training) {
@@ -51,24 +56,22 @@ export class TrainingService extends BaseService<ITraining> {
     const userSports = user.sports || [];
     const userLevel = user.trainingLevel;
     const userTimeSlots = user.trainingTimeSlot || [];
-
-    const hasCityCoordinates =
-      user.city &&
-      user.city.longitude !== undefined &&
-      user.city.latitude !== undefined;
+    const hasCityCoordinates = user?.city?.location?.coordinates;
 
     let idsWithDistance: { _id: ObjectId; distance?: number }[] = [];
 
     const minResults = limit / 2;
 
     if (hasCityCoordinates) {
+      const [longitude, latitude] = user.city.location?.coordinates || [];
+
       // distance and sports
       idsWithDistance = await this.model.aggregate([
         {
           $geoNear: {
             near: {
               type: "Point",
-              coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+              coordinates: [longitude || 0, latitude || 0]
             },
             distanceField: "distance",
             spherical: true,
@@ -88,12 +91,14 @@ export class TrainingService extends BaseService<ITraining> {
 
       // increase distance and remove sport filter
       if (idsWithDistance.length < minResults) {
+        const [longitude, latitude] = user.city.location?.coordinates || [];
+
         const extra = await this.model.aggregate([
           {
             $geoNear: {
               near: {
                 type: "Point",
-                coordinates: [user.city.longitude || 0, user.city.latitude || 0]
+                coordinates: [longitude || 0, latitude || 0]
               },
               distanceField: "distance",
               spherical: true,
@@ -200,8 +205,7 @@ export class TrainingService extends BaseService<ITraining> {
     }
 
     const [lng, lat] = training.location.coordinates;
-
-    const nearbyUsers = await UserModel.aggregate([
+    const nearbyCities: { _id: string }[] = await CityModel.aggregate([
       {
         $geoNear: {
           near: { type: "Point", coordinates: [lng, lat] },
@@ -211,16 +215,16 @@ export class TrainingService extends BaseService<ITraining> {
         }
       },
       {
-        $match: {
-          _id: { $ne: training.creator },
-          sports: training.sport
-        }
-      },
-      { $project: { _id: 1 } }
+        $project: { _id: 1 }
+      }
     ]);
 
+    const cityIds = nearbyCities.map((city) => city._id);
+
     const users = await UserModel.find({
-      _id: { $in: nearbyUsers.map((u) => u._id) }
+      _id: { $ne: training.creator },
+      sports: training.sport,
+      city: { $in: cityIds }
     });
 
     return users;
@@ -344,14 +348,27 @@ export class TrainingService extends BaseService<ITraining> {
       if (training.participants && training.participants.length > 0) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
-          $inc: { trainingPoints: 5 }
+          $inc: { trainingPoints: CONSTANTS.POINT_CREATOR_TRAINING }
+        });
+        // Log points for leaderboard
+        await UserLeaderboardModel.create({
+          user: userId,
+          points: CONSTANTS.POINT_CREATOR_TRAINING
         });
 
         // Award 1 point to each participant
         for (const attendance of training.participants) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
-              $inc: { countTrainingJoined: 1, trainingPoints: 1 }
+              $inc: {
+                countTrainingJoined: 1,
+                trainingPoints: CONSTANTS.POINT_JOIN_TRAINING
+              }
+            });
+            // Log points for leaderboard
+            await UserLeaderboardModel.create({
+              user: attendance.participant,
+              points: CONSTANTS.POINT_JOIN_TRAINING
             });
           } else {
             await UserModel.findByIdAndUpdate(attendance.participant, {

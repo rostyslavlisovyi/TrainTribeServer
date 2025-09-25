@@ -7,3 +7,4 @@ export * from "./notification.service.js";
 export * from "./review.service.js";
 export * from "./training.service.js";
 export * from "./user.service.js";
+export * from "./leaderboard.service.js";

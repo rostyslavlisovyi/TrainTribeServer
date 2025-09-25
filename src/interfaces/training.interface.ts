@@ -4,6 +4,7 @@ import {
   TrainingLevelEnum,
   TrainingStatusEnum
 } from "../types/index.js";
+import { IGeoLocation } from "./geoLocation.interface.js";
 import { ITrainingParticipant } from "./index.js";
 
 export interface ITraining extends Document<ObjectId> {
@@ -11,7 +12,7 @@ export interface ITraining extends Document<ObjectId> {
   description: string;
   date: Date;
   address: string;
-  location: GeoLocation;
+  location: IGeoLocation;
   sport: SportsEnum;
   creator: ObjectId;
   participants: ITrainingParticipant[];
@@ -22,9 +23,4 @@ export interface ITraining extends Document<ObjectId> {
   status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;
-}
-
-interface GeoLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
 }

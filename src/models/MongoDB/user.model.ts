@@ -14,7 +14,7 @@ import {
 import {
   BADGE_REVIEW_THRESHOLDS,
   BADGE_TRAINING_THRESHOLDS
-} from "../../config/badge.js";
+} from "../../config/app.config.js";
 import { IUser } from "../../interfaces/index.js";
 import { NotificationService, UserService } from "../../services/index.js";
 
