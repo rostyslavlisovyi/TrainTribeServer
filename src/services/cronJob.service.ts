@@ -54,7 +54,7 @@ export class CronJobService {
     const todayTrainings = await TrainingModel.find({
       status: TrainingStatusEnum.SCHEDULED,
       date: { $gte: startOfDay, $lt: tomorrow }
-    });
+    }).populate(["creator", "participants"]);
 
     for (const training of todayTrainings) {
       await this.notificationService.create({
@@ -65,6 +65,20 @@ export class CronJobService {
           trainingTitle: training.title
         }
       });
+
+      await Promise.all(
+        training.participants.map((participant) =>
+          this.notificationService.create({
+            user: participant.participant,
+            triggeredBy: training.creator,
+            type: NotificationEnum.TODAY_TRAININGS_REMINDER,
+            data: {
+              trainingId: training._id.toString(),
+              trainingTitle: training.title
+            }
+          })
+        )
+      );
     }
 
     return todayTrainings.length;
