@@ -2,14 +2,29 @@ import { Request, Response } from "express";
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { IReview } from "../interfaces/index.js";
 import { BaseResponse } from "../models/index.js";
-import { ReviewService } from "../services/index.js";
+import {
+  NotificationService,
+  ReviewService,
+  TrainingService
+} from "../services/index.js";
+import { NotificationEnum } from "../types/enums.js";
 import { handleError } from "../utils/handleError.js";
+import { completeName } from "../utils/user.js";
 import { BaseController } from "./base.controller.js";
 
 export class ReviewController extends BaseController<IReview, ReviewService> {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(reviewService: ReviewService, auth?: AuthResult) {
+  private readonly notificationService: NotificationService;
+  private readonly trainingService: TrainingService;
+
+  constructor(
+    reviewService: ReviewService,
+    notificationService: NotificationService,
+    trainingService: TrainingService,
+    auth?: AuthResult
+  ) {
     super(reviewService, auth);
+    this.notificationService = notificationService;
+    this.trainingService = trainingService;
   }
 
   // Create review
@@ -22,6 +37,25 @@ export class ReviewController extends BaseController<IReview, ReviewService> {
       };
 
       const result = await this.service.create(reviewData);
+
+      const training = await this.trainingService.get({
+        id: result.training.toString()
+      });
+
+      await this.notificationService.create({
+        user: result.reviewedUser,
+        triggeredBy: result.reviewer,
+        type: NotificationEnum.NEW_REVIEW_ON_TRAINING,
+        data: {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          trainingId: training!._id.toString(),
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          trainingTitle: training!.title,
+          user: completeName(user)
+        },
+        read: false
+      });
+
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
       handleError(res, error);

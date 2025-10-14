@@ -189,8 +189,7 @@ export class TrainingController extends BaseController<
       const { text } = req.body;
       const user = await this.getAuthUser();
       const data = await this.service.addComment(id, user._id.toString(), text);
-
-      if (user._id !== data?.creator) {
+      if (user._id?.toString() !== data?.creator?.toString()) {
         await this.notificationService.create({
           user: data?.creator,
           triggeredBy: user._id,

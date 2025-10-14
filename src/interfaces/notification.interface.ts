@@ -40,6 +40,15 @@ export type INotification =
       data: { badge: "review" | "training" };
     })
   | (BaseNotification & {
+      type: NotificationEnum.NEW_REVIEW_ON_TRAINING;
+      data: {
+        trainingTitle: string;
+        trainingId: string;
+        comment: string;
+        user: string;
+      };
+    })
+  | (BaseNotification & {
       type: NotificationEnum.NEW_COMMENT_ON_TRAINING;
       data: {
         user: string;
@@ -63,6 +72,13 @@ export type INotification =
     })
   | (BaseNotification & {
       type: NotificationEnum.TODAY_TRAININGS_REMINDER;
+      data: {
+        trainingTitle: string;
+        trainingId: string;
+      };
+    })
+  | (BaseNotification & {
+      type: NotificationEnum.NEW_REVIEW_ON_TRAINING;
       data: {
         trainingTitle: string;
         trainingId: string;
