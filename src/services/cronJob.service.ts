@@ -9,7 +9,7 @@ export class CronJobService {
     this.notificationService = notificationService;
   }
 
-  async createNotificationTrainingCompletionReminder(offsetMinutes = 15) {
+  async createNotificationTrainingCompletionReminder(offsetMinutes = 60) {
     const now = new Date();
 
     const expiredTrainings = await TrainingModel.find({
@@ -51,18 +51,14 @@ export class CronJobService {
   async createNotificationTodayTrainingsReminder() {
     const now = new Date();
 
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
+    const fiveHoursFromNow = new Date(now.getTime() + 5 * 60 * 60 * 1000);
 
-    const tomorrow = new Date(startOfDay);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const todayTrainings = await TrainingModel.find({
+    const upcomingTrainings = await TrainingModel.find({
       status: TrainingStatusEnum.SCHEDULED,
-      date: { $gte: startOfDay, $lt: tomorrow }
+      date: { $gt: now, $lte: fiveHoursFromNow }
     });
 
-    for (const training of todayTrainings) {
+    for (const training of upcomingTrainings) {
       const creatorHasReceived =
         await this.notificationService.hasReceivedTypeToday(
           training.creator,
@@ -101,6 +97,6 @@ export class CronJobService {
       );
     }
 
-    return todayTrainings.length;
+    return upcomingTrainings.length;
   }
 }
