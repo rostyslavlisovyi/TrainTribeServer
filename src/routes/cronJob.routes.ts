@@ -1,16 +1,16 @@
 import { CronJobController } from "controllers/cronJob.controller.js";
 import express, { Request, Router } from "express";
 
-const cronJobRouter: Router = express.Router();
+const cronJobRoute: Router = express.Router();
 
 const controller = (req: Request) =>
-  req.container.resolve<CronJobController>("cronJobConroller");
+  req.container.resolve<CronJobController>("cronJobController");
 
-cronJobRouter.get("/city-inizialize", (req, res) =>
+cronJobRoute.get("/city-inizialize", (req, res) =>
   controller(req).inizializeCity(req, res)
 );
 
-cronJobRouter.get("/notification", (req, res) =>
+cronJobRoute.get("/notification", (req, res) =>
   controller(req).notification(req, res)
 );
-export default cronJobRouter;
+export default cronJobRoute;
