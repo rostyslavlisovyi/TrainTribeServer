@@ -14,7 +14,8 @@ export class CronJobController {
 
   inizializeCity = async (req: Request, res: Response): Promise<void> => {
     try {
-      await this.cityService.inizialize();
+      // NOTE: don't await this because it's called from cron-job.org and it has 30second timeout
+      this.cityService.inizialize();
       res.status(200).json(new BaseResponse(true));
     } catch (error) {
       handleError(res, error);
