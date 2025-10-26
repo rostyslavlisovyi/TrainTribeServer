@@ -29,14 +29,20 @@ export class CronJobService {
     });
 
     for (const training of expiredTrainings) {
-      await this.notificationService.create({
-        user: training.creator,
-        type: NotificationEnum.TRAINING_COMPLETION_REMINDER,
-        data: {
-          trainingId: training._id.toString(),
-          trainingTitle: training.title
-        }
-      });
+      const hasReceived = await this.notificationService.hasReceivedTypeToday(
+        training.creator,
+        NotificationEnum.TRAINING_COMPLETION_REMINDER
+      );
+      if (!hasReceived) {
+        await this.notificationService.create({
+          user: training.creator,
+          type: NotificationEnum.TRAINING_COMPLETION_REMINDER,
+          data: {
+            trainingId: training._id.toString(),
+            trainingTitle: training.title
+          }
+        });
+      }
     }
 
     return expiredTrainings.length;
@@ -54,30 +60,44 @@ export class CronJobService {
     const todayTrainings = await TrainingModel.find({
       status: TrainingStatusEnum.SCHEDULED,
       date: { $gte: startOfDay, $lt: tomorrow }
-    }).populate(["creator", "participants"]);
+    });
 
     for (const training of todayTrainings) {
-      await this.notificationService.create({
-        user: training.creator,
-        type: NotificationEnum.TODAY_TRAININGS_REMINDER,
-        data: {
-          trainingId: training._id.toString(),
-          trainingTitle: training.title
-        }
-      });
+      const creatorHasReceived =
+        await this.notificationService.hasReceivedTypeToday(
+          training.creator,
+          NotificationEnum.TODAY_TRAININGS_REMINDER
+        );
+      if (!creatorHasReceived) {
+        await this.notificationService.create({
+          user: training.creator,
+          type: NotificationEnum.TODAY_TRAININGS_REMINDER,
+          data: {
+            trainingId: training._id.toString(),
+            trainingTitle: training.title
+          }
+        });
+      }
 
       await Promise.all(
-        training.participants.map((participant) =>
-          this.notificationService.create({
-            user: participant.participant,
-            triggeredBy: training.creator,
-            type: NotificationEnum.TODAY_TRAININGS_REMINDER,
-            data: {
-              trainingId: training._id.toString(),
-              trainingTitle: training.title
-            }
-          })
-        )
+        training.participants.map(async (participant) => {
+          const participantHasReceived =
+            await this.notificationService.hasReceivedTypeToday(
+              participant.participant,
+              NotificationEnum.TODAY_TRAININGS_REMINDER
+            );
+          if (!participantHasReceived) {
+            await this.notificationService.create({
+              user: participant.participant,
+              triggeredBy: training.creator,
+              type: NotificationEnum.TODAY_TRAININGS_REMINDER,
+              data: {
+                trainingId: training._id.toString(),
+                trainingTitle: training.title
+              }
+            });
+          }
+        })
       );
     }
 

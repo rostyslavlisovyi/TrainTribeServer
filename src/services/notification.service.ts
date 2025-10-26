@@ -1,8 +1,10 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { TokenMessage } from "firebase-admin/messaging";
+import { ObjectId } from "mongoose";
 import { firebaseCloudMessaging } from "../config/firebase.js";
 import { INotification } from "../interfaces/index.js";
 import { NotificationModel } from "../models/index.js";
+import { NotificationEnum } from "../types/enums.js";
 import { BaseService } from "./base.service.js";
 import { UserService } from "./user.service.js";
 
@@ -81,5 +83,25 @@ export class NotificationService extends BaseService<INotification> {
     );
 
     return result.modifiedCount;
+  }
+
+  async hasReceivedTypeToday(
+    userId: ObjectId,
+    type: NotificationEnum
+  ): Promise<boolean> {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(startOfDay);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const count = await this.model.countDocuments({
+      user: userId,
+      type: type,
+      createdAt: { $gte: startOfDay, $lt: tomorrow }
+    });
+
+    return count > 0;
   }
 }
