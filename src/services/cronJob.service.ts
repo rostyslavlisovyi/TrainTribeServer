@@ -36,6 +36,7 @@ export class CronJobService {
       if (!hasReceived) {
         await this.notificationService.create({
           user: training.creator,
+          triggeredBy: training.creator,
           type: NotificationEnum.TRAINING_COMPLETION_REMINDER,
           data: {
             trainingId: training._id.toString(),
@@ -67,6 +68,7 @@ export class CronJobService {
       if (!creatorHasReceived) {
         await this.notificationService.create({
           user: training.creator,
+          triggeredBy: training.creator,
           type: NotificationEnum.TODAY_TRAININGS_REMINDER,
           data: {
             trainingId: training._id.toString(),
