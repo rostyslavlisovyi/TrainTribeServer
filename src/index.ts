@@ -37,8 +37,19 @@ appServer.use(scopePerRequest(container));
 //Middlewares
 appServer.use(express.json());
 
-const corsOptions = {
-  origin: process.env.APP_URL,
+const allowedOrigins =
+  process.env.APP_URL?.split(",")?.map((url) => url.trim()) || [];
+
+const corsOptions: cors.CorsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 
