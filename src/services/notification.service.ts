@@ -85,8 +85,9 @@ export class NotificationService extends BaseService<INotification> {
     return result.modifiedCount;
   }
 
-  async hasReceivedTypeToday(
+  async hasReceivedTrainingTypeToday(
     userId: ObjectId,
+    trainingId: ObjectId,
     type: NotificationEnum
   ): Promise<boolean> {
     const now = new Date();
@@ -99,6 +100,9 @@ export class NotificationService extends BaseService<INotification> {
     const count = await this.model.countDocuments({
       user: userId,
       type: type,
+      data: {
+        trainingId
+      },
       createdAt: { $gte: startOfDay, $lt: tomorrow }
     });
 
