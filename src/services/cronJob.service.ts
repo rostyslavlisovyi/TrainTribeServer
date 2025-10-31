@@ -53,7 +53,7 @@ export class CronJobService {
               triggeredBy: training.creator,
               type: NotificationEnum.TRAINING_COMPLETION_REMINDER,
               data: {
-                trainingId: training._id.toString(),
+                trainingId: training._id,
                 trainingTitle: training.title
               }
             });
@@ -98,7 +98,7 @@ export class CronJobService {
               triggeredBy: training.creator,
               type: NotificationEnum.TODAY_TRAININGS_REMINDER,
               data: {
-                trainingId: training._id.toString(),
+                trainingId: training._id,
                 trainingTitle: training.title
               }
             });
@@ -123,7 +123,7 @@ export class CronJobService {
                 triggeredBy: training.creator,
                 type: NotificationEnum.TODAY_TRAININGS_REMINDER,
                 data: {
-                  trainingId: training._id.toString(),
+                  trainingId: training._id,
                   trainingTitle: training.title
                 }
               });

@@ -14,24 +14,24 @@ export type INotification =
       type: NotificationEnum.USER_JOIN_TRAINING;
       data: {
         user: string;
-        userId: string;
+        userId: ObjectId;
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
       };
     })
   | (BaseNotification & {
       type: NotificationEnum.TRAINING_CREATED_NEAR_TO_USER;
-      data: { trainingTitle: string; trainingId: string };
+      data: { trainingTitle: string; trainingId: ObjectId };
     })
   | (BaseNotification & {
       type: NotificationEnum.TRAINING_COMPLETION_REMINDER;
-      data: { trainingTitle: string; trainingId: string };
+      data: { trainingTitle: string; trainingId: ObjectId };
     })
   | (BaseNotification & {
       type: NotificationEnum.REMEMBER_TO_LEAVE_REVIEW;
       data: {
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
         trainingCreator: string;
       };
     })
@@ -43,7 +43,7 @@ export type INotification =
       type: NotificationEnum.NEW_REVIEW_ON_TRAINING;
       data: {
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
         comment: string;
         user: string;
       };
@@ -54,14 +54,14 @@ export type INotification =
         user: string;
         comment: string;
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
       };
     })
   | (BaseNotification & {
       type: NotificationEnum.TRAINING_EDITED;
       data: {
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
       };
     })
   | (BaseNotification & {
@@ -74,13 +74,13 @@ export type INotification =
       type: NotificationEnum.TODAY_TRAININGS_REMINDER;
       data: {
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
       };
     })
   | (BaseNotification & {
       type: NotificationEnum.NEW_REVIEW_ON_TRAINING;
       data: {
         trainingTitle: string;
-        trainingId: string;
+        trainingId: ObjectId;
       };
     });

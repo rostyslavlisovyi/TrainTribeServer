@@ -1,6 +1,6 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { TokenMessage } from "firebase-admin/messaging";
-import { ObjectId } from "mongoose";
+import { ObjectId, Types } from "mongoose";
 import { firebaseCloudMessaging } from "../config/firebase.js";
 import { INotification } from "../interfaces/index.js";
 import { NotificationModel } from "../models/index.js";
@@ -41,11 +41,12 @@ export class NotificationService extends BaseService<INotification> {
         maxAgeDays * 24 * 60 * 60 * 1000;
       if (isTokenFresh) {
         try {
+          const serializedData = this.stringifyObjectIds(result.data ?? {});
           const message: TokenMessage = {
             token: user.fcmToken,
             data: {
               type: result.type,
-              ...(result.data ?? {})
+              ...serializedData
             },
             webpush: {
               headers: {
@@ -61,6 +62,20 @@ export class NotificationService extends BaseService<INotification> {
       }
     }
 
+    return result;
+  }
+
+  private stringifyObjectIds(obj: object): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value instanceof Types.ObjectId) {
+        result[key] = value.toString();
+      } else if (typeof value === "object" && value !== null) {
+        result[key] = JSON.stringify(this.stringifyObjectIds(value));
+      } else {
+        result[key] = String(value);
+      }
+    }
     return result;
   }
 
@@ -96,13 +111,10 @@ export class NotificationService extends BaseService<INotification> {
 
     const tomorrow = new Date(startOfDay);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     const count = await this.model.countDocuments({
       user: userId,
       type: type,
-      data: {
-        trainingId
-      },
+      "data.trainingId": trainingId,
       createdAt: { $gte: startOfDay, $lt: tomorrow }
     });
 

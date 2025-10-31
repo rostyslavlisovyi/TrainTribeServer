@@ -37,7 +37,7 @@ export class TrainingController extends BaseController<
             triggeredBy: training.creator,
             type: NotificationEnum.TRAINING_CREATED_NEAR_TO_USER,
             data: {
-              trainingId: training._id.toString(),
+              trainingId: training._id,
               trainingTitle: training.title
             }
           })
@@ -70,7 +70,7 @@ export class TrainingController extends BaseController<
             type: NotificationEnum.TRAINING_EDITED,
             data: {
               trainingTitle: result!.title,
-              trainingId: result!._id.toString()
+              trainingId: result!._id
             }
           })
         )
@@ -155,9 +155,9 @@ export class TrainingController extends BaseController<
         triggeredBy: user._id,
         type: NotificationEnum.USER_JOIN_TRAINING,
         data: {
-          userId: user._id.toString(),
+          userId: user._id,
           user: completeName(user),
-          trainingId: data._id.toString(),
+          trainingId: data._id,
           trainingTitle: data.title
         },
         read: false
@@ -195,7 +195,7 @@ export class TrainingController extends BaseController<
           triggeredBy: user._id,
           type: NotificationEnum.NEW_COMMENT_ON_TRAINING,
           data: {
-            trainingId: data!._id.toString(),
+            trainingId: data!._id,
             trainingTitle: data!.title,
             comment: text,
             user: completeName(user)
@@ -261,7 +261,7 @@ export class TrainingController extends BaseController<
               data: {
                 trainingTitle: data!.title,
                 trainingCreator: completeName(creator),
-                trainingId: data!._id.toString()
+                trainingId: data!._id
               }
             })
           )
