@@ -1,7 +1,7 @@
-import { Document, HydratedDocument, ObjectId } from "mongoose";
+import mongoose, { Document, HydratedDocument } from "mongoose";
 import { IGeoLocation } from "./geoLocation.interface.js";
 
-export interface ICity extends Document<ObjectId> {
+export interface ICity extends Document<mongoose.Types.ObjectId> {
   istatCode: string;
   region: string;
   province: string;

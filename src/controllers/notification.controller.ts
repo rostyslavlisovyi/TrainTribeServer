@@ -32,4 +32,13 @@ export class NotificationController extends BaseController<
       handleError(res, error);
     }
   }
+
+  async deleteAll(req: Request, res: Response) {
+    try {
+      const result = await this.service.deleteAll();
+      res.status(200).json(new BaseResponse(result));
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
 }

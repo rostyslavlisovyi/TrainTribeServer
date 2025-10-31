@@ -1,4 +1,4 @@
-import { Document, HydratedDocument, ObjectId } from "mongoose";
+import mongoose, { Document, HydratedDocument } from "mongoose";
 import {
   LanguageEnum,
   NotificationEnum,
@@ -9,7 +9,7 @@ import {
 } from "../types/index.js";
 import { ICity, IFileUpload } from "./index.js";
 import { ITimeSlot } from "./timeSlot.interface.js";
-export interface IUser extends Document<ObjectId> {
+export interface IUser extends Document<mongoose.Types.ObjectId> {
   athleteBio?: string;
   authId: string;
   city: ICity;

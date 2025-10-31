@@ -48,7 +48,7 @@ export class ReviewController extends BaseController<IReview, ReviewService> {
         type: NotificationEnum.NEW_REVIEW_ON_TRAINING,
         data: {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          trainingId: training!._id.toString(),
+          trainingId: training!._id,
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           trainingTitle: training!.title,
           user: completeName(user)

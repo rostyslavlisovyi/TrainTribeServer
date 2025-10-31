@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { ITraining, IUser } from "../interfaces/index.js";
 import { BaseResponse } from "../models/index.js";
+import CommentModel from "../models/MongoDB/comment.model.js";
 import { NotificationService, TrainingService } from "../services/index.js";
 import { NotificationEnum, TrainingStatusEnum } from "../types/index.js";
 import { handleError } from "../utils/handleError.js";
@@ -37,7 +38,7 @@ export class TrainingController extends BaseController<
             triggeredBy: training.creator,
             type: NotificationEnum.TRAINING_CREATED_NEAR_TO_USER,
             data: {
-              trainingId: training._id.toString(),
+              trainingId: training._id,
               trainingTitle: training.title
             }
           })
@@ -70,7 +71,7 @@ export class TrainingController extends BaseController<
             type: NotificationEnum.TRAINING_EDITED,
             data: {
               trainingTitle: result!.title,
-              trainingId: result!._id.toString()
+              trainingId: result!._id
             }
           })
         )
@@ -155,9 +156,9 @@ export class TrainingController extends BaseController<
         triggeredBy: user._id,
         type: NotificationEnum.USER_JOIN_TRAINING,
         data: {
-          userId: user._id.toString(),
+          userId: user._id,
           user: completeName(user),
-          trainingId: data._id.toString(),
+          trainingId: data._id,
           trainingTitle: data.title
         },
         read: false
@@ -195,7 +196,7 @@ export class TrainingController extends BaseController<
           triggeredBy: user._id,
           type: NotificationEnum.NEW_COMMENT_ON_TRAINING,
           data: {
-            trainingId: data!._id.toString(),
+            trainingId: data!._id,
             trainingTitle: data!.title,
             comment: text,
             user: completeName(user)
@@ -224,6 +225,44 @@ export class TrainingController extends BaseController<
     try {
       const { id, commentId } = req.params;
       const data = await this.service.removeComment(id, commentId);
+      res.status(200).json(new BaseResponse(data));
+    } catch (error) {
+      handleError(res, error);
+    }
+  }
+
+  async replyComment(req: Request, res: Response) {
+    try {
+      const { id, commentId } = req.params;
+      const { text } = req.body;
+      const user = await this.getAuthUser();
+      const data = await this.service.replyComment(
+        id,
+        commentId,
+        user._id.toString(),
+        text
+      );
+
+      const parentComment = await CommentModel.findById(commentId);
+
+      if (!parentComment) {
+        throw new Error("Parent comment not found");
+      }
+
+      if (user._id?.toString() !== parentComment.user?.toString()) {
+        await this.notificationService.create({
+          user: parentComment.user,
+          triggeredBy: user._id,
+          type: NotificationEnum.REPLY_COMMENT_ON_TRAINING,
+          data: {
+            trainingId: data!._id,
+            trainingTitle: data!.title,
+            comment: text,
+            user: completeName(user)
+          }
+        });
+      }
+
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
       handleError(res, error);
@@ -261,7 +300,7 @@ export class TrainingController extends BaseController<
               data: {
                 trainingTitle: data!.title,
                 trainingCreator: completeName(creator),
-                trainingId: data!._id.toString()
+                trainingId: data!._id
               }
             })
           )

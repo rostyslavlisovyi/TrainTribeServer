@@ -1,5 +1,5 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
-import { ObjectId } from "mongoose";
+import mongoose from "mongoose";
 import { CONSTANTS } from "../config/app.config.js";
 import { ITraining, IUser } from "../interfaces/index.js";
 import { CityModel } from "../models/index.js";
@@ -58,7 +58,8 @@ export class TrainingService extends BaseService<ITraining> {
     const userTimeSlots = user.trainingTimeSlot || [];
     const hasCityCoordinates = user?.city?.location?.coordinates;
 
-    let idsWithDistance: { _id: ObjectId; distance?: number }[] = [];
+    let idsWithDistance: { _id: mongoose.Types.ObjectId; distance?: number }[] =
+      [];
 
     const minResults = limit / 2;
 
@@ -312,6 +313,29 @@ export class TrainingService extends BaseService<ITraining> {
       { $pull: { comments: commentId } },
       { new: true }
     );
+    return result as unknown as ITraining;
+  }
+
+  async replyComment(
+    id: string,
+    parentCommentId: string,
+    userId: string,
+    text: string
+  ) {
+    const reply = await CommentModel.create({ user: userId, text });
+
+    // Push to parent replies
+    const parent = await CommentModel.findByIdAndUpdate(
+      parentCommentId,
+      { $push: { replies: reply._id } },
+      { new: true }
+    );
+
+    if (!parent) {
+      throw new Error("Parent comment not found");
+    }
+
+    const result = await this.model.findById(id);
     return result as unknown as ITraining;
   }
   async changeStatus(

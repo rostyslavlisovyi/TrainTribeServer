@@ -1,4 +1,4 @@
-import { Document, ObjectId } from "mongoose";
+import mongoose, { Document } from "mongoose";
 import {
   SportsEnum,
   TrainingLevelEnum,
@@ -7,19 +7,19 @@ import {
 import { IGeoLocation } from "./geoLocation.interface.js";
 import { ITrainingParticipant } from "./index.js";
 
-export interface ITraining extends Document<ObjectId> {
+export interface ITraining extends Document<mongoose.Types.ObjectId> {
   title: string;
   description: string;
   date: Date;
   address: string;
   location: IGeoLocation;
   sport: SportsEnum;
-  creator: ObjectId;
+  creator: mongoose.Types.ObjectId;
   participants: ITrainingParticipant[];
   difficultyLevel: TrainingLevelEnum;
   duration: number;
-  likes: ObjectId[];
-  comments: ObjectId[];
+  likes: mongoose.Types.ObjectId[];
+  comments: mongoose.Types.ObjectId[];
   status: TrainingStatusEnum;
   createdAt: Date;
   updatedAt: Date;

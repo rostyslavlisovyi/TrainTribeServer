@@ -1,8 +1,8 @@
-import { ObjectId } from "mongoose";
+import mongoose from "mongoose";
 
 export interface IUserLeaderboard {
-  _id: ObjectId;
-  user: ObjectId;
+  _id: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
   points: number;
   createdAt: Date;
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose, { Model, ObjectId, Query, Schema } from "mongoose";
+import mongoose, { Model, Query, Schema, Types } from "mongoose";
 import {
   DaysOfTheWeekEnum,
   LanguageEnum,
@@ -123,7 +123,7 @@ interface IUserDocument extends IUser {
 }
 
 interface UserQuery {
-  _id?: ObjectId | string;
+  _id?: Types.ObjectId | string;
   [key: string]: any;
 }
 
@@ -158,7 +158,7 @@ function calculateLevel(
 }
 
 async function checkBadgeUpdate(
-  userId: ObjectId,
+  userId: Types.ObjectId,
   oldTrainingPoints: number,
   newTrainingPoints: number,
   oldReviewPoints: number,

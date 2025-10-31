@@ -4,7 +4,8 @@ import { IComment } from "../../interfaces/index.js";
 const CommentSchema = new Schema<IComment>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    text: { type: String, required: true }
+    text: { type: String, required: true },
+    replies: [{ type: Schema.Types.ObjectId, ref: "Comment" }]
   },
   {
     timestamps: true
