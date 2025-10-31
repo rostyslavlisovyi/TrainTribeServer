@@ -477,6 +477,51 @@ trainingRoutes.delete("/:id/comments/:commentId", (req, res) =>
 
 /**
  * @swagger
+ * /training/{id}/comments/{commentId}/reply:
+ *   post:
+ *     summary: Reply to a comment
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Training ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: Reply text
+ *     responses:
+ *       200:
+ *         description: Reply added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Training'
+ */
+trainingRoutes.post("/:id/comments/:commentId/reply", (req, res) =>
+  controller(req).replyComment(req, res)
+);
+
+/**
+ * @swagger
  * /training/{id}/status:
  *   patch:
  *     summary: Change training status
@@ -685,6 +730,34 @@ trainingRoutes.patch("/:id/status", (req, res) =>
  *         reviewPoints:
  *           type: number
  *           description: Points earned from reviews (sum of ratings received)
+ *     Comment:
+ *       type: object
+ *       required:
+ *         - user
+ *         - text
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: The auto-generated ID of the comment
+ *         user:
+ *           type: string
+ *           description: ID of the user who wrote the comment
+ *         text:
+ *           type: string
+ *           description: The text content of the comment
+ *         replies:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of comment IDs that are replies to this comment
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date when the comment was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Date when the comment was last updated
  */
 
 export default trainingRoutes;

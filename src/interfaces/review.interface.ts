@@ -1,10 +1,10 @@
-import { Document, ObjectId } from "mongoose";
+import mongoose, { Document } from "mongoose";
 import { IFileUpload } from "./index.js";
 
 export interface IReview extends Document {
-  training: ObjectId;
-  reviewer: ObjectId;
-  reviewedUser: ObjectId;
+  training: mongoose.Types.ObjectId;
+  reviewer: mongoose.Types.ObjectId;
+  reviewedUser: mongoose.Types.ObjectId;
   stars: number;
   comment: string;
   images?: IFileUpload[];

@@ -1,6 +1,6 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { TokenMessage } from "firebase-admin/messaging";
-import { ObjectId, Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { firebaseCloudMessaging } from "../config/firebase.js";
 import { INotification } from "../interfaces/index.js";
 import { NotificationModel } from "../models/index.js";
@@ -101,8 +101,8 @@ export class NotificationService extends BaseService<INotification> {
   }
 
   async hasReceivedTrainingTypeToday(
-    userId: ObjectId,
-    trainingId: ObjectId,
+    userId: mongoose.Types.ObjectId,
+    trainingId: mongoose.Types.ObjectId,
     type: NotificationEnum
   ): Promise<boolean> {
     const now = new Date();
