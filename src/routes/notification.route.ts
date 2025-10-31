@@ -16,4 +16,8 @@ notificationRoute.put("/mark-all-as-read", (req, res) =>
   controller(req).markAllAsRead(req, res)
 );
 
+notificationRoute.delete("/delete-all", (req, res) =>
+  controller(req).deleteAll(req, res)
+);
+
 export default notificationRoute;

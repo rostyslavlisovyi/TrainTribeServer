@@ -100,6 +100,16 @@ export class NotificationService extends BaseService<INotification> {
     return result.modifiedCount;
   }
 
+  async deleteAll() {
+    const user = await this.getAuthUser();
+
+    const result = await this.model.deleteMany({
+      user: user._id
+    });
+
+    return result.deletedCount;
+  }
+
   async hasReceivedTrainingTypeToday(
     userId: mongoose.Types.ObjectId,
     trainingId: mongoose.Types.ObjectId,
