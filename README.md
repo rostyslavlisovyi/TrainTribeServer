@@ -131,6 +131,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | │ └── `user.service.ts`           | Service for user-related operations               |
 | ├── `types/`                      | Global TypeScript type definitions                |
 | ├── `utils/`                      | Utility and helper functions                      |
+| │ └── `sentry.ts`                 | Shared helpers for Sentry Express middleware      |
 | ├── `validators/`                 | Request validation schemas                        |
 | │ └── `user.validator.ts`         | Validation schemas for user-related requests      |
 | `dist/`                           | Compiled JavaScript output directory              |
