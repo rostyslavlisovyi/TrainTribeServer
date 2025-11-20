@@ -2,7 +2,7 @@ export * from "./city.interface.js";
 export * from "./comment.interface.js";
 export * from "./fileUpload.interface.js";
 export * from "./geocode.interface.js";
-export * from "./participants.interface.js";
+export * from "./trainingParticipant.interface.js";
 export * from "./review.interface.js";
 export * from "./timeSlot.interface.js";
 export * from "./training.interface.js";
