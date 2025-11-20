@@ -80,6 +80,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 | Directory / File                  | Description                                       |
 | --------------------------------- | ------------------------------------------------- |
+| `instrument.js`                   | Preloads Sentry (dotenv, integrations, sampling)  |
 | `src/`                            | Main code directory                               |
 | ├── `config/`                     | Configuration files (e.g., database, environment) |
 | ├── `controllers/`                | Controllers for handling requests                 |
