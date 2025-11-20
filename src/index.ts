@@ -4,12 +4,12 @@ import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express } from "express";
-import * as Sentry from "@sentry/node";
 import { CityService } from "services/city.service.js";
 import connectDB from "./config/database.js";
 import { setupSwagger } from "./config/swagger.js";
 import container from "./container.js";
 import router from "./routes/index.js";
+import { registerSentryHandlers } from "./utils/sentry.js";
 
 dotenv.config();
 
@@ -58,39 +58,7 @@ appServer.get("/", (_req, res) => {
 
 appServer.use("/api", router);
 
-type MiddlewareError = {
-  output?: { statusCode?: number | string };
-  status?: number | string;
-  statusCode?: number | string;
-  status_code?: number | string;
-};
-
-const shouldCaptureError = (error: MiddlewareError): boolean => {
-  const statusCandidate =
-    error?.status ??
-    error?.statusCode ??
-    error?.status_code ??
-    error?.output?.statusCode;
-
-  if (statusCandidate === undefined) {
-    return true;
-  }
-
-  const statusNumber =
-    typeof statusCandidate === "number"
-      ? statusCandidate
-      : Number(statusCandidate);
-
-  if (Number.isNaN(statusNumber)) {
-    return true;
-  }
-
-  return statusNumber >= 500;
-};
-
-Sentry.setupExpressErrorHandler(appServer, {
-  shouldHandleError: shouldCaptureError
-});
+registerSentryHandlers(appServer);
 
 // Swagger
 setupSwagger(appServer);
