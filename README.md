@@ -47,15 +47,20 @@ Before installing and running the server, make sure the following tools are inst
    Create a `.env` file in the root directory and add the following environment variables:
 
    ```bash
-   PORT=666
+   SERVER_PORT=666
+   NODE_ENV=development
+   APP_URL=http://localhost:4444
 
-   DB_TYPE=mongoDB
+   DB_TYPE=mongodb
+   DB_NAME=TrainTribe
+   MONGODB_URI='your mongo db uri'
 
-   OAUTH_AUDIENCE='your auth0 audience'
+   FIREBASE_PROJECT_ID='your firebase project id'
+   FIREBASE_CLIENT_EMAIL='firebase-adminsdk@<project>.iam.gserviceaccount.com'
+   FIREBASE_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n'
 
-   OAUTH_DOMAIN='your auth0 domain'
-
-    MONGODB_URI='your mongo db uri'
+   SENTRY_DSN='your sentry dsn'
+   SENTRY_ENVIRONMENT=development
    ```
 
 4. **Run the Server**:
@@ -83,6 +88,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | `instrument.js`                   | Preloads Sentry (dotenv, integrations, sampling)  |
 | `src/`                            | Main code directory                               |
 | ├── `config/`                     | Configuration files (e.g., database, environment) |
+| │ └── `firebaseAdmin.ts`          | Initializes Firebase Admin SDK for auth           |
 | ├── `controllers/`                | Controllers for handling requests                 |
 | │ └── `base.controller.ts`        | Base controller with common functionality         |
 | │ └── `city.controller.ts`        | Logic for handling city-related API requests      |
@@ -99,7 +105,7 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | ├── `interfaces/`                 | TypeScript interfaces for strict type definitions |
 | │ └── `city.interface.ts`         | Interface for city entities                       |
 | │ └── `comment.interface.ts`      | Interface for comment entities                    |
-| │ └── `participants.interface.ts` | Interface for participant attendance entities     |
+| │ └── `trainingParticipant.interface.ts` | Interface for participant attendance entities |
 | │ └── `review.interface.ts`       | Interface for review entities                     |
 | │ └── `timeSlot.interface.ts`     | Interface for time slot entities                  |
 | │ └── `training.interface.ts`     | Interface for training entities                   |
