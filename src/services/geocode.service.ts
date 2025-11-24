@@ -1,10 +1,10 @@
 import fetch from "node-fetch";
-import { IGeocode } from "../interfaces/geocode.interface.js";
+import { IGeocode } from "../interfaces/index.js";
 
 export class GeocodeService {
   private baseUrl = "https://nominatim.openstreetmap.org";
 
-  async geocode(search: string, language = "it"): Promise<IGeocode[]> {
+  async geocode(search: string, language = "it") {
     const url =
       `${this.baseUrl}/search?` +
       `format=json&q=${encodeURIComponent(search)}&` +
@@ -19,7 +19,7 @@ export class GeocodeService {
     return (await response.json()) as IGeocode[];
   }
 
-  async reverse(lat: string, lon: string, language = "it"): Promise<IGeocode> {
+  async reverse(lat: string, lon: string, language = "it") {
     const url =
       `${this.baseUrl}/reverse?` +
       `format=json&lat=${lat}&lon=${lon}&` +
@@ -31,6 +31,6 @@ export class GeocodeService {
         Referer: process.env.APP_URL || ""
       }
     });
-    return (await response.json()) as IGeocode;
+    return (await response.json()) as IGeocode[];
   }
 }

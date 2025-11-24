@@ -1,22 +1,46 @@
+import chalk from "chalk";
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import {
-  Model,
   Document,
   FilterQuery,
+  Model,
+  PopulateOptions,
   SortOrder,
-  PopulateOptions
+  UpdateQuery
 } from "mongoose";
-import { NotFoundError, DataCannotBeEmpty } from "../errors/index.js";
-import chalk from "chalk";
+import { DataCannotBeEmpty, NotFoundError } from "../errors/index.js";
+import { IUser } from "../interfaces/user.interface.js";
+import { UserModel } from "../models/index.js";
 
 interface PopulateTree {
   [key: string]: PopulateTree;
 }
 
 export abstract class BaseService<T extends Document> {
-  model: Model<T>;
+  protected readonly model: Model<T>;
+  protected readonly auth?: AuthResult;
 
-  protected constructor(model: Model<T>) {
+  protected constructor(model: Model<T>, auth?: AuthResult) {
     this.model = model;
+    this.auth = auth;
+  }
+
+  protected async baseFilter() {
+    return {};
+  }
+
+  async getAuthUser(populate?: string | string[]): Promise<IUser> {
+    if (!this.auth) {
+      throw new Error("user not authenticated");
+    }
+    const query = UserModel.findOne({
+      authId: this.auth.payload.user_id
+    });
+
+    if (populate) {
+      query.populate(populate);
+    }
+    return (await query) as unknown as IUser;
   }
 
   async get({
@@ -25,20 +49,18 @@ export abstract class BaseService<T extends Document> {
   }: {
     id: string;
     populateFields?: string | string[];
-  }): Promise<{ data: T | null }> {
+  }): Promise<T | null> {
     try {
-      let query = this.model.findById(id);
+      let query = this.model.findOne({ _id: id, ...(await this.baseFilter()) });
       if (populateFields) {
         query = query.populate(this.buildPopulate(populateFields));
       }
-      const result = await query;
-      return { data: result };
+      return await query;
     } catch (error) {
       console.error(chalk.red("Error in get method:"), error);
       throw error;
     }
   }
-
   async list({
     pageNum = 1,
     pageSize = 10,
@@ -54,22 +76,22 @@ export abstract class BaseService<T extends Document> {
   }): Promise<{
     data: T[];
     totalItems: number;
-    totalPages: number;
     pageSize: number;
     currentPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
   }> {
     try {
       const validPageNum = Math.max(1, pageNum);
       const validPageSize = Math.max(1, pageSize);
       const skips = validPageSize * (validPageNum - 1);
 
-      const totalItems = await this.model.countDocuments(filters);
-      const totalPages =
-        totalItems > 0 ? Math.ceil(totalItems / validPageSize) : 1;
-      let query = this.model.find(filters);
+      const combinedFilters = {
+        ...(filters ?? {}),
+        ...(await this.baseFilter())
+      };
 
+      const totalItems = await this.model.countDocuments(combinedFilters);
+
+      let query = this.model.find(combinedFilters);
       if (sort) {
         query = query.sort(sort);
       }
@@ -78,15 +100,14 @@ export abstract class BaseService<T extends Document> {
       if (populateFields) {
         query = query.populate(this.buildPopulate(populateFields));
       }
-      const data = await query;
+
+      const data = await query.exec();
+
       return {
         data,
         totalItems,
-        totalPages,
         pageSize: validPageSize,
-        currentPage: validPageNum,
-        hasNextPage: validPageNum < totalPages,
-        hasPreviousPage: validPageNum > 1
+        currentPage: validPageNum
       };
     } catch (error) {
       console.error(chalk.red("Error in list:"), chalk.red(error));
@@ -94,7 +115,7 @@ export abstract class BaseService<T extends Document> {
     }
   }
 
-  async create(entity: Partial<T>): Promise<{ data: T }> {
+  async create(entity: Partial<T>): Promise<T> {
     try {
       if (!entity || Object.keys(entity).length === 0) {
         throw new DataCannotBeEmpty("Entity data cannot be empty");
@@ -102,7 +123,7 @@ export abstract class BaseService<T extends Document> {
 
       const newEntity = await this.model.create(entity);
 
-      return { data: newEntity };
+      return newEntity;
     } catch (error) {
       console.error(chalk.red("Error in create:"), error);
       throw error;
@@ -115,9 +136,9 @@ export abstract class BaseService<T extends Document> {
     populateFields
   }: {
     id: string;
-    entity: Partial<T>;
+    entity: UpdateQuery<T>;
     populateFields?: string | string[];
-  }): Promise<{ data: T | null }> {
+  }): Promise<T | null> {
     try {
       if (!entity || Object.keys(entity).length === 0) {
         throw new DataCannotBeEmpty("Update data cannot be empty");
@@ -132,14 +153,14 @@ export abstract class BaseService<T extends Document> {
       if (!updatedData) {
         throw new NotFoundError(`Data with id ${id} not found`);
       }
-      return { data: updatedData };
+      return updatedData;
     } catch (error) {
       console.error(chalk.red("Error in update:"), error);
       throw error;
     }
   }
 
-  async delete(id: string): Promise<{ data: boolean }> {
+  async delete(id: string): Promise<boolean> {
     try {
       const deleted = await this.model.findByIdAndDelete(id);
 
@@ -147,7 +168,7 @@ export abstract class BaseService<T extends Document> {
         throw new NotFoundError(`Data with id ${id} not found`);
       }
 
-      return { data: !!deleted };
+      return !!deleted;
     } catch (error) {
       console.error(chalk.red("Error in delete:"), error);
       throw error;

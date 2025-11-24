@@ -1,17 +1,19 @@
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import { IReview } from "../interfaces/review.interface.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
+import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
 export class ReviewService extends BaseService<IReview> {
-  constructor() {
-    super(ReviewModel);
+  constructor(auth?: AuthResult) {
+    super(ReviewModel, auth);
   }
 
   //Create review
-  async create(entity: Partial<IReview>): Promise<{ data: IReview }> {
+  async create(entity: Partial<IReview>): Promise<IReview> {
     const { training: trainingId, reviewedUser, stars } = entity;
 
     // Verify the training exists
@@ -53,7 +55,7 @@ export class ReviewService extends BaseService<IReview> {
     }
 
     // Create the review using parent method
-    const { data: newReview } = await super.create(entity);
+    const newReview = await super.create(entity);
 
     // Update the reviewed user's points
     if (stars && stars > 0) {
@@ -62,6 +64,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: stars } },
         { new: true }
       );
+      // Log points for leaderboard
+      await UserLeaderboardModel.create({
+        user: reviewedUser,
+        points: stars
+      });
     }
 
     // Update hasLeftReview for the participant
@@ -75,11 +82,11 @@ export class ReviewService extends BaseService<IReview> {
       }
     );
 
-    return { data: newReview };
+    return newReview;
   }
 
   //Delete method to remove points
-  async delete(id: string): Promise<{ data: boolean }> {
+  async delete(id: string): Promise<boolean> {
     const review = await this.model.findById(id);
     if (!review) {
       throw new Error("Review not found");
@@ -92,6 +99,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: -review.stars } },
         { new: true }
       );
+      // Log negative points for leaderboard
+      await UserLeaderboardModel.create({
+        user: review.reviewedUser,
+        points: -review.stars
+      });
     }
 
     const result = await super.delete(id);
@@ -126,6 +138,11 @@ export class ReviewService extends BaseService<IReview> {
           { $inc: { reviewPoints: pointDiff } },
           { new: true }
         );
+        // Log points change for leaderboard
+        await UserLeaderboardModel.create({
+          userId: review.reviewedUser,
+          points: pointDiff
+        });
       }
     }
 
@@ -139,7 +156,7 @@ export class ReviewService extends BaseService<IReview> {
   }
 
   //Delete a review with authorization check
-  async deleteReview(reviewId: string, userId: string): Promise<void> {
+  async deleteReview(reviewId: string, userId: string): Promise<boolean> {
     const review = await this.model.findById(reviewId);
 
     if (!review) {
@@ -152,7 +169,7 @@ export class ReviewService extends BaseService<IReview> {
     }
 
     // Use the overridden delete method which handles point removal
-    await this.delete(reviewId);
+    return await this.delete(reviewId);
   }
 }
 

@@ -14,6 +14,7 @@ This project includes **Swagger** documentation, which provides an interactive u
 - CRUD operations for training events: creating, editing, sorting, and deleting training sessions.
 - **Review system**: Users can leave reviews for completed trainings with ratings and comments.
 - **Points system**: Users earn points for organizing trainings and receiving positive reviews.
+- **Leaderboard system**: A monthly leaderboard is available, ranking users by their points.
 
 ## Installation and Setup Instructions
 
@@ -83,75 +84,61 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File                  | Description                                       |
-| --------------------------------- | ------------------------------------------------- |
-| `instrument.js`                   | Preloads Sentry (dotenv, integrations, sampling)  |
-| `src/`                            | Main code directory                               |
-| ├── `config/`                     | Configuration files (e.g., database, environment) |
-| │ └── `firebaseAdmin.ts`          | Initializes Firebase Admin SDK for auth           |
-| ├── `controllers/`                | Controllers for handling requests                 |
-| │ └── `base.controller.ts`        | Base controller with common functionality         |
-| │ └── `city.controller.ts`        | Logic for handling city-related API requests      |
-| │ └── `review.controller.ts`      | Logic for handling review-related API requests    |
-| │ └── `training.controller.ts`    | Logic for handling training-related API requests  |
-| │ └── `upload.controller.ts`      | Logic for handling file uploads                   |
-| │ └── `user.controller.ts`        | Logic for handling user-related API requests      |
-| ├── `errors/`                     | Error handling classes and utilities              |
-| │ └── `baseError.ts`              | Base error class for custom error handling        |
-| │ └── `clientErrors.ts`           | Client-side error definitions                     |
-| │ └── `mongoErrors.ts`            | MongoDB-specific error handling                   |
-| │ └── `networkErrors.ts`          | Network-related error definitions                 |
-| │ └── `serverError.ts`            | Server-side error definitions                     |
-| ├── `interfaces/`                 | TypeScript interfaces for strict type definitions |
-| │ └── `city.interface.ts`         | Interface for city entities                       |
-| │ └── `comment.interface.ts`      | Interface for comment entities                    |
+| Directory / File                     | Description                                         |
+| ------------------------------------ | --------------------------------------------------- |
+| `instrument.js`                      | Preloads Sentry (dotenv, integrations, sampling)    |
+| `src/`                               | Main code directory                                 |
+| ├── `config/`                        | Configuration files (e.g., database, environment)   |
+| │ ├── `app.config.ts`                | Centralized application configuration               |
+| │ ├── `firebase.ts`                  | Firebase client setup                               |
+| │ └── `firebaseAdmin.ts`             | Initializes Firebase Admin SDK for auth             |
+| ├── `controllers/`                   | Controllers for handling requests                   |
+| │ └── `base.controller.ts`           | Base controller with common functionality           |
+| │ └── `city.controller.ts`           | Logic for handling city-related API requests        |
+| │ └── `cronJob.controller.ts`        | Logic for cron job APIs                             |
+| │ └── `leaderboard.controller.ts`    | Handlers for leaderboard endpoints                  |
+| │ └── `notification.controller.ts`   | Handlers for notification endpoints                 |
+| │ └── `review.controller.ts`         | Logic for handling review-related API requests      |
+| │ └── `training.controller.ts`       | Logic for handling training-related API requests    |
+| │ └── `upload.controller.ts`         | Logic for handling file uploads                     |
+| │ └── `user.controller.ts`           | Logic for handling user-related API requests        |
+| ├── `errors/`                        | Error handling classes and utilities                |
+| ├── `interfaces/`                    | TypeScript interfaces for strict type definitions   |
+| │ └── `geoLocation.interface.ts`     | Interface for geolocation data                      |
+| │ └── `notification.interface.ts`    | Interface for notification entities                 |
 | │ └── `trainingParticipant.interface.ts` | Interface for participant attendance entities |
-| │ └── `review.interface.ts`       | Interface for review entities                     |
-| │ └── `timeSlot.interface.ts`     | Interface for time slot entities                  |
-| │ └── `training.interface.ts`     | Interface for training entities                   |
-| │ └── `user.interface.ts`         | Interface for user entities                       |
-| ├── `middlewares/`                | Middleware functions                              |
-| │ └── `auth.middleware.ts`        | Middleware for handling user authentication       |
-| │ └── `upload.middleware.ts`      | Middleware for handling file uploads              |
-| │ └── `validation.middleware.ts`  | Middleware for request validation                 |
-| ├── `mock/`                       | Mock data for testing and development             |
-| ├── `models/`                     | Database structure definitions (Models)           |
-| │ └── `MongoDB/`                  | MongoDB models for application                    |
-| │ │ └── `city.model.ts`           | MongoDB model for city entities                   |
-| │ │ └── `comment.model.ts`        | MongoDB model for comment entities                |
-| │ │ └── `review.model.ts`         | MongoDB model for review entities                 |
-| │ │ └── `training.model.ts`       | MongoDB model for training entities               |
-| │ │ └── `user.model.ts`           | MongoDB model for user entities                   |
-| ├── `routes/`                     | API route definitions                             |
-| │ └── `city.routes.ts`            | Routes for city-related endpoints                 |
-| │ └── `index.ts`                  | Main router combining all routes                  |
-| │ └── `review.routes.ts`          | Routes for review-related endpoints               |
-| │ └── `user.routes.ts`            | Routes for user-related endpoints                 |
-| │ └── `training.routes.ts`        | Routes for training-related endpoints             |
-| │ └── `upload.route.ts`           | Routes for file upload endpoints                  |
-| ├── `services/`                   | Business logic layer                              |
-| │ └── `base.service.ts`           | Base service with common functionality            |
-| │ └── `city.service.ts`           | Service for city-related operations               |
-| │ └── `review.service.ts`         | Service for review-related operations             |
-| │ └── `training.service.ts`       | Service for training-related operations           |
-| │ └── `user.service.ts`           | Service for user-related operations               |
-| ├── `types/`                      | Global TypeScript type definitions                |
-| ├── `utils/`                      | Utility and helper functions                      |
-| │ └── `sentry.ts`                 | Shared helpers for Sentry Express middleware      |
-| ├── `validators/`                 | Request validation schemas                        |
-| │ └── `user.validator.ts`         | Validation schemas for user-related requests      |
-| `dist/`                           | Compiled JavaScript output directory              |
-| `public/`                         | Static files directory                            |
-| `uploads/`                        | Uploads directory for storing user files          |
-| `.eslintrc.json`                  | ESLint configuration                              |
-| `eslint.config.js`                | ESLint configuration                              |
-| `.gitignore`                      | Git ignore file                                   |
-| `package.json`                    | Node.js dependencies file                         |
-| `README.md`                       | Project documentation                             |
-| `jest.config.ts`                  | Jest configuration file for testing setup         |
-| `nodemon.json`                    | Nodemon configuration file for automatic restarts |
-| `tsconfig.json`                   | TypeScript configuration                          |
-| `vercel.json`                     | Vercel deployment configuration                   |
+| │ └── `userLeaderboard.interface.ts` | Interface for leaderboard users                     |
+| ├── `middlewares/`                   | Middleware functions                                |
+| │ └── `auth.middleware.ts`           | Verifies Firebase tokens                            |
+| │ └── `authContainer.middleware.ts`  | Injects scoped container into requests              |
+| │ └── `cronJob.middleware.ts`        | Protects cron job endpoints                         |
+| │ └── `upload.middleware.ts`         | Middleware for handling file uploads                |
+| │ └── `validation.middleware.ts`     | Middleware for request validation                   |
+| ├── `models/`                        | Database structure definitions (Models)             |
+| │ └── `MongoDB/`                     | MongoDB models for application                      |
+| │ │ └── `notification.model.ts`      | MongoDB model for notifications                     |
+| │ │ └── `userLeaderboard.model.ts`   | MongoDB model for leaderboard entities              |
+| ├── `routes/`                        | API route definitions                               |
+| │ └── `city.routes.ts`               | Routes for city-related endpoints                   |
+| │ └── `cronJob.routes.ts`            | Routes for cron-job endpoints                       |
+| │ └── `leaderboard.routes.ts`        | Routes for leaderboard endpoints                    |
+| │ └── `notification.route.ts`        | Routes for notification endpoints                   |
+| │ └── `index.ts`                     | Main router combining all routes                    |
+| ├── `services/`                      | Business logic layer                                |
+| │ └── `cronJob.service.ts`           | Cron job orchestration                              |
+| │ └── `leaderboard.service.ts`       | Leaderboard data layer                              |
+| │ └── `notification.service.ts`      | Notifications logic                                 |
+| ├── `types/`                         | Global TypeScript type definitions                  |
+| │ └── `express.d.ts`                 | Express typings (Awilix scope, Firebase auth)       |
+| ├── `utils/`                         | Utility and helper functions                        |
+| │ └── `sentry.ts`                    | Shared helpers for Sentry Express middleware        |
+| ├── `validators/`                    | Request validation schemas                          |
+| `public/`                            | Static files directory                              |
+| `uploads/`                           | Uploads directory for storing user files            |
+| `.eslintrc.json` / `eslint.config.js`| ESLint configuration                                |
+| `package.json`                       | Node.js dependencies file                           |
+| `README.md`                          | Project documentation                               |
+| `tsconfig.json`                      | TypeScript configuration                            |
 
 ## Technologies
 
@@ -217,6 +204,12 @@ The server provides the following API endpoints:
 | PUT    | `/api/reviews/:id`                  | Update a review                     | Review author         |
 | DELETE | `/api/reviews/:id`                  | Delete a review                     | Review author         |
 
+### **Leaderboard**
+
+| Method | Endpoint                | Description                                       | Access              |
+| ------ | ----------------------- | ------------------------------------------------- | ------------------- |
+| GET    | `/api/leaderboard/list` | Get the monthly leaderboard, with optional search | Authenticated users |
+
 ## Models
 
 ### User
@@ -251,6 +244,15 @@ The server provides the following API endpoints:
 | `averageReviews`            | `Number`   | Auto     | No     | Average of reviews                                                            |
 | `createdAt`                 | `Date`     | Auto     | No     | Timestamp when the user document was created.                                 |
 | `updatedAt`                 | `Date`     | Auto     | No     | Timestamp when the user document was last updated.                            |
+
+### UserLeaderboard
+
+| Field       | Type       | Required | Description                                     |
+| ----------- | ---------- | -------- | ----------------------------------------------- |
+| `_id`       | `ObjectId` | Yes      | The auto-generated ID of the leaderboard entry. |
+| `userId`    | `ObjectId` | Yes      | Reference to the `User` who earned the points.  |
+| `points`    | `Number`   | Yes      | The number of points awarded in this entry.     |
+| `createdAt` | `Date`     | Auto     | Timestamp when the points entry was created.    |
 
 ### City
 
@@ -318,13 +320,21 @@ The `User` model includes several fields to track training-related statistics:
 - **Training Points** (`trainingPoints` field in `User` model):
 
   - **Creators**: Receive 5 points when their training is marked as `completed`.
-  - **Participants**: Receive 1 point when a training they were part of is marked as `completed`, regardless of their attendance status.
+  - **Participants**: Receive 1 point when a training they were part of is marked as `completed`.
+  - Each point transaction is logged as a separate entry in the `UserLeaderboard` collection.
 
 - **Review Points** (`reviewPoints` field in `User` model):
   - **Training Creators**: Receive points equal to the star rating value (1-5) whenever another user leaves a review about them.
   - Points are automatically added when a review is created and adjusted when reviews are updated or deleted.
+  - Each point transaction (positive or negative) is logged in the `UserLeaderboard` collection.
 
-### 3. Review System
+### 3. Leaderboard System
+
+- A monthly leaderboard is available via the `GET /api/leaderboard/list` endpoint.
+- It aggregates all points from the `UserLeaderboard` collection for the current month, groups them by user, and sorts them in descending order.
+- The endpoint supports a `search` query parameter to filter users by their first or last name.
+
+### 4. Review System
 
 **Review Creation Requirements:**
 

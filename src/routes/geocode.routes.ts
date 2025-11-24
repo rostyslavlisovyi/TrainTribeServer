@@ -1,12 +1,10 @@
-import express, { Router } from "express";
-import container from "../container.js";
-import { GeocodeController } from "../controllers/geocode.controller.js";
-import { authenticate } from "../middlewares/index.js";
+import express, { Request, Router } from "express";
+import { GeocodeController } from "../controllers/index.js";
 
 const geocodeRoutes: Router = express.Router();
 
-const geocodeController =
-  container.resolve<GeocodeController>("geocodeController");
+const controller = (req: Request) =>
+  req.container.resolve<GeocodeController>("geocodeController");
 
 /**
  * @swagger
@@ -40,9 +38,7 @@ const geocodeController =
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-geocodeRoutes.get("/search", authenticate, (req, res) =>
-  geocodeController.search(req, res)
-);
+geocodeRoutes.get("/search", (req, res) => controller(req).search(req, res));
 
 /**
  * @swagger
@@ -80,8 +76,6 @@ geocodeRoutes.get("/search", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-geocodeRoutes.get("/reverse", authenticate, (req, res) =>
-  geocodeController.reverse(req, res)
-);
+geocodeRoutes.get("/reverse", (req, res) => controller(req).reverse(req, res));
 
 export default geocodeRoutes;

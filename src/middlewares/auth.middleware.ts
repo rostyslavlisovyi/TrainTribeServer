@@ -1,5 +1,7 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
+import type { DecodedIdToken } from "firebase-admin/auth";
+import type { AuthResult, JWTPayload } from "express-oauth2-jwt-bearer";
 
 import "../config/firebaseAdmin.js";
 
@@ -19,16 +21,33 @@ const extractBearerToken = (req: Request): string => {
   return match[1];
 };
 
-export const authenticate = async (
+const buildAuthResult = (
+  token: string,
+  decodedToken: DecodedIdToken
+): AuthResult => {
+  const payload: JWTPayload = {
+    ...decodedToken,
+    sub: decodedToken.user_id ?? decodedToken.uid,
+    aud: decodedToken.aud ?? decodedToken.firebase?.aud
+  } as JWTPayload;
+
+  return {
+    header: {},
+    payload,
+    token
+  };
+};
+
+export const authenticate: RequestHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+) => {
   try {
     const token = extractBearerToken(req);
     const decodedToken = await getAuth().verifyIdToken(token);
 
-    req.auth = decodedToken;
+    req.auth = buildAuthResult(token, decodedToken);
     next();
   } catch (error) {
     res.status(401).json({ message: "UNAUTHORIZED" });

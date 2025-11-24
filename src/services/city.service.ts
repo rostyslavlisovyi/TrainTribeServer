@@ -1,12 +1,15 @@
+/* eslint-disable indent */
 import axios from "axios";
 import chalk from "chalk";
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import * as XLSX from "xlsx";
 import { ICity } from "../interfaces/index.js";
-import CityModel from "../models/MongoDB/city.model.js";
+import { CityModel } from "../models/index.js";
 import { BaseService } from "./base.service.js";
+
 export class CityService extends BaseService<ICity> {
-  constructor() {
-    super(CityModel);
+  constructor(auth?: AuthResult) {
+    super(CityModel, auth);
   }
 
   inizialize = async (): Promise<void> => {
@@ -89,14 +92,22 @@ export class CityService extends BaseService<ICity> {
       cities = cities.map((city) => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const extra = wikidataMap.get(city.istatCode!);
-        return extra ? { ...city, ...extra } : city;
+        return extra?.latitude && extra?.longitude
+          ? {
+              ...city,
+              location: {
+                type: "Point",
+                coordinates: [extra.longitude, extra.latitude]
+              }
+            }
+          : city;
       });
 
       console.log(chalk.green("Dati arricchiti con Wikidata"));
       console.log(
         chalk.yellow(
           "Cities without coordinates:",
-          cities.filter((x) => !x.latitude || !x.longitude).length
+          cities.filter((x) => !x.location).length
         )
       );
 

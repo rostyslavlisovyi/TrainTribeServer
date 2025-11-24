@@ -1,16 +1,12 @@
-import express, { Router } from "express";
-import container from "../container.js";
+import express, { Request, Router } from "express";
 import { ReviewController } from "../controllers/index.js";
-import { authenticate } from "../middlewares/index.js";
 
 const reviewRoutes: Router = express.Router({ mergeParams: true });
 
-const reviewController =
-  container.resolve<ReviewController>("reviewController");
+const controller = (req: Request) =>
+  req.container.resolve<ReviewController>("reviewController");
 
-reviewRoutes.post("/list", authenticate, (req, res) =>
-  reviewController.list(req, res)
-);
+reviewRoutes.post("/list", (req, res) => controller(req).list(req, res));
 
 /**
  * @swagger
@@ -64,9 +60,7 @@ reviewRoutes.post("/list", authenticate, (req, res) =>
  *       500:
  *         description: Internal server error
  */
-reviewRoutes.post("/", authenticate, (req, res) =>
-  reviewController.create(req, res)
-);
+reviewRoutes.post("/", (req, res) => controller(req).create(req, res));
 
 /**
  * @swagger
@@ -125,9 +119,7 @@ reviewRoutes.post("/", authenticate, (req, res) =>
  *       500:
  *         description: Internal server error
  */
-reviewRoutes.put("/:id", authenticate, (req, res) =>
-  reviewController.updateReview(req, res)
-);
+reviewRoutes.put("/:id", (req, res) => controller(req).updateReview(req, res));
 
 /**
  * @swagger
@@ -165,8 +157,8 @@ reviewRoutes.put("/:id", authenticate, (req, res) =>
  *       500:
  *         description: Internal server error
  */
-reviewRoutes.delete("/:id", authenticate, (req, res) =>
-  reviewController.deleteReview(req, res)
+reviewRoutes.delete("/:id", (req, res) =>
+  controller(req).deleteReview(req, res)
 );
 
 /**
