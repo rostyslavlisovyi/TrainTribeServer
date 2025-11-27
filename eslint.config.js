@@ -72,5 +72,13 @@ export default tslint.config(
       "arrow-parens": ["error", "always"],
       "prettier/prettier": "error"
     }
+  },
+  {
+    files: ["instrument.js"],
+    languageOptions: {
+      parserOptions: {
+        project: null
+      }
+    }
   }
 );
