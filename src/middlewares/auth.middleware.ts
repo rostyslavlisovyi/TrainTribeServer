@@ -49,7 +49,7 @@ export const authenticate: RequestHandler = async (
 
     req.auth = buildAuthResult(token, decodedToken);
     next();
-  } catch (_error) {
+  } catch (error) {
     res.status(401).json({ message: "UNAUTHORIZED" });
   }
 };
