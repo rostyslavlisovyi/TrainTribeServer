@@ -5,11 +5,8 @@ const initializeFirebaseAdmin = (): void => {
     return;
   }
 
-  const {
-    FIREBASE_CLIENT_EMAIL,
-    FIREBASE_PRIVATE_KEY,
-    FIREBASE_PROJECT_ID
-  } = process.env;
+  const { FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, FIREBASE_PROJECT_ID } =
+    process.env;
 
   if (FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY && FIREBASE_PROJECT_ID) {
     initializeApp({
