@@ -50,6 +50,7 @@ export const authenticate: RequestHandler = async (
     req.auth = buildAuthResult(token, decodedToken);
     next();
   } catch (error) {
+    void error;
     res.status(401).json({ message: "UNAUTHORIZED" });
   }
 };

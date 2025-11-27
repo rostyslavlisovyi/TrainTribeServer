@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import * as Sentry from "@sentry/node";
 
-export type MiddlewareError = {
+export interface MiddlewareError {
   output?: { statusCode?: number | string };
   status?: number | string;
   statusCode?: number | string;
   status_code?: number | string;
-};
+}
 
 const shouldCaptureError = (error: MiddlewareError): boolean => {
   const statusCandidate =
