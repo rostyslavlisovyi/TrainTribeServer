@@ -25,7 +25,7 @@ export default tslint.config(
       "coverage",
       "public",
       "eslint.config.js",
-      "jest.config.ts",
+      "jest.config.cjs",
       "migrate-mongo-config.js"
     ]
   },
@@ -71,6 +71,14 @@ export default tslint.config(
       "no-multiple-empty-lines": ["error", { max: 1 }],
       "arrow-parens": ["error", "always"],
       "prettier/prettier": "error"
+    }
+  },
+  {
+    files: ["instrument.js"],
+    languageOptions: {
+      parserOptions: {
+        project: null
+      }
     }
   }
 );

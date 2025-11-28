@@ -48,15 +48,20 @@ Before installing and running the server, make sure the following tools are inst
    Create a `.env` file in the root directory and add the following environment variables:
 
    ```bash
-   PORT=666
+   SERVER_PORT=666
+   NODE_ENV=development
+   APP_URL=http://localhost:4444
 
-   DB_TYPE=mongoDB
+   DB_TYPE=mongodb
+   DB_NAME=TrainTribe
+   MONGODB_URI='your mongo db uri'
 
-   OAUTH_AUDIENCE='your auth0 audience'
+   FIREBASE_PROJECT_ID='your firebase project id'
+   FIREBASE_CLIENT_EMAIL='firebase-adminsdk@<project>.iam.gserviceaccount.com'
+   FIREBASE_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n'
 
-   OAUTH_DOMAIN='your auth0 domain'
-
-    MONGODB_URI='your mongo db uri'
+   SENTRY_DSN='your sentry dsn'
+   SENTRY_ENVIRONMENT=development
    ```
 
 4. **Run the Server**:
@@ -81,74 +86,59 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 | Directory / File                     | Description                                         |
 | ------------------------------------ | --------------------------------------------------- |
+| `instrument.js`                      | Preloads Sentry (dotenv, integrations, sampling)    |
 | `src/`                               | Main code directory                                 |
 | ├── `config/`                        | Configuration files (e.g., database, environment)   |
+| │ ├── `app.config.ts`                | Centralized application configuration               |
+| │ ├── `firebase.ts`                  | Firebase client setup                               |
+| │ └── `firebaseAdmin.ts`             | Initializes Firebase Admin SDK for auth             |
 | ├── `controllers/`                   | Controllers for handling requests                   |
 | │ └── `base.controller.ts`           | Base controller with common functionality           |
 | │ └── `city.controller.ts`           | Logic for handling city-related API requests        |
-| │ └── `leaderboard.controller.ts`    | Logic for handling leaderboard-related API requests |
+| │ └── `cronJob.controller.ts`        | Logic for cron job APIs                             |
+| │ └── `leaderboard.controller.ts`    | Handlers for leaderboard endpoints                  |
+| │ └── `notification.controller.ts`   | Handlers for notification endpoints                 |
 | │ └── `review.controller.ts`         | Logic for handling review-related API requests      |
 | │ └── `training.controller.ts`       | Logic for handling training-related API requests    |
 | │ └── `upload.controller.ts`         | Logic for handling file uploads                     |
 | │ └── `user.controller.ts`           | Logic for handling user-related API requests        |
 | ├── `errors/`                        | Error handling classes and utilities                |
-| │ └── `baseError.ts`                 | Base error class for custom error handling          |
-| │ └── `clientErrors.ts`              | Client-side error definitions                       |
-| │ └── `mongoErrors.ts`               | MongoDB-specific error handling                     |
-| │ └── `networkErrors.ts`             | Network-related error definitions                   |
-| │ └── `serverError.ts`               | Server-side error definitions                       |
 | ├── `interfaces/`                    | TypeScript interfaces for strict type definitions   |
-| │ └── `city.interface.ts`            | Interface for city entities                         |
-| │ └── `comment.interface.ts`         | Interface for comment entities                      |
-| │ └── `participants.interface.ts`    | Interface for participant attendance entities       |
-| │ └── `review.interface.ts`          | Interface for review entities                       |
-| │ └── `timeSlot.interface.ts`        | Interface for time slot entities                    |
-| │ └── `training.interface.ts`        | Interface for training entities                     |
-| │ └── `user.interface.ts`            | Interface for user entities                         |
-| │ └── `userLeaderboard.interface.ts` | Interface for user leaderboard entities             |
+| │ └── `geoLocation.interface.ts`     | Interface for geolocation data                      |
+| │ └── `notification.interface.ts`    | Interface for notification entities                 |
+| │ └── `trainingParticipant.interface.ts` | Interface for participant attendance entities |
+| │ └── `userLeaderboard.interface.ts` | Interface for leaderboard users                     |
 | ├── `middlewares/`                   | Middleware functions                                |
-| │ └── `auth.middleware.ts`           | Middleware for handling user authentication         |
+| │ └── `auth.middleware.ts`           | Verifies Firebase tokens                            |
+| │ └── `authContainer.middleware.ts`  | Injects scoped container into requests              |
+| │ └── `cronJob.middleware.ts`        | Protects cron job endpoints                         |
 | │ └── `upload.middleware.ts`         | Middleware for handling file uploads                |
 | │ └── `validation.middleware.ts`     | Middleware for request validation                   |
-| ├── `mock/`                          | Mock data for testing and development               |
 | ├── `models/`                        | Database structure definitions (Models)             |
 | │ └── `MongoDB/`                     | MongoDB models for application                      |
-| │ │ └── `city.model.ts`              | MongoDB model for city entities                     |
-| │ │ └── `comment.model.ts`           | MongoDB model for comment entities                  |
-| │ │ └── `review.model.ts`            | MongoDB model for review entities                   |
-| │ │ └── `training.model.ts`          | MongoDB model for training entities                 |
-| │ │ └── `user.model.ts`              | MongoDB model for user entities                     |
-| │ │ └── `userLeaderboard.model.ts`   | MongoDB model for user leaderboard entities         |
+| │ │ └── `notification.model.ts`      | MongoDB model for notifications                     |
+| │ │ └── `userLeaderboard.model.ts`   | MongoDB model for leaderboard entities              |
 | ├── `routes/`                        | API route definitions                               |
 | │ └── `city.routes.ts`               | Routes for city-related endpoints                   |
+| │ └── `cronJob.routes.ts`            | Routes for cron-job endpoints                       |
+| │ └── `leaderboard.routes.ts`        | Routes for leaderboard endpoints                    |
+| │ └── `notification.route.ts`        | Routes for notification endpoints                   |
 | │ └── `index.ts`                     | Main router combining all routes                    |
-| │ └── `leaderboard.routes.ts`        | Routes for leaderboard-related endpoints            |
-| │ └── `review.routes.ts`             | Routes for review-related endpoints                 |
-| │ └── `user.routes.ts`               | Routes for user-related endpoints                   |
-| │ └── `training.routes.ts`           | Routes for training-related endpoints               |
-| │ └── `upload.route.ts`              | Routes for file upload endpoints                    |
 | ├── `services/`                      | Business logic layer                                |
-| │ └── `base.service.ts`              | Base service with common functionality              |
-| │ └── `city.service.ts`              | Service for city-related operations                 |
-| │ └── `leaderboard.service.ts`       | Service for leaderboard-related operations          |
-| │ └── `review.service.ts`            | Service for review-related operations               |
-| │ └── `training.service.ts`          | Service for training-related operations             |
-| │ └── `user.service.ts`              | Service for user-related operations                 |
+| │ └── `cronJob.service.ts`           | Cron job orchestration                              |
+| │ └── `leaderboard.service.ts`       | Leaderboard data layer                              |
+| │ └── `notification.service.ts`      | Notifications logic                                 |
 | ├── `types/`                         | Global TypeScript type definitions                  |
+| │ └── `express.d.ts`                 | Express typings (Awilix scope, Firebase auth)       |
 | ├── `utils/`                         | Utility and helper functions                        |
+| │ └── `sentry.ts`                    | Shared helpers for Sentry Express middleware        |
 | ├── `validators/`                    | Request validation schemas                          |
-| │ └── `user.validator.ts`            | Validation schemas for user-related requests        |
-| `dist/`                              | Compiled JavaScript output directory                |
 | `public/`                            | Static files directory                              |
 | `uploads/`                           | Uploads directory for storing user files            |
-| `.eslintrc.json`                     | ESLint configuration                                |
-| `eslint.config.js`                   | ESLint configuration                                |
-| `.gitignore`                         | Git ignore file                                     |
+| `.eslintrc.json` / `eslint.config.js`| ESLint configuration                                |
 | `package.json`                       | Node.js dependencies file                           |
 | `README.md`                          | Project documentation                               |
-| `jest.config.ts`                     | Jest configuration file for testing setup           |
 | `tsconfig.json`                      | TypeScript configuration                            |
-| `vercel.json`                        | Vercel deployment configuration                     |
 
 ## Technologies
 
