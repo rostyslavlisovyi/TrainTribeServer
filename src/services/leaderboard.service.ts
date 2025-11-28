@@ -2,29 +2,26 @@ import { PipelineStage } from "mongoose";
 import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 
 export class LeaderboardService {
-  async getMonthlyLeaderboard(search?: string) {
+  async getMonthlyLeaderboard(options?: { search?: string }) {
+    const { search } = options ?? {};
+
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
     const now = new Date();
 
-    const matchStage: PipelineStage = {
-      $match: {
-        createdAt: { $gte: startOfMonth, $lte: now }
-      }
-    };
-
     const aggregation: PipelineStage[] = [
-      matchStage,
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth, $lte: now }
+        }
+      },
       {
         $group: {
           _id: "$user",
           totalPoints: { $sum: "$points" }
         }
-      },
-      {
-        $sort: { totalPoints: -1 }
       },
       {
         $lookup: {
@@ -34,31 +31,31 @@ export class LeaderboardService {
           as: "user"
         }
       },
-      {
-        $unwind: "$user"
-      }
+      { $unwind: "$user" }
     ];
 
-    if (search) {
+    if (search && search.trim()) {
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "i");
+
       aggregation.push({
         $match: {
-          $or: [
-            { "user.firstName": { $regex: search, $options: "i" } },
-            { "user.lastName": { $regex: search, $options: "i" } }
-          ]
+          $or: [{ "user.firstName": regex }, { "user.lastName": regex }]
         }
       });
     }
 
-    aggregation.push({
-      $project: {
-        user: "$_id",
-        totalPoints: 1,
-        firstName: "$user.firstName",
-        lastName: "$user.lastName",
-        image: "$user.image"
+    aggregation.push(
+      {
+        $project: {
+          user: "$user",
+          totalPoints: 1
+        }
+      },
+      {
+        $sort: { totalPoints: -1 }
       }
-    });
+    );
 
     const leaderboard = await UserLeaderboardModel.aggregate(aggregation);
 
