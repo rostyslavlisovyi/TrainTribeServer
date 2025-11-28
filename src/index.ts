@@ -1,5 +1,4 @@
-// index.ts - CORRETTO
-
+import "../instrument.js";
 import { scopePerRequest } from "awilix-express";
 import chalk from "chalk";
 import cors from "cors";
@@ -16,6 +15,7 @@ import {
 } from "./middlewares/index.js";
 import { apiRouter, cronJobRouter } from "./routes/index.js";
 import { CityService } from "./services/index.js";
+import { registerSentryHandlers } from "./utils/sentry.js";
 dotenv.config();
 
 // Environment Variables Validation
@@ -70,6 +70,8 @@ appServer.use("/api", authContainerMiddleware);
 appServer.use("/api", apiRouter);
 appServer.use("/cron-job", cronJobMiddleware);
 appServer.use("/cron-job", cronJobRouter);
+
+registerSentryHandlers(appServer);
 
 // Swagger
 setupSwagger(appServer);

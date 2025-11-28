@@ -1,6 +1,5 @@
-import { Config } from "jest";
-
-const config: Config = {
+/** @type {import('jest').Config} */
+const config = {
   preset: "ts-jest",
   testEnvironment: "node",
   transform: {
@@ -12,7 +11,7 @@ const config: Config = {
       }
     ]
   },
-  moduleFileExtensions: ["ts", "js", "json","tsx","jsx","node"],
+  moduleFileExtensions: ["ts", "js", "json", "tsx", "jsx", "node"],
   moduleNameMapper: {
     "^#ansi-styles$": "ansi-styles/index.js",
     "^(\\.{1,2}/.*)\\.js$": "$1"
@@ -20,10 +19,16 @@ const config: Config = {
   testMatch: ["**/*.test.ts"],
   globals: {
     "ts-jest": {
-      isolatedModules: true
+      isolatedModules: true,
+      tsconfig: {
+        module: "Node16",
+        moduleResolution: "node16",
+        esModuleInterop: true
+      }
     }
   },
-  clearMocks: true
+  clearMocks: true,
+  passWithNoTests: true
 };
 
-export default config;
+module.exports = config;
