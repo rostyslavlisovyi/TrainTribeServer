@@ -8,8 +8,9 @@ export class LeaderboardController {
   async getMonthlyLeaderboard(req: Request, res: Response): Promise<void> {
     try {
       const search = req.query.search as string | undefined;
-      const leaderboard =
-        await this.leaderboardService.getMonthlyLeaderboard(search);
+      const leaderboard = await this.leaderboardService.getMonthlyLeaderboard({
+        search
+      });
       res.status(200).json(new BaseResponse(leaderboard));
     } catch (error) {
       if (error instanceof Error) {
