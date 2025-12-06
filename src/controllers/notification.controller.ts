@@ -20,7 +20,7 @@ export class NotificationController extends BaseController<
       const result = await this.service.countUnread();
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -29,7 +29,7 @@ export class NotificationController extends BaseController<
       const result = await this.service.markAllAsRead();
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -38,7 +38,7 @@ export class NotificationController extends BaseController<
       const result = await this.service.deleteAll();
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

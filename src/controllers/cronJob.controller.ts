@@ -18,7 +18,7 @@ export class CronJobController {
       this.cityService.inizialize();
       res.status(200).json(new BaseResponse(true));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   };
 
@@ -28,7 +28,7 @@ export class CronJobController {
       await this.cronJobService.createNotificationTodayTrainingsReminder();
       res.status(200).json(new BaseResponse(true));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   };
 }

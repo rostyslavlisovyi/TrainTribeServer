@@ -19,7 +19,7 @@ export class UserController extends BaseController<IUser, UserService> {
       );
       res.status(200).json(new BaseResponse(user));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

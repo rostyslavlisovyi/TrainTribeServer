@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Request, Response } from "express";
 import { AuthResult } from "express-oauth2-jwt-bearer";
+import { NotFoundError } from "../errors/index.js";
 import { ITraining, IUser } from "../interfaces/index.js";
 import { BaseResponse } from "../models/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
@@ -47,7 +48,7 @@ export class TrainingController extends BaseController<
 
       res.status(201).json(new BaseResponse(training));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -79,7 +80,7 @@ export class TrainingController extends BaseController<
 
       res.json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -104,7 +105,7 @@ export class TrainingController extends BaseController<
 
       res.status(204).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -118,7 +119,7 @@ export class TrainingController extends BaseController<
       );
       res.status(201).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -129,7 +130,7 @@ export class TrainingController extends BaseController<
       const data = await this.service.addLike(id, user._id.toString());
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -140,7 +141,7 @@ export class TrainingController extends BaseController<
       const data = await this.service.removeLike(id, user._id.toString());
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -166,7 +167,7 @@ export class TrainingController extends BaseController<
 
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -180,7 +181,7 @@ export class TrainingController extends BaseController<
       );
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -206,7 +207,7 @@ export class TrainingController extends BaseController<
 
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -217,7 +218,7 @@ export class TrainingController extends BaseController<
       const data = await this.service.updateComment(commentId, text);
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -227,7 +228,7 @@ export class TrainingController extends BaseController<
       const data = await this.service.removeComment(id, commentId);
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -246,7 +247,7 @@ export class TrainingController extends BaseController<
       const parentComment = await CommentModel.findById(commentId);
 
       if (!parentComment) {
-        throw new Error("Parent comment not found");
+        throw new NotFoundError("Parent comment");
       }
 
       if (user._id?.toString() !== parentComment.user?.toString()) {
@@ -265,7 +266,7 @@ export class TrainingController extends BaseController<
 
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -309,7 +310,7 @@ export class TrainingController extends BaseController<
 
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }
