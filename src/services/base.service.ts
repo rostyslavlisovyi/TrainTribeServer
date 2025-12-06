@@ -8,7 +8,11 @@ import {
   SortOrder,
   UpdateQuery
 } from "mongoose";
-import { DataCannotBeEmpty, NotFoundError } from "../errors/index.js";
+import {
+  DataCannotBeEmpty,
+  NotFoundError,
+  UnauthorizedError
+} from "../errors/index.js";
 import { IUser } from "../interfaces/user.interface.js";
 import { UserModel } from "../models/index.js";
 
@@ -31,7 +35,7 @@ export abstract class BaseService<T extends Document> {
 
   async getAuthUser(populate?: string | string[]): Promise<IUser> {
     if (!this.auth) {
-      throw new Error("user not authenticated");
+      throw new UnauthorizedError("User not authenticated");
     }
     const query = UserModel.findOne({
       authId: this.auth.payload.user_id

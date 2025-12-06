@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { Readable } from "stream";
+import { InternalServerError } from "../errors/index.js";
 import { IFileUpload } from "../interfaces/index.js";
 
 export class CloudinaryService {
@@ -17,7 +18,11 @@ export class CloudinaryService {
           },
           (error, result) => {
             if (error) return reject(error);
-            if (!result) return reject(new Error("No result from Cloudinary"));
+            if (!result) {
+              return reject(
+                new InternalServerError("No result from Cloudinary")
+              );
+            }
             resolve(result);
           }
         );
@@ -28,7 +33,7 @@ export class CloudinaryService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to upload image: ${errorMessage}`);
+      throw new InternalServerError(`Failed to upload image: ${errorMessage}`);
     }
   }
 
@@ -40,7 +45,7 @@ export class CloudinaryService {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
-      throw new Error(`Failed to delete image: ${errorMessage}`);
+      throw new InternalServerError(`Failed to delete image: ${errorMessage}`);
     }
   }
 }

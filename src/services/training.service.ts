@@ -1,6 +1,12 @@
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import mongoose from "mongoose";
 import { CONSTANTS } from "../config/app.config.js";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError
+} from "../errors/index.js";
 import { ITraining, IUser } from "../interfaces/index.js";
 import { CityModel } from "../models/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
@@ -30,7 +36,7 @@ export class TrainingService extends BaseService<ITraining> {
     const training = await this.model.findById(id);
 
     if (!training) {
-      throw new Error("Training not found");
+      throw new NotFoundError("Training");
     }
 
     const creatorId = training.creator;
@@ -202,7 +208,7 @@ export class TrainingService extends BaseService<ITraining> {
 
   async getPotentialParticipants(training: ITraining, maxDistanceKm = 40) {
     if (!training.location?.coordinates) {
-      throw new Error("Training has no location coordinates");
+      throw new BadRequestError("Training has no location coordinates");
     }
 
     const [lng, lat] = training.location.coordinates;
@@ -252,11 +258,11 @@ export class TrainingService extends BaseService<ITraining> {
   async addParticipant(id: string, userId: string) {
     const training = await this.model.findById(id);
     if (!training) {
-      throw new Error("Training not found");
+      throw new NotFoundError("Training");
     }
 
     if (training.status !== TrainingStatusEnum.SCHEDULED) {
-      throw new Error(
+      throw new ConflictError(
         "Cannot add participant. Training is not in scheduled status."
       );
     }
@@ -271,11 +277,11 @@ export class TrainingService extends BaseService<ITraining> {
   async removeParticipant(id: string, userId: string) {
     const training = await this.model.findById(id);
     if (!training) {
-      throw new Error("Training not found");
+      throw new NotFoundError("Training");
     }
 
     if (training.status !== TrainingStatusEnum.SCHEDULED) {
-      throw new Error(
+      throw new ConflictError(
         "Cannot remove participant. Training is not in scheduled status."
       );
     }
@@ -332,7 +338,7 @@ export class TrainingService extends BaseService<ITraining> {
     );
 
     if (!parent) {
-      throw new Error("Parent comment not found");
+      throw new NotFoundError("Parent comment");
     }
 
     const result = await this.model.findById(id);
@@ -345,7 +351,7 @@ export class TrainingService extends BaseService<ITraining> {
   ) {
     const training = await this.model.findById(id);
     if (!training) {
-      throw new Error("Training not found");
+      throw new NotFoundError("Training");
     }
 
     const validStatuses = [
@@ -354,13 +360,13 @@ export class TrainingService extends BaseService<ITraining> {
       TrainingStatusEnum.CANCELLED
     ];
     if (!validStatuses.includes(newStatus)) {
-      throw new Error(
+      throw new BadRequestError(
         "Invalid status. Must be one of: scheduled, completed, cancelled"
       );
     }
 
     if (training.creator.toString() !== userId) {
-      throw new Error("Only the creator can change the status");
+      throw new ForbiddenError("Only the creator can change the status");
     }
 
     // If changing to completed, award points
