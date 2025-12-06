@@ -74,6 +74,12 @@ This project includes **Swagger** documentation, which provides an interactive u
 - **Notifications cron** – `GET /cron-job/notification` (also protected via `CRON_SECRET`) generates notification events.
 - **Auto seed via env** – when `FETCH_CITY_ON_STARTUP=true`, the seed runs automatically on server start. For production schedule a cron job/Cloud Scheduler that calls `/cron-job/*` with the secret.
 
+### Error Handling Guidelines
+
+- Always throw domain-specific errors from `src/errors` (e.g., `NotFoundError`, `BadRequestError`, `ForbiddenError`).
+- Avoid `throw new Error()` directly; controllers rely on `handleError` to map custom errors to proper HTTP codes.
+- Unexpected 5xx errors are automatically logged to Sentry by `handleError`, together with request metadata.
+
 ## Architecture
 
 The application is built on the `MVC` architecture pattern, where the `Model` represents the data, the `View` represents the user interface, and the `Controller` manages the communication between the `Model` and the `View`.
