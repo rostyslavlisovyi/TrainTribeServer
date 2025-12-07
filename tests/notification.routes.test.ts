@@ -12,7 +12,7 @@ import NotificationModel from "../src/models/MongoDB/notification.model.js";
 import { NotificationEnum } from "../src/types/enums.js";
 
 let mongo: MongoMemoryServer;
-let currentAuthId = "notification-auth";
+const currentAuthId = "notification-auth";
 
 const app = express();
 app.use(express.json());

@@ -1,16 +1,14 @@
-import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { TrainingStatusEnum } from "../src/types/index.js";
-import TrainingModel from "../src/models/MongoDB/training.model.js";
-import UserModel from "../src/models/MongoDB/user.model.js";
-import { TrainingService } from "../src/services/training.service.js";
+import mongoose from "mongoose";
 import {
   BadRequestError,
-  ConflictError,
   ForbiddenError,
   NotFoundError
 } from "../src/errors/index.js";
-import type { ITraining } from "../src/interfaces/index.js";
+import TrainingModel from "../src/models/MongoDB/training.model.js";
+import UserModel from "../src/models/MongoDB/user.model.js";
+import { TrainingService } from "../src/services/training.service.js";
+import { TrainingStatusEnum } from "../src/types/index.js";
 
 let mongo: MongoMemoryServer;
 

@@ -1,8 +1,8 @@
 import js from "@eslint/js";
+import prettierPlugin from "eslint-plugin-prettier";
+import eslintReact from "eslint-plugin-react";
 import globals from "globals";
 import tslint from "typescript-eslint";
-import eslintReact from "eslint-plugin-react";
-import prettierPlugin from "eslint-plugin-prettier";
 // import eslintConfigPrettier from "eslint-plugin-prettier";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
@@ -26,7 +26,8 @@ export default tslint.config(
       "public",
       "eslint.config.js",
       "jest.config.cjs",
-      "migrate-mongo-config.js"
+      "migrate-mongo-config.js",
+      ".vercel"
     ]
   },
   {
@@ -37,7 +38,7 @@ export default tslint.config(
         ...globals.es2024
       },
       parserOptions: {
-        project: ["tsconfig.json"]
+        project: ["tsconfig.eslint.json"]
       }
     }
   },

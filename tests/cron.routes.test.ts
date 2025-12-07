@@ -1,6 +1,6 @@
+import type { AwilixContainer } from "awilix";
 import express from "express";
 import request from "supertest";
-import type { AwilixContainer } from "awilix";
 import { CronJobController } from "../src/controllers/cronJob.controller.js";
 import cronJobRoute from "../src/routes/cronJob.routes.js";
 
@@ -24,9 +24,13 @@ const createApp = () => {
     resolve: () => controller
   } as unknown as AwilixContainer;
 
+  interface RequestWithContainer extends express.Request {
+    container: AwilixContainer;
+  }
+
   const app = express();
   app.use((req, _res, next) => {
-    (req as any).container = container;
+    (req as RequestWithContainer).container = container;
     next();
   });
   app.use("/cron", cronJobRoute);
