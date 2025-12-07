@@ -1,12 +1,10 @@
-import express, { Router } from "express";
-import container from "../container.js";
+import express, { Request, Router } from "express";
 import { CityController } from "../controllers/index.js";
-import { authenticate } from "../middlewares/index.js";
 
 const cityRoute: Router = express.Router();
 
-const cityController = container.resolve<CityController>("cityController");
-
+const controller = (req: Request) =>
+  req.container.resolve<CityController>("cityController");
 /**
  * @swagger
  * /city/list:
@@ -72,11 +70,7 @@ const cityController = container.resolve<CityController>("cityController");
  *         $ref: '#/components/responses/InternalServerError'
  */
 
-cityRoute.get("/inizialize", (req, res) => cityController.inizialize(req, res));
-
-cityRoute.post("/list", authenticate, (req, res) =>
-  cityController.list(req, res)
-);
+cityRoute.post("/list", (req, res) => controller(req).list(req, res));
 
 /**
  * @swagger
@@ -111,7 +105,7 @@ cityRoute.post("/list", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.get("/:id", authenticate, (req, res) => cityController.get(req, res));
+cityRoute.get("/:id", (req, res) => controller(req).get(req, res));
 
 /**
  * @swagger
@@ -160,9 +154,7 @@ cityRoute.get("/:id", authenticate, (req, res) => cityController.get(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.post("/", authenticate, (req, res) =>
-  cityController.create(req, res)
-);
+cityRoute.post("/", (req, res) => controller(req).create(req, res));
 
 /**
  * @swagger
@@ -221,9 +213,7 @@ cityRoute.post("/", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.put("/:id", authenticate, (req, res) =>
-  cityController.update(req, res)
-);
+cityRoute.put("/:id", (req, res) => controller(req).update(req, res));
 
 /**
  * @swagger
@@ -246,8 +236,6 @@ cityRoute.put("/:id", authenticate, (req, res) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.delete("/:id", authenticate, (req, res) =>
-  cityController.delete(req, res)
-);
+cityRoute.delete("/:id", (req, res) => controller(req).delete(req, res));
 
 export default cityRoute;

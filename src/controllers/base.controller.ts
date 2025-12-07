@@ -1,42 +1,23 @@
 import { Request, Response } from "express";
+import { AuthResult } from "express-oauth2-jwt-bearer";
 import { Document, FilterQuery, SortOrder } from "mongoose";
-import container from "../container.js";
-import { IUser } from "../interfaces/user.interface.js";
+import { BaseResponse, PaginatedResponse } from "../models/index.js";
 import { BaseService } from "../services/index.js";
-import { UserService } from "../services/user.service.js";
 import { handleError } from "../utils/index.js";
 
 export abstract class BaseController<
   T extends Document,
   S extends BaseService<T>
 > {
-  protected service: S;
-  protected userService: UserService;
-
-  constructor(service: S) {
+  protected readonly service: S;
+  protected readonly auth?: AuthResult;
+  constructor(service: S, auth?: AuthResult) {
     this.service = service;
-    this.userService = container.resolve<UserService>("userService");
+    this.auth = auth;
   }
 
-  protected async getUserFromToken(
-    req: Request,
-    populate?: string | string[]
-  ): Promise<IUser> {
-    const token = req.auth;
-    if (!token) {
-      throw new Error("No token provided");
-    }
-    const query = this.userService.model.findOne({
-      authId: token.payload.user_id
-    });
-    if (populate) {
-      query.populate(populate);
-    }
-    const user = (await query) as unknown as IUser;
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return user;
+  async getAuthUser(populate?: string | string[]) {
+    return await this.service.getAuthUser(populate);
   }
 
   async get(req: Request, res: Response): Promise<void> {
@@ -49,13 +30,13 @@ export abstract class BaseController<
         id,
         populateFields
       });
-      if (!result.data) {
+      if (!result) {
         res.status(404).json({ message: "Not Found" });
         return;
       }
-      res.json(result);
+      res.json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -88,18 +69,18 @@ export abstract class BaseController<
         filters: filters as unknown as FilterQuery<T>
       });
 
-      res.json(result);
+      res.json(new PaginatedResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
   async create(req: Request, res: Response): Promise<void> {
     try {
       const result = await this.service.create(req.body);
-      res.status(201).json(result);
+      res.status(201).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -112,19 +93,19 @@ export abstract class BaseController<
         entity: req.body,
         populateFields
       });
-      res.json(result);
+      res.json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      await this.service.delete(id);
-      res.status(204).send();
+      const result = await this.service.delete(id);
+      res.status(204).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

@@ -1,28 +1,38 @@
+import { AuthResult } from "express-oauth2-jwt-bearer";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError
+} from "../errors/index.js";
 import { IReview } from "../interfaces/review.interface.js";
 import ReviewModel from "../models/MongoDB/review.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
 import UserModel from "../models/MongoDB/user.model.js";
+import UserLeaderboardModel from "../models/MongoDB/userLeaderboard.model.js";
 import { TrainingStatusEnum } from "../types/index.js";
 import { BaseService } from "./base.service.js";
 
 export class ReviewService extends BaseService<IReview> {
-  constructor() {
-    super(ReviewModel);
+  constructor(auth?: AuthResult) {
+    super(ReviewModel, auth);
   }
 
   //Create review
-  async create(entity: Partial<IReview>): Promise<{ data: IReview }> {
+  async create(entity: Partial<IReview>): Promise<IReview> {
     const { training: trainingId, reviewedUser, stars } = entity;
 
     // Verify the training exists
     const training = await TrainingModel.findById(trainingId);
     if (!training) {
-      throw new Error("Training not found");
+      throw new NotFoundError("Training");
     }
 
     // Check training status - must be completed
     if (training.status !== TrainingStatusEnum.COMPLETED) {
-      throw new Error("Training must be completed before it can be reviewed");
+      throw new ConflictError(
+        "Training must be completed before it can be reviewed"
+      );
     }
 
     // Check if the reviewer is a participant
@@ -34,12 +44,12 @@ export class ReviewService extends BaseService<IReview> {
       );
 
     if (!isParticipant) {
-      throw new Error("Only participants can add reviews");
+      throw new ForbiddenError("Only participants can add reviews");
     }
 
     // Validate rating
     if (!stars || stars < 1 || stars > 5) {
-      throw new Error("Rating must be between 1 and 5");
+      throw new BadRequestError("Rating must be between 1 and 5");
     }
 
     // Check if user has already reviewed this training
@@ -49,11 +59,11 @@ export class ReviewService extends BaseService<IReview> {
     });
 
     if (existingReview) {
-      throw new Error("You have already reviewed this training");
+      throw new ConflictError("You have already reviewed this training");
     }
 
     // Create the review using parent method
-    const { data: newReview } = await super.create(entity);
+    const newReview = await super.create(entity);
 
     // Update the reviewed user's points
     if (stars && stars > 0) {
@@ -62,6 +72,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: stars } },
         { new: true }
       );
+      // Log points for leaderboard
+      await UserLeaderboardModel.create({
+        user: reviewedUser,
+        points: stars
+      });
     }
 
     // Update hasLeftReview for the participant
@@ -75,14 +90,14 @@ export class ReviewService extends BaseService<IReview> {
       }
     );
 
-    return { data: newReview };
+    return newReview;
   }
 
   //Delete method to remove points
-  async delete(id: string): Promise<{ data: boolean }> {
+  async delete(id: string): Promise<boolean> {
     const review = await this.model.findById(id);
     if (!review) {
-      throw new Error("Review not found");
+      throw new NotFoundError("Review");
     }
 
     // Remove the stars from the user's review points
@@ -92,6 +107,11 @@ export class ReviewService extends BaseService<IReview> {
         { $inc: { reviewPoints: -review.stars } },
         { new: true }
       );
+      // Log negative points for leaderboard
+      await UserLeaderboardModel.create({
+        user: review.reviewedUser,
+        points: -review.stars
+      });
     }
 
     const result = await super.delete(id);
@@ -108,12 +128,12 @@ export class ReviewService extends BaseService<IReview> {
     const review = await this.model.findById(reviewId);
 
     if (!review) {
-      throw new Error("Review not found");
+      throw new NotFoundError("Review");
     }
 
     // Only the reviewer can update their review
     if (review.reviewer.toString() !== userId) {
-      throw new Error("Not authorized to update this review");
+      throw new ForbiddenError("Not authorized to update this review");
     }
 
     // If stars are being updated, adjust the user's review points
@@ -126,6 +146,11 @@ export class ReviewService extends BaseService<IReview> {
           { $inc: { reviewPoints: pointDiff } },
           { new: true }
         );
+        // Log points change for leaderboard
+        await UserLeaderboardModel.create({
+          userId: review.reviewedUser,
+          points: pointDiff
+        });
       }
     }
 
@@ -139,20 +164,20 @@ export class ReviewService extends BaseService<IReview> {
   }
 
   //Delete a review with authorization check
-  async deleteReview(reviewId: string, userId: string): Promise<void> {
+  async deleteReview(reviewId: string, userId: string): Promise<boolean> {
     const review = await this.model.findById(reviewId);
 
     if (!review) {
-      throw new Error("Review not found");
+      throw new NotFoundError("Review");
     }
 
     // Only the reviewer can delete the review
     if (review.reviewer.toString() !== userId) {
-      throw new Error("Not authorized to delete this review");
+      throw new ForbiddenError("Not authorized to delete this review");
     }
 
     // Use the overridden delete method which handles point removal
-    await this.delete(reviewId);
+    return await this.delete(reviewId);
   }
 }
 

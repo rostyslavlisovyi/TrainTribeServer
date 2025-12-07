@@ -1,11 +1,10 @@
+import * as Sentry from "@sentry/node";
+import type { Request } from "express";
 import { Response } from "express";
 import mongoose from "mongoose";
 import chalk from "chalk";
 import {
   BaseError,
-  NotFoundError,
-  BadRequestError,
-  DataCannotBeEmpty,
   MongoValidationError,
   MongoCastError,
   MongoDuplicateKeyError,
@@ -13,21 +12,41 @@ import {
   InternalServerError
 } from "../errors/index.js";
 
-export function handleError(res: Response, error: unknown) {
-  console.error(chalk.red("Error:", error));
+function buildErrorContext(req?: Request) {
+  if (!req) {
+    return undefined;
+  }
+
+  const user =
+    req.auth?.payload?.sub ??
+    req.auth?.payload?.user_id ??
+    req.auth?.payload?.aud;
+
+  return {
+    method: req.method,
+    path: req.originalUrl,
+    user
+  } as const;
+}
+
+export function handleError(
+  res: Response,
+  req: Request | undefined,
+  error: unknown
+) {
+  const context = buildErrorContext(req);
+  const shouldReport = !(error instanceof BaseError && error.statusCode < 500);
+
+  if (shouldReport) {
+    Sentry.captureException(error, {
+      extra: context
+    });
+  }
+
+  console.error(chalk.red("Error:"), context ?? "", error);
 
   if (error instanceof BaseError) {
     return res.status(error.statusCode).json(error.toJSON());
-  }
-  // Handle Client Errors
-  if (error instanceof NotFoundError) {
-    return res.status(404).json(error.toJSON());
-  }
-  if (error instanceof BadRequestError) {
-    return res.status(400).json(error.toJSON());
-  }
-  if (error instanceof DataCannotBeEmpty) {
-    return res.status(400).json(error.toJSON());
   }
 
   // Handle MongoDB Errors
@@ -56,5 +75,6 @@ export function handleError(res: Response, error: unknown) {
   }
 
   // Catch-all Fallback
-  return res.status(500).json(new InternalServerError().toJSON());
+  const fallback = new InternalServerError();
+  return res.status(fallback.statusCode).json(fallback.toJSON());
 }

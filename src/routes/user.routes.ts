@@ -1,7 +1,6 @@
-import express, { Router } from "express";
-import container from "../container.js";
+import express, { Request, Router } from "express";
 import { UserController } from "../controllers/index.js";
-import { authenticate, handleValidationErrors } from "../middlewares/index.js";
+import { handleValidationErrors } from "../middlewares/index.js";
 import {
   validateUserCreation,
   validateUserUpdate
@@ -9,8 +8,8 @@ import {
 
 const userRoute: Router = express.Router();
 
-const userController = container.resolve<UserController>("userController");
-
+const controller = (req: Request) =>
+  req.container.resolve<UserController>("userController");
 // GET: Get user by Auth ID
 /**
  * @swagger
@@ -92,11 +91,9 @@ const userController = container.resolve<UserController>("userController");
  *                   type: string
  *                   example: INTERNAL SERVER ERROR
  */
-userRoute.get("/me", authenticate, (req, res) =>
-  userController.getMe(req, res)
-);
+userRoute.get("/me", (req, res) => controller(req).getMe(req, res));
 
-userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
+userRoute.get("/:id", (req, res) => controller(req).get(req, res));
 
 // POST: Create new user
 /**
@@ -233,11 +230,11 @@ userRoute.get("/:id", authenticate, (req, res) => userController.get(req, res));
  */
 userRoute.post(
   "/",
-  authenticate,
+
   validateUserCreation,
   handleValidationErrors,
   (req: express.Request, res: express.Response) =>
-    userController.create(req, res)
+    controller(req).create(req, res)
 );
 
 /**
@@ -387,116 +384,11 @@ userRoute.post(
  */
 userRoute.put(
   "/:id",
-  authenticate,
+
   validateUserUpdate,
   handleValidationErrors,
   (req: express.Request, res: express.Response) =>
-    userController.update(req, res)
-);
-
-/**
- * @swagger
- * /user:
- *   delete:
- *     summary: Delete a user by ID
- *     tags:
- *       - User
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - _id
- *             properties:
- *               _id:
- *                 type: string
- *                 description: The unique identifier of the user to be deleted
- *                 example: 67543795b67ad667d26e3bdc
- *     responses:
- *       200:
- *         description: User deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: USER DELETED
- *       400:
- *         description: Bad Request - Includes missing `_id` or extra fields
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   enum:
- *                     - "ONLY _id IS ALLOWED"
- *                     - "ID IS REQUIRED"
- *                   example: "ONLY _id IS ALLOWED"
- *             examples:
- *               onlyIdAllowed:
- *                 summary: Only `_id` field is allowed
- *                 value:
- *                   message: "ONLY _id IS ALLOWED"
- *               missingId:
- *                 summary: ID is missing
- *                 value:
- *                   message: "ID IS REQUIRED"
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: USER NOT FOUND
- *       422:
- *         description: Unprocessable Entity - Invalid `_id` format
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: UNPROCESSABLE ENTITY
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       message:
- *                         type: string
- *                         example: INVALID _id FORMAT
- *             examples:
- *               invalidIdFormat:
- *                 summary: Invalid `_id` format
- *                 value:
- *                   message: "UNPROCESSABLE ENTITY"
- *                   errors:
- *                     - message: "INVALID _id FORMAT"
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: INTERNAL SERVER ERROR
- */
-userRoute.delete("/:id", authenticate, (req, res) =>
-  userController.delete(req, res)
+    controller(req).update(req, res)
 );
 
 export default userRoute;

@@ -1,14 +1,21 @@
+import "../instrument.js";
 import { scopePerRequest } from "awilix-express";
 import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express } from "express";
-import { CityService } from "services/city.service.js";
 import connectDB from "./config/database.js";
+import "./config/firebase.js";
 import { setupSwagger } from "./config/swagger.js";
 import container from "./container.js";
-import router from "./routes/index.js";
-
+import {
+  authContainerMiddleware,
+  authenticate,
+  cronJobMiddleware
+} from "./middlewares/index.js";
+import { apiRouter, cronJobRouter } from "./routes/index.js";
+import { CityService } from "./services/index.js";
+import { registerSentryHandlers } from "./utils/sentry.js";
 dotenv.config();
 
 // Environment Variables Validation
@@ -30,14 +37,24 @@ appServer.use(scopePerRequest(container));
 //Middlewares
 appServer.use(express.json());
 
-const corsOptions = {
-  origin: process.env.APP_URL,
+const allowedOrigins =
+  process.env.APP_URL?.split(",")?.map((url) => url.trim()) || [];
+
+const corsOptions: cors.CorsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
 };
 
-appServer.use(cors(corsOptions));
-
-appServer.options("*", cors(corsOptions));
+appServer.use("/api", cors(corsOptions));
+appServer.options("/api/*", cors(corsOptions));
 
 appServer.use(express.urlencoded({ extended: true }));
 
@@ -48,8 +65,13 @@ appServer.use(express.static("public"));
 appServer.get("/", (_req, res) => {
   res.sendFile("index.html", { root: "./public" });
 });
+appServer.use("/api", authenticate);
+appServer.use("/api", authContainerMiddleware);
+appServer.use("/api", apiRouter);
+appServer.use("/cron-job", cronJobMiddleware);
+appServer.use("/cron-job", cronJobRouter);
 
-appServer.use("/api", router);
+registerSentryHandlers(appServer);
 
 // Swagger
 setupSwagger(appServer);
@@ -81,7 +103,7 @@ async function startServer(): Promise<void> {
       process.env.FETCH_CITY_ON_STARTUP === "true";
 
     if (shouldFetchCityOnStartup) {
-      const cityService = container.resolve<CityService>("cityService");
+      const cityService = new CityService();
       await cityService.inizialize();
     }
 

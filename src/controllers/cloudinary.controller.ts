@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { BaseResponse } from "../models/index.js";
 import { CloudinaryService } from "../services/index.js";
 export class CloudinaryController {
   private readonly service: CloudinaryService;
@@ -17,7 +18,7 @@ export class CloudinaryController {
       const folder = req.body.folder;
       const result = await this.service.upload(req.file, folder);
 
-      res.status(200).json(result);
+      res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
       res.status(500).json({
         message: "UPLOAD FAILED",
@@ -35,9 +36,9 @@ export class CloudinaryController {
         return;
       }
 
-      await this.service.delete(public_id);
+      const result = await this.service.delete(public_id);
 
-      res.status(200).json();
+      res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
       res.status(500).json({
         message: "DELETE FAILED",
