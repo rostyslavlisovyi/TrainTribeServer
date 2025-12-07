@@ -54,17 +54,17 @@ This project includes **Swagger** documentation, which provides an interactive u
 
 ### Environment Variables
 
-| Variable | Description |
-| --- | --- |
-| `SERVER_PORT` | HTTP port (defaults to `666`). |
-| `NODE_ENV` | `development` / `staging` / `production`. Used by Sentry. |
-| `APP_URL` | Comma-separated list of allowed CORS origins (also used as referer for geocoding). |
-| `DB_NAME`, `MONGODB_URI`, `DB_TYPE` | MongoDB configuration. |
-| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin service account. The private key string must keep `\n` escaped. |
-| `CRON_SECRET` | Token used to authenticate cron/initialization requests (`Authorization: Bearer <CRON_SECRET>`). |
-| `CLOUDINARY_BASE_FOLDER_UPLOAD` | Folder used by the Cloudinary upload service. |
-| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILES_SAMPLE_RATE` | Sentry configuration and sampling rates. |
-| `FETCH_CITY_ON_STARTUP` | If `true`, the server triggers the city initialization during startup. |
+| Variable                                                                                       | Description                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `SERVER_PORT`                                                                                  | HTTP port (defaults to `666`).                                                                   |
+| `NODE_ENV`                                                                                     | `development` / `staging` / `production`. Used by Sentry.                                        |
+| `APP_URL`                                                                                      | Comma-separated list of allowed CORS origins (also used as referer for geocoding).               |
+| `DB_NAME`, `MONGODB_URI`, `DB_TYPE`                                                            | MongoDB configuration.                                                                           |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`                         | Firebase Admin service account. The private key string must keep `\n` escaped.                   |
+| `CRON_SECRET`                                                                                  | Token used to authenticate cron/initialization requests (`Authorization: Bearer <CRON_SECRET>`). |
+| `CLOUDINARY_BASE_FOLDER_UPLOAD`                                                                | Folder used by the Cloudinary upload service.                                                    |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILES_SAMPLE_RATE` | Sentry configuration and sampling rates.                                                         |
+| `FETCH_CITY_ON_STARTUP`                                                                        | If `true`, the server triggers the city initialization during startup.                           |
 
 > All variables are required both locally and in production. Prefer secret managers/CI variables for sensitive values.
 
@@ -86,63 +86,63 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 
 ## Project Structure
 
-| Directory / File                     | Description                                         |
-| ------------------------------------ | --------------------------------------------------- |
-| `instrument.js`                      | Preloads Sentry (dotenv, integrations, sampling)    |
-| `src/`                               | Main code directory                                 |
-| ├── `config/`                        | Configuration files (e.g., database, environment)   |
-| │ ├── `app.config.ts`                | Centralized application configuration               |
-| │ ├── `firebase.ts`                  | Firebase client setup                               |
-| │ └── `firebaseAdmin.ts`             | Initializes Firebase Admin SDK for auth             |
-| ├── `controllers/`                   | Controllers for handling requests                   |
-| │ └── `base.controller.ts`           | Base controller with common functionality           |
-| │ └── `city.controller.ts`           | Logic for handling city-related API requests        |
-| │ └── `cronJob.controller.ts`        | Logic for cron job APIs                             |
-| │ └── `leaderboard.controller.ts`    | Handlers for leaderboard endpoints                  |
-| │ └── `notification.controller.ts`   | Handlers for notification endpoints                 |
-| │ └── `review.controller.ts`         | Logic for handling review-related API requests      |
-| │ └── `training.controller.ts`       | Logic for handling training-related API requests    |
-| │ └── `upload.controller.ts`         | Logic for handling file uploads                     |
-| │ └── `user.controller.ts`           | Logic for handling user-related API requests        |
-| ├── `errors/`                        | Error handling classes and utilities                |
-| ├── `interfaces/`                    | TypeScript interfaces for strict type definitions   |
-| │ └── `geoLocation.interface.ts`     | Interface for geolocation data                      |
-| │ └── `notification.interface.ts`    | Interface for notification entities                 |
-| │ └── `trainingParticipant.interface.ts` | Interface for participant attendance entities |
-| │ └── `userLeaderboard.interface.ts` | Interface for leaderboard users                     |
-| ├── `middlewares/`                   | Middleware functions                                |
-| │ └── `auth.middleware.ts`           | Verifies Firebase tokens                            |
-| │ └── `authContainer.middleware.ts`  | Injects scoped container into requests              |
-| │ └── `cronJob.middleware.ts`        | Protects cron job endpoints                         |
-| │ └── `upload.middleware.ts`         | Middleware for handling file uploads                |
-| │ └── `validation.middleware.ts`     | Middleware for request validation                   |
-| ├── `models/`                        | Database structure definitions (Models)             |
-| │ └── `MongoDB/`                     | MongoDB models for application                      |
-| │ │ └── `notification.model.ts`      | MongoDB model for notifications                     |
-| │ │ └── `userLeaderboard.model.ts`   | MongoDB model for leaderboard entities              |
-| ├── `routes/`                        | API route definitions                               |
-| │ └── `city.routes.ts`               | Routes for city-related endpoints                   |
-| │ └── `cronJob.routes.ts`            | Routes for cron-job endpoints                       |
-| │ └── `leaderboard.routes.ts`        | Routes for leaderboard endpoints                    |
-| │ └── `notification.route.ts`        | Routes for notification endpoints                   |
-| │ └── `index.ts`                     | Main router combining all routes                    |
-| ├── `services/`                      | Business logic layer                                |
-| │ └── `cronJob.service.ts`           | Cron job orchestration                              |
-| │ └── `leaderboard.service.ts`       | Leaderboard data layer                              |
-| │ └── `notification.service.ts`      | Notifications logic                                 |
-| ├── `types/`                         | Global TypeScript type definitions                  |
-| │ └── `express.d.ts`                 | Express typings (Awilix scope, Firebase auth)       |
-| ├── `utils/`                         | Utility and helper functions                        |
-| │ └── `sentry.ts`                    | Shared helpers for Sentry Express middleware        |
-| ├── `validators/`                    | Request validation schemas                          |
-| `public/`                            | Static files directory                              |
-| `uploads/`                           | Uploads directory for storing user files            |
-| `.eslintrc.json` / `eslint.config.js`| ESLint configuration                                |
-| `package.json`                       | Node.js dependencies file                           |
-| `README.md`                          | Project documentation                               |
-| `tsconfig.json`                      | TypeScript configuration (includes tests directory) |
-| `tests/`                             | Jest test suite, mocks, and helpers                  |
-| `.github/workflows/ci.yml`           | GitHub Actions pipeline (lint/typecheck/tests)      |
+| Directory / File                         | Description                                         |
+| ---------------------------------------- | --------------------------------------------------- |
+| `instrument.js`                          | Preloads Sentry (dotenv, integrations, sampling)    |
+| `src/`                                   | Main code directory                                 |
+| ├── `config/`                            | Configuration files (e.g., database, environment)   |
+| │ ├── `app.config.ts`                    | Centralized application configuration               |
+| │ ├── `firebase.ts`                      | Firebase client setup                               |
+| │ └── `firebaseAdmin.ts`                 | Initializes Firebase Admin SDK for auth             |
+| ├── `controllers/`                       | Controllers for handling requests                   |
+| │ └── `base.controller.ts`               | Base controller with common functionality           |
+| │ └── `city.controller.ts`               | Logic for handling city-related API requests        |
+| │ └── `cronJob.controller.ts`            | Logic for cron job APIs                             |
+| │ └── `leaderboard.controller.ts`        | Handlers for leaderboard endpoints                  |
+| │ └── `notification.controller.ts`       | Handlers for notification endpoints                 |
+| │ └── `review.controller.ts`             | Logic for handling review-related API requests      |
+| │ └── `training.controller.ts`           | Logic for handling training-related API requests    |
+| │ └── `upload.controller.ts`             | Logic for handling file uploads                     |
+| │ └── `user.controller.ts`               | Logic for handling user-related API requests        |
+| ├── `errors/`                            | Error handling classes and utilities                |
+| ├── `interfaces/`                        | TypeScript interfaces for strict type definitions   |
+| │ └── `geoLocation.interface.ts`         | Interface for geolocation data                      |
+| │ └── `notification.interface.ts`        | Interface for notification entities                 |
+| │ └── `trainingParticipant.interface.ts` | Interface for participant attendance entities       |
+| │ └── `userLeaderboard.interface.ts`     | Interface for leaderboard users                     |
+| ├── `middlewares/`                       | Middleware functions                                |
+| │ └── `auth.middleware.ts`               | Verifies Firebase tokens                            |
+| │ └── `authContainer.middleware.ts`      | Injects scoped container into requests              |
+| │ └── `cronJob.middleware.ts`            | Protects cron job endpoints                         |
+| │ └── `upload.middleware.ts`             | Middleware for handling file uploads                |
+| │ └── `validation.middleware.ts`         | Middleware for request validation                   |
+| ├── `models/`                            | Database structure definitions (Models)             |
+| │ └── `MongoDB/`                         | MongoDB models for application                      |
+| │ │ └── `notification.model.ts`          | MongoDB model for notifications                     |
+| │ │ └── `userLeaderboard.model.ts`       | MongoDB model for leaderboard entities              |
+| ├── `routes/`                            | API route definitions                               |
+| │ └── `city.routes.ts`                   | Routes for city-related endpoints                   |
+| │ └── `cronJob.routes.ts`                | Routes for cron-job endpoints                       |
+| │ └── `leaderboard.routes.ts`            | Routes for leaderboard endpoints                    |
+| │ └── `notification.route.ts`            | Routes for notification endpoints                   |
+| │ └── `index.ts`                         | Main router combining all routes                    |
+| ├── `services/`                          | Business logic layer                                |
+| │ └── `cronJob.service.ts`               | Cron job orchestration                              |
+| │ └── `leaderboard.service.ts`           | Leaderboard data layer                              |
+| │ └── `notification.service.ts`          | Notifications logic                                 |
+| ├── `types/`                             | Global TypeScript type definitions                  |
+| │ └── `express.d.ts`                     | Express typings (Awilix scope, Firebase auth)       |
+| ├── `utils/`                             | Utility and helper functions                        |
+| │ └── `sentry.ts`                        | Shared helpers for Sentry Express middleware        |
+| ├── `validators/`                        | Request validation schemas                          |
+| `public/`                                | Static files directory                              |
+| `uploads/`                               | Uploads directory for storing user files            |
+| `.eslintrc.json` / `eslint.config.js`    | ESLint configuration                                |
+| `package.json`                           | Node.js dependencies file                           |
+| `README.md`                              | Project documentation                               |
+| `tsconfig.json`                          | TypeScript configuration (includes tests directory) |
+| `tests/`                                 | Jest test suite, mocks, and helpers                 |
+| `.github/workflows/ci.yml`               | GitHub Actions pipeline (lint/typecheck/tests)      |
 
 ## Technologies
 
@@ -210,19 +210,19 @@ The server provides the following API endpoints:
 
 ### **Notifications**
 
-| Method | Endpoint                      | Description                              | Access              |
-| ------ | ----------------------------- | ---------------------------------------- | ------------------- |
-| POST   | `/api/notification/list`      | Paginated list of notifications          | Authenticated users |
-| GET    | `/api/notification/count-unread` | Get unread counter                    | Authenticated users |
-| PUT    | `/api/notification/mark-all-as-read` | Mark all as read                   | Authenticated users |
-| DELETE | `/api/notification/delete-all` | Remove all notifications for the user | Authenticated users |
+| Method | Endpoint                             | Description                           | Access              |
+| ------ | ------------------------------------ | ------------------------------------- | ------------------- |
+| POST   | `/api/notification/list`             | Paginated list of notifications       | Authenticated users |
+| GET    | `/api/notification/count-unread`     | Get unread counter                    | Authenticated users |
+| PUT    | `/api/notification/mark-all-as-read` | Mark all as read                      | Authenticated users |
+| DELETE | `/api/notification/delete-all`       | Remove all notifications for the user | Authenticated users |
 
 ### **Cron Jobs / Internal automation**
 
-| Method | Endpoint                        | Description                                         | Access |
-| ------ | ------------------------------- | --------------------------------------------------- | ------ |
-| GET    | `/cron-job/city-inizialize`     | Runs the ISTAT/Wikidata sync (same as manual seed)   | `CRON_SECRET` |
-| GET    | `/cron-job/notification`        | Triggers the notification scheduler                  | `CRON_SECRET` |
+| Method | Endpoint                    | Description                                        | Access        |
+| ------ | --------------------------- | -------------------------------------------------- | ------------- |
+| GET    | `/cron-job/city-inizialize` | Runs the ISTAT/Wikidata sync (same as manual seed) | `CRON_SECRET` |
+| GET    | `/cron-job/notification`    | Triggers the notification scheduler                | `CRON_SECRET` |
 
 > Cron endpoints always require the header `Authorization: Bearer <CRON_SECRET>` and are not intended for public clients.
 
@@ -340,7 +340,6 @@ The `User` model includes several fields to track training-related statistics:
 ### 2. Points System
 
 - **Training Points** (`trainingPoints` field in `User` model):
-
   - **Creators**: Receive 5 points when their training is marked as `completed`.
   - **Participants**: Receive 1 point when a training they were part of is marked as `completed`.
   - Each point transaction is logged as a separate entry in the `UserLeaderboard` collection.

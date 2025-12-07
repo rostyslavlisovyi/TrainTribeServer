@@ -9,7 +9,9 @@ const createApp = () => {
     inizialize: jest.fn()
   };
   const cronJobService = {
-    createNotificationTrainingCompletionReminder: jest.fn().mockResolvedValue(0),
+    createNotificationTrainingCompletionReminder: jest
+      .fn()
+      .mockResolvedValue(0),
     createNotificationTodayTrainingsReminder: jest.fn().mockResolvedValue(0)
   };
 
@@ -36,7 +38,9 @@ describe("Cron routes", () => {
   it("initializes cities", async () => {
     const { app, cityService } = createApp();
 
-    const response = await request(app).get("/cron/city-inizialize").expect(200);
+    const response = await request(app)
+      .get("/cron/city-inizialize")
+      .expect(200);
 
     expect(response.body).toEqual({ data: true });
     expect(cityService.inizialize).toHaveBeenCalledTimes(1);
