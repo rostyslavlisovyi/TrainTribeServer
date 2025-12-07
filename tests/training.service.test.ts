@@ -1,16 +1,14 @@
-import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { TrainingStatusEnum } from "../src/types/index.js";
-import TrainingModel from "../src/models/MongoDB/training.model.js";
-import UserModel from "../src/models/MongoDB/user.model.js";
-import { TrainingService } from "../src/services/training.service.js";
+import mongoose from "mongoose";
 import {
   BadRequestError,
-  ConflictError,
   ForbiddenError,
   NotFoundError
 } from "../src/errors/index.js";
-import type { ITraining } from "../src/interfaces/index.js";
+import TrainingModel from "../src/models/MongoDB/training.model.js";
+import UserModel from "../src/models/MongoDB/user.model.js";
+import { TrainingService } from "../src/services/training.service.js";
+import { TrainingStatusEnum } from "../src/types/index.js";
 
 let mongo: MongoMemoryServer;
 
@@ -31,9 +29,17 @@ afterEach(async () => {
   await UserModel.deleteMany({});
 });
 
-async function seedTraining(status: TrainingStatusEnum = TrainingStatusEnum.SCHEDULED) {
-  const creator = await UserModel.create({ authId: "creator", email: "creator@test.com" });
-  const trainee = await UserModel.create({ authId: "user", email: "user@test.com" });
+async function seedTraining(
+  status: TrainingStatusEnum = TrainingStatusEnum.SCHEDULED
+) {
+  const creator = await UserModel.create({
+    authId: "creator",
+    email: "creator@test.com"
+  });
+  const trainee = await UserModel.create({
+    authId: "user",
+    email: "user@test.com"
+  });
 
   const training = await TrainingModel.create({
     title: "Test",
@@ -61,7 +67,11 @@ describe("TrainingService.changeStatus", () => {
   it("throws NotFoundError when training does not exist", async () => {
     const service = new TrainingService();
     await expect(
-      service.changeStatus(new mongoose.Types.ObjectId().toString(), "user", TrainingStatusEnum.COMPLETED)
+      service.changeStatus(
+        new mongoose.Types.ObjectId().toString(),
+        "user",
+        TrainingStatusEnum.COMPLETED
+      )
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
@@ -70,16 +80,26 @@ describe("TrainingService.changeStatus", () => {
     const { training, trainee } = await seedTraining();
 
     await expect(
-      service.changeStatus(training._id.toString(), trainee._id.toString(), TrainingStatusEnum.COMPLETED)
+      service.changeStatus(
+        training._id.toString(),
+        trainee._id.toString(),
+        TrainingStatusEnum.COMPLETED
+      )
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("throws BadRequestError on invalid state change", async () => {
     const service = new TrainingService();
-    const { training, creator } = await seedTraining(TrainingStatusEnum.COMPLETED);
+    const { training, creator } = await seedTraining(
+      TrainingStatusEnum.COMPLETED
+    );
 
     await expect(
-      service.changeStatus(training._id.toString(), creator._id.toString(), "INVALID" as TrainingStatusEnum)
+      service.changeStatus(
+        training._id.toString(),
+        creator._id.toString(),
+        "INVALID" as TrainingStatusEnum
+      )
     ).rejects.toBeInstanceOf(BadRequestError);
   });
 

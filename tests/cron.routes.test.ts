@@ -1,6 +1,6 @@
+import type { AwilixContainer } from "awilix";
 import express from "express";
 import request from "supertest";
-import type { AwilixContainer } from "awilix";
 import { CronJobController } from "../src/controllers/cronJob.controller.js";
 import cronJobRoute from "../src/routes/cronJob.routes.js";
 
@@ -9,7 +9,9 @@ const createApp = () => {
     inizialize: jest.fn()
   };
   const cronJobService = {
-    createNotificationTrainingCompletionReminder: jest.fn().mockResolvedValue(0),
+    createNotificationTrainingCompletionReminder: jest
+      .fn()
+      .mockResolvedValue(0),
     createNotificationTodayTrainingsReminder: jest.fn().mockResolvedValue(0)
   };
 
@@ -22,9 +24,13 @@ const createApp = () => {
     resolve: () => controller
   } as unknown as AwilixContainer;
 
+  interface RequestWithContainer extends express.Request {
+    container: AwilixContainer;
+  }
+
   const app = express();
   app.use((req, _res, next) => {
-    (req as any).container = container;
+    (req as RequestWithContainer).container = container;
     next();
   });
   app.use("/cron", cronJobRoute);
@@ -36,7 +42,9 @@ describe("Cron routes", () => {
   it("initializes cities", async () => {
     const { app, cityService } = createApp();
 
-    const response = await request(app).get("/cron/city-inizialize").expect(200);
+    const response = await request(app)
+      .get("/cron/city-inizialize")
+      .expect(200);
 
     expect(response.body).toEqual({ data: true });
     expect(cityService.inizialize).toHaveBeenCalledTimes(1);
