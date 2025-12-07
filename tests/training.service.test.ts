@@ -4,7 +4,12 @@ import { TrainingStatusEnum } from "../src/types/index.js";
 import TrainingModel from "../src/models/MongoDB/training.model.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
 import { TrainingService } from "../src/services/training.service.js";
-import { ConflictError, ForbiddenError, NotFoundError } from "../src/errors/index.js";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError
+} from "../src/errors/index.js";
 import type { ITraining } from "../src/interfaces/index.js";
 
 let mongo: MongoMemoryServer;
@@ -36,6 +41,11 @@ async function seedTraining(status: TrainingStatusEnum = TrainingStatusEnum.SCHE
     status,
     sport: "RUNNING",
     date: new Date(),
+    address: "Test address",
+    location: {
+      type: "Point",
+      coordinates: [0, 0]
+    },
     participants: [
       {
         participant: trainee._id,
@@ -64,13 +74,13 @@ describe("TrainingService.changeStatus", () => {
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  it("throws ConflictError on invalid state change", async () => {
+  it("throws BadRequestError on invalid state change", async () => {
     const service = new TrainingService();
     const { training, creator } = await seedTraining(TrainingStatusEnum.COMPLETED);
 
     await expect(
       service.changeStatus(training._id.toString(), creator._id.toString(), "INVALID" as TrainingStatusEnum)
-    ).rejects.toBeInstanceOf(ConflictError);
+    ).rejects.toBeInstanceOf(BadRequestError);
   });
 
   it("completes training and awards points", async () => {
