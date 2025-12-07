@@ -36,7 +36,7 @@ export abstract class BaseController<
       }
       res.json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -71,7 +71,7 @@ export abstract class BaseController<
 
       res.json(new PaginatedResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -80,7 +80,7 @@ export abstract class BaseController<
       const result = await this.service.create(req.body);
       res.status(201).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -95,7 +95,7 @@ export abstract class BaseController<
       });
       res.json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -105,7 +105,7 @@ export abstract class BaseController<
       const result = await this.service.delete(id);
       res.status(204).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

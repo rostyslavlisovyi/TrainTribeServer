@@ -58,7 +58,7 @@ export class ReviewController extends BaseController<IReview, ReviewService> {
 
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -74,7 +74,7 @@ export class ReviewController extends BaseController<IReview, ReviewService> {
       );
       res.status(200).json(new BaseResponse(result));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -86,7 +86,7 @@ export class ReviewController extends BaseController<IReview, ReviewService> {
       await this.service.deleteReview(id, user._id.toString());
       res.status(200).json(new BaseResponse(true));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

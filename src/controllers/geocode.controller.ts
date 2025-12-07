@@ -23,7 +23,7 @@ export class GeocodeController {
       const data = await this.service.geocode(search, language);
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 
@@ -42,7 +42,7 @@ export class GeocodeController {
       const data = await this.service.reverse(lat, lon, language);
       res.status(200).json(new BaseResponse(data));
     } catch (error) {
-      handleError(res, error);
+      handleError(res, req, error);
     }
   }
 }

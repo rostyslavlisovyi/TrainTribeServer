@@ -1,6 +1,6 @@
 // Initializes Sentry before any other modules are loaded (see src/index.ts).
-import * as Sentry from "@sentry/node";
 import dotenv from "dotenv";
+import * as Sentry from "@sentry/node";
 
 dotenv.config();
 
@@ -18,7 +18,10 @@ const defaultTraceRate = environment === "production" ? 0.2 : 1;
 const defaultProfileRate = environment === "production" ? 0.1 : 1;
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN ?? environment,
+  dsn:
+    process.env.SENTRY_DSN ??
+    "https://90d5e93c1530d89dff3a687f6cc7d109@o4510277415796736.ingest.de.sentry.io/4510308645797968",
+  environment,
   sendDefaultPii: true,
   integrations: [
     Sentry.expressIntegration(),

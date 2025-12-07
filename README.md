@@ -18,65 +18,67 @@ This project includes **Swagger** documentation, which provides an interactive u
 
 ## Installation and Setup Instructions
 
-This section provides step-by-step instructions for installing and running the server locally or in a production environment.
-
 ### Prerequisites
 
-Before installing and running the server, make sure the following tools are installed on your system:
+- **Node.js** `>=18`
+- **npm** `>=9`
 
-- **Node.js** (v16.x or later)
-- **npm** (v8.x or later)
+### Quick Start for Developers
 
-### Installation
-
-1. **Clone the Repository**:
+1. **Clone & install**
 
    ```bash
    git clone https://github.com/rokokos97/TrainTribeServer.git
-   cd project-name
-
-   ```
-
-2. **Install Dependencies**:
-
-   ```bash
+   cd TrainTribeServer
    npm install
-
    ```
 
-3. **Set Up Environment Variables**:
-   Create a `.env` file in the root directory and add the following environment variables:
+2. **Configure environment**
+
+   Copy `.env.example` (or create `.env`) and fill in the values listed below. At minimum provide MongoDB credentials, the Firebase service account, your Sentry DSN, and `CRON_SECRET`.
+
+3. **Run local server**
 
    ```bash
-   SERVER_PORT=666
-   NODE_ENV=development
-   APP_URL=http://localhost:4444
-
-   DB_TYPE=mongodb
-   DB_NAME=TrainTribe
-   MONGODB_URI='your mongo db uri'
-
-   FIREBASE_PROJECT_ID='your firebase project id'
-   FIREBASE_CLIENT_EMAIL='firebase-adminsdk@<project>.iam.gserviceaccount.com'
-   FIREBASE_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n'
-
-   SENTRY_DSN='your sentry dsn'
-   SENTRY_ENVIRONMENT=development
+   npm run dev         # ts-node with auto-reload
+   npm run typecheck   # TypeScript static analysis
+   npm run lint        # ESLint + Prettier
+   npm run test        # Jest (exits 0 even with no tests)
    ```
 
-4. **Run the Server**:
+   For production builds run `npm run build && npm run start` (tsup outputs to `dist/`).
 
-   ```bash
-   npm run build
-   npm start
-   ```
+4. **Swagger**
 
-5. **View API Documentation**:
-   After starting the server, you can access the API documentation powered by **Swagger** at the following URL:
+   Once the backend is running open `http://localhost:<SERVER_PORT>/api-docs` to inspect the documented API.
 
-   ```plaintext
-   http://localhost:<PORT>/api-docs
-   ```
+### Environment Variables
+
+| Variable | Description |
+| --- | --- |
+| `SERVER_PORT` | HTTP port (defaults to `666`). |
+| `NODE_ENV` | `development` / `staging` / `production`. Used by Sentry. |
+| `APP_URL` | Comma-separated list of allowed CORS origins (also used as referer for geocoding). |
+| `DB_NAME`, `MONGODB_URI`, `DB_TYPE` | MongoDB configuration. |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin service account. The private key string must keep `\n` escaped. |
+| `CRON_SECRET` | Token used to authenticate cron/initialization requests (`Authorization: Bearer <CRON_SECRET>`). |
+| `CLOUDINARY_BASE_FOLDER_UPLOAD` | Folder used by the Cloudinary upload service. |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILES_SAMPLE_RATE` | Sentry configuration and sampling rates. |
+| `FETCH_CITY_ON_STARTUP` | If `true`, the server triggers the city initialization during startup. |
+
+> All variables are required both locally and in production. Prefer secret managers/CI variables for sensitive values.
+
+### Initial Data & Cron Jobs
+
+- **City seed** – to populate the city catalog call `GET /cron-job/city-inizialize` (or the internal `/api/city/inizialize`) with header `Authorization: Bearer <CRON_SECRET>`. The job downloads ISTAT data, enriches with Wikidata coordinates, and syncs MongoDB.
+- **Notifications cron** – `GET /cron-job/notification` (also protected via `CRON_SECRET`) generates notification events.
+- **Auto seed via env** – when `FETCH_CITY_ON_STARTUP=true`, the seed runs automatically on server start. For production schedule a cron job/Cloud Scheduler that calls `/cron-job/*` with the secret.
+
+### Error Handling Guidelines
+
+- Always throw domain-specific errors from `src/errors` (e.g., `NotFoundError`, `BadRequestError`, `ForbiddenError`).
+- Avoid `throw new Error()` directly; controllers rely on `handleError` to map custom errors to proper HTTP codes.
+- Unexpected 5xx errors are automatically logged to Sentry by `handleError`, together with request metadata.
 
 ## Architecture
 
@@ -138,7 +140,9 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | `.eslintrc.json` / `eslint.config.js`| ESLint configuration                                |
 | `package.json`                       | Node.js dependencies file                           |
 | `README.md`                          | Project documentation                               |
-| `tsconfig.json`                      | TypeScript configuration                            |
+| `tsconfig.json`                      | TypeScript configuration (includes tests directory) |
+| `tests/`                             | Jest test suite, mocks, and helpers                  |
+| `.github/workflows/ci.yml`           | GitHub Actions pipeline (lint/typecheck/tests)      |
 
 ## Technologies
 
@@ -203,6 +207,24 @@ The server provides the following API endpoints:
 | GET    | `/api/reviews/training/:trainingId` | Get reviews for a specific training | Authenticated users   |
 | PUT    | `/api/reviews/:id`                  | Update a review                     | Review author         |
 | DELETE | `/api/reviews/:id`                  | Delete a review                     | Review author         |
+
+### **Notifications**
+
+| Method | Endpoint                      | Description                              | Access              |
+| ------ | ----------------------------- | ---------------------------------------- | ------------------- |
+| POST   | `/api/notification/list`      | Paginated list of notifications          | Authenticated users |
+| GET    | `/api/notification/count-unread` | Get unread counter                    | Authenticated users |
+| PUT    | `/api/notification/mark-all-as-read` | Mark all as read                   | Authenticated users |
+| DELETE | `/api/notification/delete-all` | Remove all notifications for the user | Authenticated users |
+
+### **Cron Jobs / Internal automation**
+
+| Method | Endpoint                        | Description                                         | Access |
+| ------ | ------------------------------- | --------------------------------------------------- | ------ |
+| GET    | `/cron-job/city-inizialize`     | Runs the ISTAT/Wikidata sync (same as manual seed)   | `CRON_SECRET` |
+| GET    | `/cron-job/notification`        | Triggers the notification scheduler                  | `CRON_SECRET` |
+
+> Cron endpoints always require the header `Authorization: Bearer <CRON_SECRET>` and are not intended for public clients.
 
 ### **Leaderboard**
 

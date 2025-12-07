@@ -17,3 +17,21 @@ export class DataCannotBeEmpty extends BaseError {
     super(`${field} cannot be empty`, 400, true);
   }
 }
+
+export class UnauthorizedError extends BaseError {
+  constructor(message = "Unauthorized") {
+    super(message, 401, true);
+  }
+}
+
+export class ForbiddenError extends BaseError {
+  constructor(message = "Forbidden") {
+    super(message, 403, true);
+  }
+}
+
+export class ConflictError extends BaseError {
+  constructor(message = "Conflict") {
+    super(message, 409, true);
+  }
+}
