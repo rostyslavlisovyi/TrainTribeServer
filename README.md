@@ -140,7 +140,9 @@ The application is built on the `MVC` architecture pattern, where the `Model` re
 | `.eslintrc.json` / `eslint.config.js`| ESLint configuration                                |
 | `package.json`                       | Node.js dependencies file                           |
 | `README.md`                          | Project documentation                               |
-| `tsconfig.json`                      | TypeScript configuration                            |
+| `tsconfig.json`                      | TypeScript configuration (includes tests directory) |
+| `tests/`                             | Jest test suite, mocks, and helpers                  |
+| `.github/workflows/ci.yml`           | GitHub Actions pipeline (lint/typecheck/tests)      |
 
 ## Technologies
 

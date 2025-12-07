@@ -18,10 +18,10 @@
     "strict": true,
     "target": "ESNext",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "exclude": ["node_modules"],
-  "include": ["./src/**/*", "./tests/**/*", "env.d.ts", "instrument.js"],
+  "include": ["./src/**/*", "env.d.ts", "instrument.js"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",

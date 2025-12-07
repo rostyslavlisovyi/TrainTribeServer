@@ -6,4 +6,4 @@ export const getAuth = () => ({
   })
 });
 
-export type DecodedIdToken = Record<string, unknown>;
+export const DecodedIdToken = {} as unknown;

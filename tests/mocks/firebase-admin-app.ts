@@ -1,4 +1,4 @@
-export const apps: Record<string, unknown>[] = [];
+export const apps: Array<Record<string, unknown>> = [];
 
 export const initializeApp = () => {
   const app = {};

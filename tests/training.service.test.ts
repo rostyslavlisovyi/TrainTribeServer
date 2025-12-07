@@ -1,15 +1,11 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-jest.setTimeout(30000);
 import { TrainingStatusEnum } from "../src/types/index.js";
 import TrainingModel from "../src/models/MongoDB/training.model.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
 import { TrainingService } from "../src/services/training.service.js";
-import {
-  BadRequestError,
-  ForbiddenError,
-  NotFoundError
-} from "../src/errors/index.js";
+import { ConflictError, ForbiddenError, NotFoundError } from "../src/errors/index.js";
+import type { ITraining } from "../src/interfaces/index.js";
 
 let mongo: MongoMemoryServer;
 
@@ -30,17 +26,9 @@ afterEach(async () => {
   await UserModel.deleteMany({});
 });
 
-async function seedTraining(
-  status: TrainingStatusEnum = TrainingStatusEnum.SCHEDULED
-) {
-  const creator = await UserModel.create({
-    authId: "creator",
-    email: "creator@test.com"
-  });
-  const trainee = await UserModel.create({
-    authId: "user",
-    email: "user@test.com"
-  });
+async function seedTraining(status: TrainingStatusEnum = TrainingStatusEnum.SCHEDULED) {
+  const creator = await UserModel.create({ authId: "creator", email: "creator@test.com" });
+  const trainee = await UserModel.create({ authId: "user", email: "user@test.com" });
 
   const training = await TrainingModel.create({
     title: "Test",
@@ -48,8 +36,6 @@ async function seedTraining(
     status,
     sport: "RUNNING",
     date: new Date(),
-    address: "Test address",
-    location: { type: "Point", coordinates: [12, 50] },
     participants: [
       {
         participant: trainee._id,
@@ -65,11 +51,7 @@ describe("TrainingService.changeStatus", () => {
   it("throws NotFoundError when training does not exist", async () => {
     const service = new TrainingService();
     await expect(
-      service.changeStatus(
-        new mongoose.Types.ObjectId().toString(),
-        "user",
-        TrainingStatusEnum.COMPLETED
-      )
+      service.changeStatus(new mongoose.Types.ObjectId().toString(), "user", TrainingStatusEnum.COMPLETED)
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
@@ -78,27 +60,17 @@ describe("TrainingService.changeStatus", () => {
     const { training, trainee } = await seedTraining();
 
     await expect(
-      service.changeStatus(
-        training._id.toString(),
-        trainee._id.toString(),
-        TrainingStatusEnum.COMPLETED
-      )
+      service.changeStatus(training._id.toString(), trainee._id.toString(), TrainingStatusEnum.COMPLETED)
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("throws ConflictError on invalid state change", async () => {
     const service = new TrainingService();
-    const { training, creator } = await seedTraining(
-      TrainingStatusEnum.COMPLETED
-    );
+    const { training, creator } = await seedTraining(TrainingStatusEnum.COMPLETED);
 
     await expect(
-      service.changeStatus(
-        training._id.toString(),
-        creator._id.toString(),
-        "INVALID" as TrainingStatusEnum
-      )
-    ).rejects.toBeInstanceOf(BadRequestError);
+      service.changeStatus(training._id.toString(), creator._id.toString(), "INVALID" as TrainingStatusEnum)
+    ).rejects.toBeInstanceOf(ConflictError);
   });
 
   it("completes training and awards points", async () => {
