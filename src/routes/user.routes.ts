@@ -95,6 +95,8 @@ userRoute.get("/me", (req, res) => controller(req).getMe(req, res));
 
 userRoute.get("/:id", (req, res) => controller(req).get(req, res));
 
+userRoute.post("/list", (req, res) => controller(req).list(req, res));
+
 // POST: Create new user
 /**
  * @swagger

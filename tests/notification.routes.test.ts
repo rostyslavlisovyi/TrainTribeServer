@@ -12,7 +12,7 @@ import NotificationModel from "../src/models/MongoDB/notification.model.js";
 import { NotificationEnum } from "../src/types/enums.js";
 
 let mongo: MongoMemoryServer;
-let currentAuthId = "notification-auth";
+const currentAuthId = "notification-auth";
 
 const app = express();
 app.use(express.json());
@@ -28,7 +28,8 @@ app.use((req, _res, next) => {
 app.use(authContainerMiddleware);
 app.use("/notification", notificationRoute);
 
-const uniqueEmail = (prefix: string) => `${prefix}-${new mongoose.Types.ObjectId().toString()}@test.com`;
+const uniqueEmail = (prefix: string) =>
+  `${prefix}-${new mongoose.Types.ObjectId().toString()}@test.com`;
 
 async function seedUserWithNotifications() {
   const user = await UserModel.create({
@@ -102,8 +103,12 @@ describe("Notification routes", () => {
 
     expect(Array.isArray(response.body?.data)).toBe(true);
     expect(response.body.totalItems).toBe(2);
-    const userIds = response.body.data.map((item: { user: string }) => item.user);
-    expect(userIds.every((id: string) => id === user._id.toString())).toBe(true);
+    const userIds = response.body.data.map(
+      (item: { user: string }) => item.user
+    );
+    expect(userIds.every((id: string) => id === user._id.toString())).toBe(
+      true
+    );
   });
 
   it("returns the count of unread notifications", async () => {
@@ -125,7 +130,10 @@ describe("Notification routes", () => {
 
     expect(response.body.data).toBe(1);
 
-    const unread = await NotificationModel.countDocuments({ user: user._id, read: false });
+    const unread = await NotificationModel.countDocuments({
+      user: user._id,
+      read: false
+    });
     expect(unread).toBe(0);
   });
 
@@ -138,7 +146,9 @@ describe("Notification routes", () => {
 
     expect(response.body.data).toBe(2);
 
-    const remaining = await NotificationModel.countDocuments({ user: user._id });
+    const remaining = await NotificationModel.countDocuments({
+      user: user._id
+    });
     expect(remaining).toBe(0);
   });
 });
