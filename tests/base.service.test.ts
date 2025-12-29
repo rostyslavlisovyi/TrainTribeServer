@@ -50,6 +50,20 @@ class DummyService extends BaseService<IDummy> {
   }
 }
 
+class OwnershipDummyService extends BaseService<IDummy> {
+  constructor(auth?: AuthResult) {
+    super(DummyModel, auth);
+  }
+
+  // no base filter, only ownership guard for mutations
+  protected override async ownershipFilter() {
+    if (this.auth?.payload?.user_id) {
+      return { owner: this.auth.payload.user_id };
+    }
+    return {};
+  }
+}
+
 describe("BaseService", () => {
   let mongo: MongoMemoryServer;
 
@@ -162,5 +176,32 @@ describe("BaseService", () => {
     await expect(
       service.delete(new mongoose.Types.ObjectId().toString())
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("enforces ownership filters on update/delete when auth is provided", async () => {
+    const ownerA = await DummyModel.create({ name: "OwnerA", owner: "a" });
+    const otherDoc = await DummyModel.create({ name: "OwnerB", owner: "b" });
+
+    const auth = { payload: { user_id: "a" } } as AuthResult;
+    const service = new OwnershipDummyService(auth);
+
+    const updated = await service.update({
+      id: ownerA._id.toString(),
+      entity: { name: "OwnerA-updated" } as Partial<IDummy>
+    });
+    expect(updated?.name).toBe("OwnerA-updated");
+
+    await expect(
+      service.update({
+        id: otherDoc._id.toString(),
+        entity: { name: "Illegal" } as Partial<IDummy>
+      })
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    await expect(service.delete(otherDoc._id.toString())).rejects.toBeInstanceOf(
+      NotFoundError
+    );
+
+    await expect(service.delete(ownerA._id.toString())).resolves.toBe(true);
   });
 });

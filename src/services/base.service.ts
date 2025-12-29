@@ -29,7 +29,16 @@ export abstract class BaseService<T extends Document> {
     this.auth = auth;
   }
 
-  protected async baseFilter() {
+  protected async baseFilter(): Promise<FilterQuery<T>> {
+    return {};
+  }
+
+  /**
+   * Additional filter applied to mutation queries to enforce ownership rules.
+   * Services can override it to ensure update/delete affect only caller's data.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async ownershipFilter(_id: string): Promise<FilterQuery<T>> {
     return {};
   }
 
@@ -147,7 +156,13 @@ export abstract class BaseService<T extends Document> {
       if (!entity || Object.keys(entity).length === 0) {
         throw new DataCannotBeEmpty("Update data cannot be empty");
       }
-      let query = this.model.findByIdAndUpdate(id, entity, {
+      const combinedFilters = {
+        _id: id,
+        ...(await this.baseFilter()),
+        ...(await this.ownershipFilter(id))
+      };
+
+      let query = this.model.findOneAndUpdate(combinedFilters, entity, {
         new: true
       });
       if (populateFields) {
@@ -166,7 +181,13 @@ export abstract class BaseService<T extends Document> {
 
   async delete(id: string): Promise<boolean> {
     try {
-      const deleted = await this.model.findByIdAndDelete(id);
+      const combinedFilters = {
+        _id: id,
+        ...(await this.baseFilter()),
+        ...(await this.ownershipFilter(id))
+      };
+
+      const deleted = await this.model.findOneAndDelete(combinedFilters);
 
       if (!deleted) {
         throw new NotFoundError(`Data with id ${id} not found`);

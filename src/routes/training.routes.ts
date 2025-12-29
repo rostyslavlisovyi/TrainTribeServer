@@ -148,6 +148,7 @@ trainingRoutes.post("/", (req, res) => controller(req).create(req, res));
  * /training/{id}:
  *   put:
  *     summary: Update a training by ID
+ *     description: Only the training creator can update their session.
  *     tags: [Trainings]
  *     parameters:
  *       - in: path
@@ -210,6 +211,8 @@ trainingRoutes.post("/", (req, res) => controller(req).create(req, res));
  *                   $ref: '#/components/schemas/Training'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
@@ -367,6 +370,7 @@ trainingRoutes.delete("/:id/participants", (req, res) =>
  * /training/{id}:
  *   delete:
  *     summary: Delete a training by ID
+ *     description: Only the training creator can delete their session.
  *     tags: [Trainings]
  *     parameters:
  *       - in: path
@@ -389,6 +393,8 @@ trainingRoutes.delete("/:id/participants", (req, res) =>
  *                 message:
  *                   type: string
  *                   example: "Training deleted successfully"
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
