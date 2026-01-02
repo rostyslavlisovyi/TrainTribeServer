@@ -16,6 +16,12 @@ This project includes **Swagger** documentation, which provides an interactive u
 - **Points system**: Users earn points for organizing trainings and receiving positive reviews.
 - **Leaderboard system**: A monthly leaderboard is available, ranking users by their points.
 
+### Authorization & Ownership
+
+- `PUT/DELETE /api/training/:id` – enforced on the server so only the original creator can modify or remove a session; other users receive `403 Forbidden`.
+- `PUT/DELETE /api/user/:id` – restricted to the authenticated profile (`authId` must match the token) to prevent tampering with other accounts.
+- Public CRUD endpoints (cities, leaderboards, etc.) stay open, while private resources now include server-side guards to prevent cross-user edits.
+
 ## Installation and Setup Instructions
 
 ### Prerequisites

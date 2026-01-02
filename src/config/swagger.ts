@@ -67,6 +67,26 @@ const swaggerOptions = {
             }
           }
         },
+        Forbidden: {
+          description: "Forbidden - The authenticated user cannot access this resource",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: {
+                    type: "string",
+                    example: "Forbidden"
+                  },
+                  statusCode: {
+                    type: "integer",
+                    example: 403
+                  }
+                }
+              }
+            }
+          }
+        },
         NotFound: {
           description: "Not Found - The requested resource was not found",
           content: {
@@ -526,7 +546,7 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ["./src/routes/*.js"]
+  apis: ["./src/routes/**/*.ts", "./src/routes/**/*.js"]
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);

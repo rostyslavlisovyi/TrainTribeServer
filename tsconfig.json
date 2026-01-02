@@ -18,9 +18,9 @@
     "strict": true,
     "target": "ESNext",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "tests", "dist"],
   "include": ["./src/**/*", "env.d.ts", "instrument.js"],
   "ts-node": {
     "esm": true,

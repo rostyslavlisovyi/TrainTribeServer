@@ -21,6 +21,14 @@ export class TrainingService extends BaseService<ITraining> {
     super(TrainingModel, auth);
   }
 
+  protected override async ownershipFilter() {
+    if (!this.auth) {
+      return {};
+    }
+    const user = await this.getAuthUser();
+    return { creator: user._id };
+  }
+
   override async create(entity: Partial<ITraining>): Promise<ITraining> {
     const newTraining = await super.create(entity);
     if (newTraining && newTraining.creator) {
