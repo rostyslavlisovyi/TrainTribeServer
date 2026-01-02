@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { handleError } from "utils/index.js";
 import { BaseResponse } from "../models/index.js";
 import { CloudinaryService } from "../services/index.js";
 export class CloudinaryController {
@@ -20,10 +21,7 @@ export class CloudinaryController {
 
       res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
-      res.status(500).json({
-        message: "UPLOAD FAILED",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      handleError(res, req, error);
     }
   };
 
@@ -40,10 +38,7 @@ export class CloudinaryController {
 
       res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
-      res.status(500).json({
-        message: "DELETE FAILED",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      handleError(res, req, error);
     }
   };
 }
