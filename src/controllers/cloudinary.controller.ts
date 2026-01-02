@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { handleError } from "utils/index.js";
 import { BaseResponse } from "../models/index.js";
 import { CloudinaryService } from "../services/index.js";
+import { handleError } from "../utils/index.js";
 export class CloudinaryController {
   private readonly service: CloudinaryService;
 
