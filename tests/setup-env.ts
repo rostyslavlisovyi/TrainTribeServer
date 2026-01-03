@@ -4,7 +4,10 @@ process.env.FIREBASE_CLIENT_EMAIL =
   process.env.FIREBASE_CLIENT_EMAIL || "test@example.com";
 process.env.FIREBASE_PRIVATE_KEY =
   process.env.FIREBASE_PRIVATE_KEY ||
-  "-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n";
+  `-----BEGIN PRIVATE KEY-----
+TEST
+-----END PRIVATE KEY-----
+`;
 process.env.CRON_SECRET = process.env.CRON_SECRET || "test-secret";
 process.env.APP_URL = process.env.APP_URL || "http://localhost:3000";
 process.env.SENTRY_DSN =
