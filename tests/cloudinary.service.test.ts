@@ -3,7 +3,7 @@ import { CloudinaryService } from "../src/services/cloudinary.service.js";
 jest.mock("cloudinary", () => ({
   v2: {
     utils: {
-      api_sign_request: jest.fn((data, secret) => "test-signature")
+      api_sign_request: jest.fn(() => "test-signature")
     }
   }
 }));
@@ -49,4 +49,3 @@ describe("CloudinaryService", () => {
     });
   });
 });
-

@@ -63,4 +63,3 @@ describe("Cloudinary routes", () => {
     expect(response.body.data.signature).toBe("test-signature");
   });
 });
-

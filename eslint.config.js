@@ -2,9 +2,9 @@ import js from "@eslint/js";
 import prettierPlugin from "eslint-plugin-prettier";
 import eslintReact from "eslint-plugin-react";
 import globals from "globals";
+import path from "path";
 import tslint from "typescript-eslint";
 import { fileURLToPath } from "url";
-import path from "path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
