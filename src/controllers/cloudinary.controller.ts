@@ -9,15 +9,10 @@ export class CloudinaryController {
     this.service = cloudinaryService;
   }
 
-  upload = async (req: Request, res: Response): Promise<void> => {
+  getSignatureUpload = async (req: Request, res: Response): Promise<void> => {
     try {
-      if (!req.file) {
-        res.status(400).json({ message: "NO FILE UPLOADED" });
-        return;
-      }
-
       const folder = req.body.folder;
-      const result = await this.service.upload(req.file, folder);
+      const result = await this.service.getSignatureUpload(folder);
 
       res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
@@ -25,16 +20,10 @@ export class CloudinaryController {
     }
   };
 
-  delete = async (req: Request, res: Response): Promise<void> => {
+  getSignatureDelete = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { public_id } = req.params;
-
-      if (!public_id) {
-        res.status(400).json({ message: "PUBLIC_ID IS REQUIRED" });
-        return;
-      }
-
-      const result = await this.service.delete(public_id);
+      const publicId = req.body.publicId;
+      const result = await this.service.getSignatureDelete(publicId);
 
       res.status(200).json(new BaseResponse(result));
     } catch (error: unknown) {
