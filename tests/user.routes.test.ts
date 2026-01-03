@@ -114,7 +114,7 @@ describe("User routes", () => {
   });
 
   it("updates an existing user", async () => {
-    const user = await createUser({ firstName: "Old" });
+    const user = await createUser({ authId: currentAuthId, firstName: "Old" });
 
     const response = await request(app)
       .put(`/user/${user._id.toString()}`)

@@ -2,13 +2,19 @@
 const config = {
   preset: "ts-jest",
   testEnvironment: "node",
+  extensionsToTreatAsEsm: [".ts"],
+  testTimeout: 30000,
   transformIgnorePatterns: ["/node_modules/(?!(chalk|ansi-styles)/)"],
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
         useESM: true,
-        isolatedModules: true
+        tsconfig: {
+          module: "ESNext",
+          moduleResolution: "node16",
+          esModuleInterop: true
+        }
       }
     ]
   },
@@ -21,16 +27,6 @@ const config = {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
   testMatch: ["**/*.test.ts"],
-  globals: {
-    "ts-jest": {
-      isolatedModules: true,
-      tsconfig: {
-        module: "Node16",
-        moduleResolution: "node16",
-        esModuleInterop: true
-      }
-    }
-  },
   clearMocks: true,
   passWithNoTests: true
 };

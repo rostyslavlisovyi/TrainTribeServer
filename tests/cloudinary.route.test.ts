@@ -6,11 +6,19 @@ import cloudinaryRoute from "../src/routes/cloudinary.route.js";
 
 const createApp = () => {
   const cloudinaryService = {
-    upload: jest.fn().mockResolvedValue({
-      secure_url: "https://cdn.example.com/image.jpg",
-      public_id: "public-id"
+    getSignatureUpload: jest.fn().mockResolvedValue({
+      timestamp: Math.round(Date.now() / 1000),
+      signature: "test-signature",
+      apiKey: "api-key",
+      cloudName: "cloud-name",
+      folder: "base/avatars"
     }),
-    delete: jest.fn().mockResolvedValue({ result: "ok" })
+    getSignatureDelete: jest.fn().mockResolvedValue({
+      timestamp: Math.round(Date.now() / 1000),
+      signature: "test-signature",
+      apiKey: "api-key",
+      cloudName: "cloud-name"
+    })
   };
 
   const controller = new CloudinaryController(cloudinaryService as never);
@@ -20,6 +28,7 @@ const createApp = () => {
   } as unknown as AwilixContainer;
 
   const app = express();
+  app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).container = container;
     next();
@@ -30,40 +39,28 @@ const createApp = () => {
 };
 
 describe("Cloudinary routes", () => {
-  it("uploads a file and returns Cloudinary data", async () => {
+  it("returns signature for upload", async () => {
     const { app, cloudinaryService } = createApp();
 
     const response = await request(app)
-      .post("/cloudinary/upload")
-      .field("folder", "avatars")
-      .attach("file", Buffer.from("fake"), "file.png")
+      .post("/cloudinary/signature-upload")
+      .send({ folder: "avatars" })
       .expect(200);
 
-    expect(cloudinaryService.upload).toHaveBeenCalledTimes(1);
-    expect(cloudinaryService.upload.mock.calls[0][1]).toBe("avatars");
-    expect(response.body.data.public_id).toBe("public-id");
+    expect(cloudinaryService.getSignatureUpload).toHaveBeenCalledTimes(1);
+    expect(response.body.data.folder).toBe("base/avatars");
   });
 
-  it("rejects upload without a file", async () => {
+  it("returns signature for delete", async () => {
     const { app, cloudinaryService } = createApp();
 
     const response = await request(app)
-      .post("/cloudinary/upload")
-      .field("folder", "avatars")
-      .expect(400);
-
-    expect(response.body.message).toBe("NO FILE UPLOADED");
-    expect(cloudinaryService.upload).not.toHaveBeenCalled();
-  });
-
-  it("deletes an asset by public id", async () => {
-    const { app, cloudinaryService } = createApp();
-
-    const response = await request(app)
-      .delete("/cloudinary/image-123")
+      .post("/cloudinary/signature-delete")
+      .send({ publicId: "image-123" })
       .expect(200);
 
-    expect(cloudinaryService.delete).toHaveBeenCalledWith("image-123");
-    expect(response.body.data.result).toBe("ok");
+    expect(cloudinaryService.getSignatureDelete).toHaveBeenCalledTimes(1);
+    expect(response.body.data.signature).toBe("test-signature");
   });
 });
+

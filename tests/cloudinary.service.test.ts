@@ -1,75 +1,52 @@
-import { Writable } from "stream";
 import { CloudinaryService } from "../src/services/cloudinary.service.js";
-
-const uploadStreamMock = jest.fn();
-const destroyMock = jest.fn();
 
 jest.mock("cloudinary", () => ({
   v2: {
-    uploader: {
-      upload_stream: (...args: unknown[]) => uploadStreamMock(...args),
-      destroy: (...args: unknown[]) => destroyMock(...args)
+    utils: {
+      api_sign_request: jest.fn((data, secret) => "test-signature")
     }
   }
 }));
 
-const mockUploadStream = (result: unknown, error: Error | null = null) => {
-  uploadStreamMock.mockImplementation((_options, callback) => {
-    const stream = new Writable({
-      write(_chunk, _encoding, done) {
-        callback(error, result);
-        done();
-      }
-    });
-    return stream;
-  });
-};
-
 describe("CloudinaryService", () => {
   const service = new CloudinaryService();
-  const baseFile = {
-    buffer: Buffer.from("file"),
-    fieldname: "file",
-    originalname: "file.png",
-    encoding: "7bit",
-    mimetype: "image/png",
-    size: 4,
-    destination: "",
-    filename: "",
-    path: ""
-  } as Express.Multer.File;
 
   beforeEach(() => {
     process.env.CLOUDINARY_BASE_FOLDER_UPLOAD = "base";
+    process.env.CLOUDINARY_API_SECRET = "secret";
+    process.env.CLOUDINARY_API_KEY = "api-key";
+    process.env.CLOUDINARY_CLOUD_NAME = "cloud-name";
     jest.clearAllMocks();
   });
 
-  it("uploads a file with the correct folder", async () => {
-    const expected = { secure_url: "https://cdn/test", public_id: "pid" };
-    mockUploadStream(expected);
+  describe("getSignatureUpload", () => {
+    it("returns signature with base folder only", async () => {
+      const result = await service.getSignatureUpload();
 
-    const result = await service.upload(baseFile, "avatars");
+      expect(result.signature).toBe("test-signature");
+      expect(result.apiKey).toBe("api-key");
+      expect(result.cloudName).toBe("cloud-name");
+      expect(result.folder).toBe("base");
+      expect(result.timestamp).toBeGreaterThan(0);
+    });
 
-    expect(result).toEqual(expected);
-    expect(uploadStreamMock).toHaveBeenCalledTimes(1);
-    const options = uploadStreamMock.mock.calls[0][0];
-    expect(options.asset_folder).toBe("base/avatars");
+    it("returns signature with subfolder", async () => {
+      const result = await service.getSignatureUpload("avatars");
+
+      expect(result.folder).toBe("base/avatars");
+      expect(result.signature).toBe("test-signature");
+    });
   });
 
-  it("rejects when Cloudinary returns an error", async () => {
-    mockUploadStream(null, new Error("upload failed"));
+  describe("getSignatureDelete", () => {
+    it("returns signature for delete operation", async () => {
+      const result = await service.getSignatureDelete("public-id-123");
 
-    await expect(service.upload(baseFile, undefined)).rejects.toThrow(
-      "upload failed"
-    );
-  });
-
-  it("deletes an asset by public id", async () => {
-    destroyMock.mockResolvedValue({ result: "ok" });
-
-    const response = await service.delete("public-id");
-
-    expect(destroyMock).toHaveBeenCalledWith("public-id");
-    expect(response).toEqual({ result: "ok" });
+      expect(result.signature).toBe("test-signature");
+      expect(result.apiKey).toBe("api-key");
+      expect(result.cloudName).toBe("cloud-name");
+      expect(result.timestamp).toBeGreaterThan(0);
+    });
   });
 });
+
