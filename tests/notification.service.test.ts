@@ -1,6 +1,6 @@
+import type { AuthResult } from "express-oauth2-jwt-bearer";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
-import type { AuthResult } from "express-oauth2-jwt-bearer";
 import NotificationModel from "../src/models/MongoDB/notification.model.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
 import { NotificationService } from "../src/services/notification.service.js";
@@ -30,7 +30,10 @@ describe("NotificationService", () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
-    await Promise.all([NotificationModel.deleteMany({}), UserModel.deleteMany({})]);
+    await Promise.all([
+      NotificationModel.deleteMany({}),
+      UserModel.deleteMany({})
+    ]);
   });
 
   const buildUserService = (userOverrides: Record<string, unknown> = {}) => {
@@ -91,7 +94,10 @@ describe("NotificationService", () => {
   describe("authenticated queries", () => {
     const buildAuthService = async () => {
       const authId = `auth-${new mongoose.Types.ObjectId().toString()}`;
-      const user = await UserModel.create({ authId, email: `${authId}@test.com` });
+      const user = await UserModel.create({
+        authId,
+        email: `${authId}@test.com`
+      });
       const auth = {
         payload: {
           user_id: authId
@@ -147,7 +153,10 @@ describe("NotificationService", () => {
       const updated = await service.markAllAsRead();
       expect(updated).toBe(2);
 
-      const unread = await NotificationModel.countDocuments({ user: user._id, read: false });
+      const unread = await NotificationModel.countDocuments({
+        user: user._id,
+        read: false
+      });
       expect(unread).toBe(0);
     });
 
@@ -164,7 +173,9 @@ describe("NotificationService", () => {
 
       const deleted = await service.deleteAll();
       expect(deleted).toBe(1);
-      expect(await NotificationModel.countDocuments({ user: user._id })).toBe(0);
+      expect(await NotificationModel.countDocuments({ user: user._id })).toBe(
+        0
+      );
     });
 
     it("detects notifications sent earlier today", async () => {

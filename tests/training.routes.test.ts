@@ -1,17 +1,17 @@
-import express from "express";
-import request from "supertest";
 import { scopePerRequest } from "awilix-express";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import request from "supertest";
 import container from "../src/container.js";
-import trainingRoutes from "../src/routes/training.routes.js";
 import { authContainerMiddleware } from "../src/middlewares/index.js";
-import UserModel from "../src/models/MongoDB/user.model.js";
-import TrainingModel from "../src/models/MongoDB/training.model.js";
-import NotificationModel from "../src/models/MongoDB/notification.model.js";
 import CommentModel from "../src/models/MongoDB/comment.model.js";
+import NotificationModel from "../src/models/MongoDB/notification.model.js";
+import TrainingModel from "../src/models/MongoDB/training.model.js";
+import UserModel from "../src/models/MongoDB/user.model.js";
 import UserLeaderboardModel from "../src/models/MongoDB/userLeaderboard.model.js";
+import trainingRoutes from "../src/routes/training.routes.js";
 import {
   NotificationEnum,
   SportsEnum,
@@ -37,7 +37,10 @@ app.use(authContainerMiddleware);
 app.use("/training", trainingRoutes);
 
 const futureDate = () => new Date(Date.now() + 60 * 60 * 1000);
-const baseLocation = { type: "Point", coordinates: [12.4839, 41.8947] } as const;
+const baseLocation = {
+  type: "Point",
+  coordinates: [12.4839, 41.8947]
+} as const;
 
 const uniqueEmail = () =>
   `training-${new mongoose.Types.ObjectId().toString()}@test.com`;
@@ -50,7 +53,8 @@ async function createUser(
   }> = {}
 ) {
   const data = {
-    authId: overrides.authId ?? `auth-${new mongoose.Types.ObjectId().toString()}`,
+    authId:
+      overrides.authId ?? `auth-${new mongoose.Types.ObjectId().toString()}`,
     email: uniqueEmail(),
     sports: overrides.sports ?? [SportsEnum.RUNNING],
     trainingLevel: overrides.trainingLevel ?? TrainingLevelEnum.BEGINNER
@@ -59,7 +63,11 @@ async function createUser(
   return await UserModel.create({ ...data, firstName: "Tester" });
 }
 
-async function createTraining(overrides: Partial<{ creator: mongoose.Types.ObjectId } & Record<string, unknown>> = {}) {
+async function createTraining(
+  overrides: Partial<
+    { creator: mongoose.Types.ObjectId } & Record<string, unknown>
+  > = {}
+) {
   const creator = overrides.creator ?? (await createUser())._id;
 
   return await TrainingModel.create({
@@ -123,7 +131,9 @@ describe("Training routes", () => {
       .expect(201);
 
     expect(response.body.data.title).toBe("Tempo Session");
-    expect(await TrainingModel.countDocuments({ title: "Tempo Session" })).toBe(1);
+    expect(await TrainingModel.countDocuments({ title: "Tempo Session" })).toBe(
+      1
+    );
   });
 
   it("lists trainings with pagination", async () => {

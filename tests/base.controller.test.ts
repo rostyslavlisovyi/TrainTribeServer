@@ -65,7 +65,10 @@ describe("BaseController", () => {
     expect(res.status).toHaveBeenCalledWith(400);
 
     const res2 = createRes();
-    await controller.list({ body: { pageNum: 1, pageSize: 10 } } as any, res2 as any);
+    await controller.list(
+      { body: { pageNum: 1, pageSize: 10 } } as any,
+      res2 as any
+    );
     expect(service.list).toHaveBeenCalledWith({
       pageNum: 1,
       pageSize: 10,
@@ -114,7 +117,9 @@ describe("BaseController", () => {
       entity: { name: "Updated" },
       populateFields: "creator"
     });
-    expect(res.json.mock.calls[0][0]).toMatchObject({ data: { name: "Updated" } });
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      data: { name: "Updated" }
+    });
   });
 
   it("deletes entities", async () => {

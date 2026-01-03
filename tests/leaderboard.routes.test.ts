@@ -1,8 +1,8 @@
+import type { AwilixContainer } from "awilix";
 import express from "express";
 import request from "supertest";
-import type { AwilixContainer } from "awilix";
-import leaderboardRoutes from "../src/routes/leaderboard.routes.js";
 import { LeaderboardController } from "../src/controllers/leaderboard.controller.js";
+import leaderboardRoutes from "../src/routes/leaderboard.routes.js";
 
 const verifyIdToken = jest.fn(async () => ({
   uid: "auth-user",

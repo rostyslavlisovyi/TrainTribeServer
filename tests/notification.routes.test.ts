@@ -1,14 +1,14 @@
-import express from "express";
-import request from "supertest";
 import { scopePerRequest } from "awilix-express";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import request from "supertest";
 import container from "../src/container.js";
-import notificationRoute from "../src/routes/notification.route.js";
 import { authContainerMiddleware } from "../src/middlewares/index.js";
-import UserModel from "../src/models/MongoDB/user.model.js";
 import NotificationModel from "../src/models/MongoDB/notification.model.js";
+import UserModel from "../src/models/MongoDB/user.model.js";
+import notificationRoute from "../src/routes/notification.route.js";
 import { NotificationEnum } from "../src/types/enums.js";
 
 let mongo: MongoMemoryServer;

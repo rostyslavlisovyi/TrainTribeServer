@@ -1,18 +1,18 @@
+import type { AuthResult } from "express-oauth2-jwt-bearer";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose, { Document, Model, Schema, Types } from "mongoose";
-import type { AuthResult } from "express-oauth2-jwt-bearer";
 jest.mock("../src/models/index.js", () => {
   const mongoose = require("mongoose");
   const TestUserSchema = new mongoose.Schema({ authId: String });
-  const TestUserModel = mongoose.models.TestUser ||
-    mongoose.model("TestUser", TestUserSchema);
+  const TestUserModel =
+    mongoose.models.TestUser || mongoose.model("TestUser", TestUserSchema);
   return {
     UserModel: TestUserModel
   };
 });
 
-import { BaseService } from "../src/services/base.service.js";
 import { DataCannotBeEmpty, NotFoundError } from "../src/errors/index.js";
+import { BaseService } from "../src/services/base.service.js";
 
 interface IRelated extends Document {
   title: string;
@@ -198,9 +198,9 @@ describe("BaseService", () => {
       })
     ).rejects.toBeInstanceOf(NotFoundError);
 
-    await expect(service.delete(otherDoc._id.toString())).rejects.toBeInstanceOf(
-      NotFoundError
-    );
+    await expect(
+      service.delete(otherDoc._id.toString())
+    ).rejects.toBeInstanceOf(NotFoundError);
 
     await expect(service.delete(ownerA._id.toString())).resolves.toBe(true);
   });

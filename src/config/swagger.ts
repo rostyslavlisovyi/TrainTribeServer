@@ -68,7 +68,8 @@ const swaggerOptions = {
           }
         },
         Forbidden: {
-          description: "Forbidden - The authenticated user cannot access this resource",
+          description:
+            "Forbidden - The authenticated user cannot access this resource",
           content: {
             "application/json": {
               schema: {

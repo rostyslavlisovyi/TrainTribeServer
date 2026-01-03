@@ -1,16 +1,16 @@
-import express from "express";
-import request from "supertest";
 import { scopePerRequest } from "awilix-express";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
-import { TrainingStatusEnum } from "../src/types/index.js";
-import container from "../src/container.js";
-import reviewRoutes from "../src/routes/review.routes.js";
-import { authContainerMiddleware } from "../src/middlewares/index.js";
-import UserModel from "../src/models/MongoDB/user.model.js";
-import TrainingModel from "../src/models/MongoDB/training.model.js";
-import ReviewModel from "../src/models/MongoDB/review.model.js";
+import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import request from "supertest";
+import container from "../src/container.js";
+import { authContainerMiddleware } from "../src/middlewares/index.js";
+import ReviewModel from "../src/models/MongoDB/review.model.js";
+import TrainingModel from "../src/models/MongoDB/training.model.js";
+import UserModel from "../src/models/MongoDB/user.model.js";
+import reviewRoutes from "../src/routes/review.routes.js";
+import { TrainingStatusEnum } from "../src/types/index.js";
 
 let mongo: MongoMemoryServer;
 let currentAuthId = "reviewer-auth";

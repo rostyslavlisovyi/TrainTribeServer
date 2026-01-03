@@ -19,14 +19,22 @@ describe("LeaderboardService", () => {
   });
 
   afterEach(async () => {
-    await Promise.all([UserModel.deleteMany({}), UserLeaderboardModel.deleteMany({})]);
+    await Promise.all([
+      UserModel.deleteMany({}),
+      UserLeaderboardModel.deleteMany({})
+    ]);
   });
 
   const createUser = async (
-    overrides: Partial<{ firstName: string; lastName: string; authId: string }> = {}
+    overrides: Partial<{
+      firstName: string;
+      lastName: string;
+      authId: string;
+    }> = {}
   ) => {
     return await UserModel.create({
-      authId: overrides.authId ?? `auth-${new mongoose.Types.ObjectId().toString()}`,
+      authId:
+        overrides.authId ?? `auth-${new mongoose.Types.ObjectId().toString()}`,
       email: `${new mongoose.Types.ObjectId().toString()}@test.com`,
       firstName: overrides.firstName ?? "Runner",
       lastName: overrides.lastName ?? "One"

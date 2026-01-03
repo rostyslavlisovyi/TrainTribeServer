@@ -1,16 +1,16 @@
-import express from "express";
-import request from "supertest";
 import { scopePerRequest } from "awilix-express";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import request from "supertest";
 import container from "../src/container.js";
-import cityRoute from "../src/routes/city.routes.js";
 import { authContainerMiddleware } from "../src/middlewares/index.js";
 import CityModel from "../src/models/MongoDB/city.model.js";
+import cityRoute from "../src/routes/city.routes.js";
 
 let mongo: MongoMemoryServer;
-let currentAuthId = "city-auth";
+const currentAuthId = "city-auth";
 
 const app = express();
 app.use(express.json());
@@ -26,7 +26,10 @@ app.use((req, _res, next) => {
 app.use(authContainerMiddleware);
 app.use("/city", cityRoute);
 
-const baseLocation = { type: "Point", coordinates: [12.4924, 41.8902] } as const;
+const baseLocation = {
+  type: "Point",
+  coordinates: [12.4924, 41.8902]
+} as const;
 
 async function createCity(
   overrides: Partial<{

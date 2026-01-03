@@ -1,8 +1,8 @@
+import type { AwilixContainer } from "awilix";
 import express from "express";
 import request from "supertest";
-import type { AwilixContainer } from "awilix";
-import geocodeRoutes from "../src/routes/geocode.routes.js";
 import { GeocodeController } from "../src/controllers/geocode.controller.js";
+import geocodeRoutes from "../src/routes/geocode.routes.js";
 
 const createApp = () => {
   const geocodeService = {
@@ -57,7 +57,11 @@ describe("Geocode routes", () => {
       .query({ lat: "41.9", lon: "12.5" })
       .expect(200);
 
-    expect(geocodeService.reverse).toHaveBeenCalledWith("41.9", "12.5", "en-US");
+    expect(geocodeService.reverse).toHaveBeenCalledWith(
+      "41.9",
+      "12.5",
+      "en-US"
+    );
     expect(response.body.data.display_name).toBe("Colosseo");
   });
 

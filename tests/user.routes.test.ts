@@ -1,13 +1,13 @@
-import express from "express";
-import request from "supertest";
 import { scopePerRequest } from "awilix-express";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import request from "supertest";
 import container from "../src/container.js";
-import userRoute from "../src/routes/user.routes.js";
 import { authContainerMiddleware } from "../src/middlewares/index.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
+import userRoute from "../src/routes/user.routes.js";
 
 let mongo: MongoMemoryServer;
 let currentAuthId = "user-auth";

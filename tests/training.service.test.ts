@@ -163,7 +163,10 @@ describe("TrainingService.addParticipant", () => {
     });
 
     await expect(
-      service.addParticipant(training._id.toString(), participant._id.toString())
+      service.addParticipant(
+        training._id.toString(),
+        participant._id.toString()
+      )
     ).rejects.toBeInstanceOf(ConflictError);
   });
 

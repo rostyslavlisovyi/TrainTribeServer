@@ -1,8 +1,8 @@
+import type { AwilixContainer } from "awilix";
 import express from "express";
 import request from "supertest";
-import type { AwilixContainer } from "awilix";
-import cloudinaryRoute from "../src/routes/cloudinary.route.js";
 import { CloudinaryController } from "../src/controllers/cloudinary.controller.js";
+import cloudinaryRoute from "../src/routes/cloudinary.route.js";
 
 const createApp = () => {
   const cloudinaryService = {
