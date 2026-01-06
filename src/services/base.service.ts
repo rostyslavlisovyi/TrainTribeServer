@@ -53,7 +53,13 @@ export abstract class BaseService<T extends Document> {
     if (populate) {
       query.populate(populate);
     }
-    return (await query) as unknown as IUser;
+    const user = (await query) as IUser | null;
+
+    if (!user) {
+      throw new NotFoundError("User profile");
+    }
+
+    return user;
   }
 
   async get({

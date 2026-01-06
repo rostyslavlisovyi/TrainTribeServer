@@ -74,6 +74,11 @@ This project includes **Swagger** documentation, which provides an interactive u
 
 > All variables are required both locally and in production. Prefer secret managers/CI variables for sensitive values.
 
+### User Onboarding Flow
+
+- When a client signs up, send the form payload to the backend and wait for the API response that confirms the MongoDB `User` document was created. Do not trigger additional calls (e.g., `/api/training/recommended`) until this request resolves.
+- Endpoints that depend on the authenticated profile now return `404 User profile not found` if the document is still missing. Display a loader/spinner in the UI until the creation request completes, then redirect the user to the rest of the app.
+
 ### Initial Data & Cron Jobs
 
 - **City seed** – to populate the city catalog call `GET /cron-job/city-inizialize` (or the internal `/api/city/inizialize`) with header `Authorization: Bearer <CRON_SECRET>`. The job downloads ISTAT data, enriches with Wikidata coordinates, and syncs MongoDB.
@@ -194,6 +199,7 @@ The server provides the following API endpoints:
 | ------ | ------------------------------- | ------------------------------------- | ------------------- |
 | GET    | `/api/training`                 | Get all trainings                     | All users           |
 | GET    | `/api/training/:id`             | Get training by ID                    | All users           |
+| GET    | `/api/training/recommended`     | Personalized list based on user data | Authenticated users |
 | POST   | `/api/training`                 | Create new training                   | Authenticated users |
 | PUT    | `/api/training/:id`             | Update training by ID                 | Training creator    |
 | DELETE | `/api/training/:id`             | Delete training by ID                 | Training creator    |
