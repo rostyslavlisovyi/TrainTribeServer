@@ -35,6 +35,37 @@ const controller = (req: Request) =>
  */
 trainingRoutes.post("/list", (req, res) => controller(req).list(req, res));
 
+/**
+ * @swagger
+ * /training/recommended:
+ *   get:
+ *     summary: Get trainings recommended for the authenticated user
+ *     description: Returns up to 10 upcoming trainings ranked by distance, sport, and availability.
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: query
+ *         name: populate
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of relations to populate
+ *     responses:
+ *       200:
+ *         description: Recommended trainings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Training'
+ *       404:
+ *         description: Returned when the authenticated user profile is missing
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
 trainingRoutes.get("/recommended", (req, res) =>
   controller(req).getRecommendedTrainings(req, res)
 );
