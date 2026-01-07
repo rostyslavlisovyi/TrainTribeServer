@@ -186,8 +186,8 @@ export class TrainingService extends BaseService<ITraining> {
         const trainingHour = new Date(training.date).getHours();
         const trainingDay = new Date(training.date).getDay();
         const slotMatch = userTimeSlots.some((slot) => {
-          const start = parseInt(slot.startTime.split(":")[0], 10);
-          const end = parseInt(slot.endTime.split(":")[0], 10);
+          const start = parseInt(slot.startTime?.split(":")?.[0], 10);
+          const end = parseInt(slot.endTime?.split(":")?.[0], 10);
           return (
             trainingHour >= start &&
             trainingHour <= end &&
