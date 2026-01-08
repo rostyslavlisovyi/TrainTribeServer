@@ -7,7 +7,7 @@ import {
   TrainingGoalEnum,
   TrainingLevelEnum
 } from "../types/index.js";
-import { ICity, IFileUpload } from "./index.js";
+import { ICity, ICloudinaryFile } from "./index.js";
 import { ITimeSlot } from "./timeSlot.interface.js";
 export interface IUser extends Document<mongoose.Types.ObjectId> {
   athleteBio?: string;
@@ -17,7 +17,7 @@ export interface IUser extends Document<mongoose.Types.ObjectId> {
   email: string;
   firstName?: string;
   hasCompletedOnboarding: boolean;
-  image?: IFileUpload;
+  image?: ICloudinaryFile;
   lastName?: string;
   lastOnboardingStep: string;
   privacySettings: boolean;

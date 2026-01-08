@@ -1,5 +1,5 @@
 import mongoose, { Document } from "mongoose";
-import { IFileUpload } from "./index.js";
+import { ICloudinaryFile } from "./index.js";
 
 export interface IReview extends Document {
   training: mongoose.Types.ObjectId;
@@ -7,7 +7,7 @@ export interface IReview extends Document {
   reviewedUser: mongoose.Types.ObjectId;
   stars: number;
   comment: string;
-  images?: IFileUpload[];
+  images?: ICloudinaryFile[];
   createdAt: Date;
   updatedAt: Date;
 }

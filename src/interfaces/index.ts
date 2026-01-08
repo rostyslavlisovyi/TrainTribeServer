@@ -1,6 +1,6 @@
 export * from "./city.interface.js";
+export * from "./cloudinaryFile.interface.js";
 export * from "./comment.interface.js";
-export * from "./fileUpload.interface.js";
 export * from "./geocode.interface.js";
 export * from "./geoLocation.interface.js";
 export * from "./notification.interface.js";
