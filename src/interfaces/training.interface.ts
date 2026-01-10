@@ -5,13 +5,13 @@ import {
   TrainingStatusEnum
 } from "../types/index.js";
 import { IGeoLocation } from "./geoLocation.interface.js";
-import { ITrainingParticipant } from "./index.js";
+import { IGeocodeAddress, ITrainingParticipant } from "./index.js";
 
 export interface ITraining extends Document<mongoose.Types.ObjectId> {
   title: string;
   description: string;
   date: Date;
-  address: string;
+  address: IGeocodeAddress;
   location: IGeoLocation;
   sport: SportsEnum;
   creator: mongoose.Types.ObjectId;

@@ -9,17 +9,22 @@ export interface IGeocode {
   type: string;
   importance: number;
   category: string;
-  address?: {
-    house_number?: string;
-    road?: string;
-    suburb?: string;
-    city?: string;
-    town?: string;
-    village?: string;
-    county?: string;
-    state?: string;
-    postcode?: string;
-    country?: string;
-    country_code?: string;
-  };
+  address?: IGeocodeAddress;
+}
+
+export interface IGeocodeAddress {
+  house_number?: string;
+  road?: string;
+  residential?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  village?: string;
+  town?: string;
+  city?: string;
+  county?: string;
+  state?: string;
+  region?: string;
+  postcode?: string;
+  country?: string;
+  country_code?: string;
 }

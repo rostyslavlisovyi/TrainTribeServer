@@ -11,7 +11,22 @@ const TrainingSchema = new Schema<ITraining>(
     title: { type: String, required: true },
     description: { type: String, required: false },
     date: { type: Date, required: true },
-    address: { type: String, required: true },
+    address: {
+      type: {
+        house_number: String,
+        road: String,
+        suburb: String,
+        city: String,
+        town: String,
+        village: String,
+        county: String,
+        state: String,
+        postcode: String,
+        country: String,
+        country_code: String
+      },
+      required: false
+    },
     location: {
       type: {
         type: String,
