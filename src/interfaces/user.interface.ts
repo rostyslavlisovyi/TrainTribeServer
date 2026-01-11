@@ -20,7 +20,8 @@ export interface IUser extends Document<mongoose.Types.ObjectId> {
   image?: ICloudinaryFile;
   lastName?: string;
   lastOnboardingStep: string;
-  privacySettings: boolean;
+  termsAndPrivacyAccepted: boolean;
+  termsAndPrivacyAcceptedAt?: Date;
   rangeOfAction: number;
   sports?: SportsEnum[];
   trainingGoal?: TrainingGoalEnum[];

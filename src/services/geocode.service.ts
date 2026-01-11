@@ -31,6 +31,6 @@ export class GeocodeService {
         Referer: process.env.APP_URL || ""
       }
     });
-    return (await response.json()) as IGeocode[];
+    return (await response.json()) as IGeocode;
   }
 }

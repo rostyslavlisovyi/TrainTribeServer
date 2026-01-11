@@ -30,7 +30,8 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     image: { type: Schema.Types.Mixed, required: false },
     lastName: { type: String },
     lastOnboardingStep: { type: String, required: false },
-    privacySettings: { type: Boolean, default: false },
+    termsAndPrivacyAccepted: { type: Boolean, default: false },
+    termsAndPrivacyAcceptedAt: { type: Date, required: false },
     rangeOfAction: { type: Number },
     sports: [
       {

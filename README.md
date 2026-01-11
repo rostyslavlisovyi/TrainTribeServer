@@ -199,7 +199,7 @@ The server provides the following API endpoints:
 | ------ | ------------------------------- | ------------------------------------- | ------------------- |
 | GET    | `/api/training`                 | Get all trainings                     | All users           |
 | GET    | `/api/training/:id`             | Get training by ID                    | All users           |
-| GET    | `/api/training/recommended`     | Personalized list based on user data | Authenticated users |
+| GET    | `/api/training/recommended`     | Personalized list based on user data  | Authenticated users |
 | POST   | `/api/training`                 | Create new training                   | Authenticated users |
 | PUT    | `/api/training/:id`             | Update training by ID                 | Training creator    |
 | DELETE | `/api/training/:id`             | Delete training by ID                 | Training creator    |
@@ -261,7 +261,7 @@ The server provides the following API endpoints:
 | `authId`                    | `String`   | Yes      | Yes    | Unique authentication ID from the auth provider.                              |
 | `lastOnboardingStep`        | `String`   | No       | No     | Indicates the last completed onboarding step.                                 |
 | `hasCompletedOnboarding`    | `Boolean`  | No       | No     | Indicates if user has completed onboarding.                                   |
-| `privacySettings`           | `Boolean`  | No       | No     | User's privacy preference. Default is false.                                  |
+| `termsAndPrivacyAccepted`   | `Boolean`  | No       | No     | User's privacy preference. Default is false.                                  |
 | `dateOfBirth`               | `Date`     | No       | No     | User's date of birth.                                                         |
 | `rangeOfAction`             | `Number`   | No       | No     | Range of action for the user (in kilometers).                                 |
 | `trainingGoal`              | `String[]` | No       | No     | Array of training goals from TrainingGoalEnum.                                |
