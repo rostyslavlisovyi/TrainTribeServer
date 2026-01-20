@@ -25,6 +25,16 @@ export class FeedbackService {
     });
   }
 
+  private getEnvironmentPrefix(): string {
+    const env = process.env.VERCEL_ENV || process.env.NODE_ENV;
+    if (env === "production") {
+      return "";
+    }
+    const envName =
+      env === "preview" ? "PREVIEW" : env?.toUpperCase() || "STAGING";
+    return `[${envName}] `;
+  }
+
   async getAuthUser(populate?: string | string[]): Promise<IUser> {
     if (!this.auth) {
       throw new UnauthorizedError("User not authenticated");
@@ -48,6 +58,7 @@ export class FeedbackService {
   async sendFeedback(feedbackData: FeedbackData): Promise<void> {
     try {
       const { name, email, message } = feedbackData;
+      const envPrefix = this.getEnvironmentPrefix();
 
       const to = process.env.FEEDBACK_RECIPIENT_EMAIL?.split(",")
         ?.map((email) => email.trim())
@@ -56,9 +67,9 @@ export class FeedbackService {
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to,
-        subject: `[TRAINTRIBE APP - FEEDBACK] Nuovo messaggio da ${name}`,
+        subject: `${envPrefix}[TRAINTRIBE APP - FEEDBACK] Nuovo messaggio da ${name}`,
         html: `
-          <h2>Nuovo Messaggio da TrainTribeApp: </h2>
+          <h2>${envPrefix}Nuovo Messaggio da TrainTribeApp: </h2>
           <p><strong>Nome:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <h3>Messaggio:</h3>
