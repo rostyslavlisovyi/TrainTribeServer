@@ -415,7 +415,7 @@ const swaggerOptions = {
               type: "string",
               description: "The last completed onboarding step"
             },
-            privacySettings: {
+            termsAndPrivacyAccepted: {
               type: "boolean",
               description: "User's privacy settings"
             },

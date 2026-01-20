@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import cityRoute from "./city.routes.js";
 import cloudinaryRoute from "./cloudinary.route.js";
 import cronJobRoute from "./cronJob.routes.js";
+import feedbackRoute from "./feedback.routes.js";
 import geocodeRoutes from "./geocode.routes.js";
 import leaderboardRoutes from "./leaderboard.routes.js";
 import notificationRoute from "./notification.route.js";
@@ -19,6 +20,7 @@ apiRouter.use("/user", userRoute);
 apiRouter.use("/review", reviewRoutes);
 apiRouter.use("/leaderboard", leaderboardRoutes);
 apiRouter.use("/notification", notificationRoute);
+apiRouter.use("/feedback", feedbackRoute);
 
 const cronJobRouter = express.Router();
 cronJobRouter.use("/", cronJobRoute);

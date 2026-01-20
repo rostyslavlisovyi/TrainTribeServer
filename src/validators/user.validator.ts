@@ -72,10 +72,10 @@ export const validateUserCreation: ValidationChain[] = [
     .optional()
     .isBoolean()
     .withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
-  body("privacySettings")
+  body("termsAndPrivacyAccepted")
     .optional()
     .isBoolean()
-    .withMessage("privacySettings MUST BE BOOLEAN")
+    .withMessage("termsAndPrivacyAccepted MUST BE BOOLEAN")
 ];
 
 export const validateUserUpdate: ValidationChain[] = [
@@ -137,8 +137,8 @@ export const validateUserUpdate: ValidationChain[] = [
     .optional()
     .isBoolean()
     .withMessage("hasCompletedOnboarding MUST BE BOOLEAN"),
-  body("privacySettings")
+  body("termsAndPrivacyAccepted")
     .optional()
     .isBoolean()
-    .withMessage("privacySettings MUST BE BOOLEAN")
+    .withMessage("termsAndPrivacyAccepted MUST BE BOOLEAN")
 ];
