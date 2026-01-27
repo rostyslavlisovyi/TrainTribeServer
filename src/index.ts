@@ -1,125 +1,160 @@
-import "../instrument.js";
-import { scopePerRequest } from "awilix-express";
-import chalk from "chalk";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { Express } from "express";
-import connectDB from "./config/database.js";
-import "./config/firebase.js";
-import { setupSwagger } from "./config/swagger.js";
-import container from "./container.js";
-import {
-  authContainerMiddleware,
-  authenticate,
-  cronJobMiddleware
-} from "./middlewares/index.js";
-import { apiRouter, cronJobRouter } from "./routes/index.js";
-import { CityService } from "./services/index.js";
-import { registerSentryHandlers } from "./utils/sentry.js";
+import type { Express, Request, Response } from "express";
+import "../instrument.js";
+
 dotenv.config();
 
-// Environment Variables Validation
-const REQUIRED_ENV_VARS: string[] = ["SERVER_PORT", "MONGODB_URI"] as const;
+/* -------------------------------------------------------------------------- */
+/*                              ENV VALIDATION                                 */
+/* -------------------------------------------------------------------------- */
+
+const REQUIRED_ENV_VARS: string[] = ["MONGODB_URI"];
+const isProduction = process.env.NODE_ENV === "production";
+const isVercel = !!process.env.VERCEL;
+
+if (!isVercel) {
+  REQUIRED_ENV_VARS.push("SERVER_PORT");
+}
+
 REQUIRED_ENV_VARS.forEach((varName) => {
   if (!process.env[varName]) {
-    console.error(chalk.red(`Environment variable ${varName} is not defined.`));
-    process.exit(1);
+    console.error(`Environment variable ${varName} is not defined.`);
+    if (!isProduction) process.exit(1);
   }
 });
 
-// Constants
-const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? "666", 10);
+/* -------------------------------------------------------------------------- */
+/*                           APP SINGLETON LOGIC                               */
+/* -------------------------------------------------------------------------- */
 
-// Initialize Express App
-const appServer: Express = express();
-appServer.use(scopePerRequest(container));
+let appPromise: Promise<Express> | null = null;
 
-//Middlewares
-appServer.use(express.json());
+function getApp(): Promise<Express> {
+  if (!appPromise) {
+    appPromise = initializeApp();
+  }
+  return appPromise;
+}
 
-const allowedOrigins =
-  process.env.APP_URL?.split(",")?.map((url) => url.trim()) || [];
+/* -------------------------------------------------------------------------- */
+/*                            APP INITIALIZATION                               */
+/* -------------------------------------------------------------------------- */
 
-const corsOptions: cors.CorsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
+async function initializeApp(): Promise<Express> {
+  const express = (await import("express")).default;
+  const { scopePerRequest } = await import("awilix-express");
+  const cors = (await import("cors")).default;
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
+  const connectDB = (await import("./config/database.js")).default;
+  const { setupSwagger } = await import("./config/swagger.js");
+  const container = (await import("./container.js")).default;
+  const { authContainerMiddleware, authenticate, cronJobMiddleware } =
+    await import("./middlewares/index.js");
+  const { apiRouter, cronJobRouter } = await import("./routes/index.js");
+  const { registerSentryHandlers } = await import("./utils/sentry.js");
+
+  const app = express();
+
+  /* ------------------------------- MIDDLEWARES ------------------------------ */
+
+  app.use(express.json());
+  app.use(scopePerRequest(container));
+
+  const allowedOrigins =
+    process.env.APP_URL?.split(",").map((url) => url.trim()) || [];
+
+  const corsOptions: cors.CorsOptions = {
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error(`CORS blocked for origin: ${origin}`));
-    }
-  },
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
-};
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE"
+  };
 
-appServer.use("/api", cors(corsOptions));
-appServer.options("/api/*", cors(corsOptions));
+  app.use("/api", cors(corsOptions));
+  app.options("/api/*", cors(corsOptions));
+  app.use(express.urlencoded({ extended: true }));
 
-appServer.use(express.urlencoded({ extended: true }));
+  /* ---------------------------------- ROUTES -------------------------------- */
 
-// Serve static files from the public directory
-appServer.use(express.static("public"));
+  app.get("/", (_req, res) => {
+    res.status(200).json({ status: "ok", service: "TrainTribeAPI" });
+  });
 
-// Routes
-appServer.get("/", (_req, res) => {
-  res.sendFile("index.html", { root: "./public" });
-});
-appServer.use("/api", authenticate);
-appServer.use("/api", authContainerMiddleware);
-appServer.use("/api", apiRouter);
-appServer.use("/cron-job", cronJobMiddleware);
-appServer.use("/cron-job", cronJobRouter);
+  /* ----------------------------- DB CONNECTION ------------------------------ */
+  // Protected internally with promise cache
+  await connectDB();
 
-registerSentryHandlers(appServer);
+  /* ---------------------------- OPTIONAL SERVICES ---------------------------- */
 
-// Swagger
-setupSwagger(appServer);
+  // Firebase → lazy + non-blocking
+  import("./config/firebase.js").catch(() =>
+    console.warn("Firebase initialization skipped")
+  );
 
-// Graceful Shutdown
-async function gracefulShutdown(signal: string): Promise<void> {
-  console.info(`Received ${signal}. Gracefully shutting down...`);
-  try {
-    console.info("Database connection closed.");
-    process.exit(0);
-  } catch (error) {
-    console.error(chalk.red("Error during shutdown: ", error));
-    process.exit(1);
+  /* --------------------------------- API ----------------------------------- */
+
+  app.use("/api", authenticate);
+  app.use("/api", authContainerMiddleware);
+  app.use("/api", apiRouter);
+
+  app.use("/cron-job", cronJobMiddleware);
+  app.use("/cron-job", cronJobRouter);
+
+  registerSentryHandlers(app);
+
+  /* -------------------------------- SWAGGER -------------------------------- */
+
+  if (!isProduction || process.env.ENABLE_SWAGGER === "true") {
+    setupSwagger(app);
   }
+
+  return app;
 }
 
-// Register Shutdown Hooks
-["SIGINT", "SIGTERM"].forEach((signal) =>
-  process.on(signal, () => gracefulShutdown(signal))
-);
+/* -------------------------------------------------------------------------- */
+/*                          VERCEL DEFAULT EXPORT                              */
+/* -------------------------------------------------------------------------- */
 
-// Start Server
+export default async function app(req: Request, res: Response) {
+  const expressApp = await getApp();
+  return expressApp(req, res);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          LOCAL DEVELOPMENT SERVER                           */
+/* -------------------------------------------------------------------------- */
+
 async function startServer(): Promise<void> {
-  try {
-    // Connect to database
-    await connectDB();
+  if (isVercel) return;
 
-    const shouldFetchCityOnStartup =
-      process.env.FETCH_CITY_ON_STARTUP === "true";
+  const SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "3000", 10);
+  const { CityService } = await import("./services/index.js");
 
-    if (shouldFetchCityOnStartup) {
-      const cityService = new CityService();
-      await cityService.inizialize();
-    }
+  const app = await getApp();
 
-    // Start listening
-    appServer.listen(SERVER_PORT, () => {
-      console.info(
-        chalk.green(`Server is running on http://localhost:${SERVER_PORT}`)
-      );
-    });
-  } catch (error) {
-    console.error("Error connecting to database: ", error);
-    process.exit(1);
+  if (process.env.FETCH_CITY_ON_STARTUP === "true") {
+    const cityService = new CityService();
+    await cityService.inizialize();
   }
+
+  const server = app.listen(SERVER_PORT, () => {
+    console.info(`🚀 Server running on http://localhost:${SERVER_PORT}`);
+  });
+
+  const shutdown = () => {
+    console.info("🛑 Shutting down server...");
+    server.close(() => process.exit(0));
+  };
+
+  ["SIGINT", "SIGTERM"].forEach((signal) => process.on(signal, shutdown));
 }
 
-startServer().catch((error) => {
-  console.error("Failed to start the server:", error);
-  process.exit(1);
-});
+if (!isVercel) {
+  startServer().catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  });
+}
