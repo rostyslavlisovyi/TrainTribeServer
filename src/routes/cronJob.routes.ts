@@ -13,4 +13,7 @@ cronJobRoute.get("/city-inizialize", (req, res) =>
 cronJobRoute.get("/notification", (req, res) =>
   controller(req).notification(req, res)
 );
+
+cronJobRoute.get("/ping", (req, res) => controller(req).ping(req, res));
+
 export default cronJobRoute;

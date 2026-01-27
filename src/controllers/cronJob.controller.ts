@@ -31,4 +31,8 @@ export class CronJobController {
       handleError(res, req, error);
     }
   };
+
+  ping = async (_req: Request, res: Response): Promise<void> => {
+    res.status(200).json(new BaseResponse(true));
+  };
 }

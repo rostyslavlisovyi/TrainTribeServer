@@ -1,6 +1,5 @@
 import express, { Request, Router } from "express";
 import { LeaderboardController } from "../controllers/leaderboard.controller.js";
-import { authenticate } from "../middlewares/index.js";
 
 const leaderboardRoutes: Router = express.Router();
 
@@ -47,7 +46,7 @@ const controller = (req: Request) =>
  *       500:
  *         description: Internal server error
  */
-leaderboardRoutes.get("/list", authenticate, (req, res) =>
+leaderboardRoutes.get("/list", (req, res) =>
   controller(req).getMonthlyLeaderboard(req, res)
 );
 
