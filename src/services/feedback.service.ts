@@ -31,7 +31,7 @@ export class FeedbackService {
       return "";
     }
     const envName =
-      env === "preview" ? "PREVIEW" : env?.toUpperCase() || "STAGING";
+      env === "preview" ? "STAGING" : env?.toUpperCase() || "STAGING";
     return `[${envName}] `;
   }
 
