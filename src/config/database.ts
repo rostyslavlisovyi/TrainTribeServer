@@ -14,6 +14,7 @@ const connectDB = async (): Promise<void> => {
 
   try {
     console.log("Connecting to MongoDB database...");
+    console.time("MongoDB Connection Time");
     const mongoURI = process.env.MONGODB_URI;
 
     if (!mongoURI) {
@@ -36,6 +37,7 @@ const connectDB = async (): Promise<void> => {
     await mongoose.connect(mongoURI, options);
     cachedConnection = mongoose;
 
+    console.timeEnd("MongoDB Connection Time");
     console.log("Connected to MongoDB database");
 
     // Handle connection events
