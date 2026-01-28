@@ -17,7 +17,7 @@
     "migrate:status": "migrate-mongo status",
     "typecheck": "tsc --noEmit",
     "merge:staging": "git checkout staging && git pull && git merge develop && git push",
-    "merge:production": "git checkout staging && git pull && git merge develop && git push && git checkout production && git pull && git merge staging && git push"
+    "merge:main": "git checkout staging && git pull && git merge develop && git push && git checkout main && git pull && git merge staging && git push"
   },
   "keywords": [],
   "author": "lisovyi.rostyslav@gmail.com",
