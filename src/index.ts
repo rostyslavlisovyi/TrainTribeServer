@@ -32,7 +32,16 @@ let appPromise: Promise<Express> | null = null;
 
 function getApp(): Promise<Express> {
   if (!appPromise) {
-    appPromise = initializeApp();
+    console.time("getApp");
+    appPromise = initializeApp()
+      .then(((ap)p) => {
+        console.timeEnd("getApp");
+        return app;
+      })
+      .catch(((erro)r) => {
+        console.timeEnd("getApp");
+        throw error;
+      });
   }
   return appPromise;
 }
@@ -42,6 +51,9 @@ function getApp(): Promise<Express> {
 /* -------------------------------------------------------------------------- */
 
 async function initializeApp(): Promise<Express> {
+  console.time("App Initialization");
+  console.time("Module Imports");
+
   const express = (await import("express")).default;
   const { scopePerRequest } = await import("awilix-express");
   const cors = (await import("cors")).default;
@@ -53,6 +65,8 @@ async function initializeApp(): Promise<Express> {
     await import("./middlewares/index.js");
   const { apiRouter, cronJobRouter } = await import("./routes/index.js");
   const { registerSentryHandlers } = await import("./utils/sentry.js");
+
+  console.timeEnd("Module Imports");
 
   const app = express();
 
@@ -85,7 +99,9 @@ async function initializeApp(): Promise<Express> {
 
   /* ----------------------------- DB CONNECTION ------------------------------ */
   // Protected internally with promise cache
+  console.time("Database Connection");
   await connectDB();
+  console.timeEnd("Database Connection");
 
   /* ---------------------------- OPTIONAL SERVICES ---------------------------- */
 
@@ -108,9 +124,12 @@ async function initializeApp(): Promise<Express> {
   /* -------------------------------- SWAGGER -------------------------------- */
 
   if (!isProduction || process.env.ENABLE_SWAGGER === "true") {
+    console.time("Swagger Setup");
     setupSwagger(app);
+    console.timeEnd("Swagger Setup");
   }
 
+  console.timeEnd("App Initialization");
   return app;
 }
 
@@ -130,17 +149,21 @@ export default async function app(req: Request, res: Response) {
 async function startServer(): Promise<void> {
   if (isVercel) return;
 
+  console.time("Server Startup");
   const SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "3000", 10);
   const { CityService } = await import("./services/index.js");
 
   const app = await getApp();
 
   if (process.env.FETCH_CITY_ON_STARTUP === "true") {
+    console.time("City Service Initialization");
     const cityService = new CityService();
     await cityService.inizialize();
+    console.timeEnd("City Service Initialization");
   }
 
   const server = app.listen(SERVER_PORT, () => {
+    console.timeEnd("Server Startup");
     console.info(`🚀 Server running on http://localhost:${SERVER_PORT}`);
   });
 
