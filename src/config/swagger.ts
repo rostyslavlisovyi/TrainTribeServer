@@ -550,8 +550,12 @@ const swaggerOptions = {
   apis: ["./src/routes/**/*.ts", "./src/routes/**/*.js"]
 };
 
+console.time("Swagger Spec Generation");
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
+console.timeEnd("Swagger Spec Generation");
 
 export const setupSwagger = (app: Express) => {
+  console.time("Swagger UI Setup");
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.timeEnd("Swagger UI Setup");
 };

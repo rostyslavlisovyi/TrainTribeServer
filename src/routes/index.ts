@@ -10,6 +10,7 @@ import reviewRoutes from "./review.routes.js";
 import trainingRoutes from "./training.routes.js";
 import userRoute from "./user.routes.js";
 
+console.time("Routes Setup");
 const apiRouter: Router = express.Router();
 
 apiRouter.use("/city", cityRoute);
@@ -24,5 +25,6 @@ apiRouter.use("/feedback", feedbackRoute);
 
 const cronJobRouter = express.Router();
 cronJobRouter.use("/", cronJobRoute);
+console.timeEnd("Routes Setup");
 
 export { apiRouter, cronJobRouter };

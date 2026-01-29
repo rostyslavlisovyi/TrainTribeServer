@@ -1,5 +1,5 @@
-import type { Express } from "express";
 import * as Sentry from "@sentry/node";
+import type { Express } from "express";
 
 export interface MiddlewareError {
   output?: { statusCode?: number | string };
@@ -32,7 +32,9 @@ const shouldCaptureError = (error: MiddlewareError): boolean => {
 };
 
 export const registerSentryHandlers = (app: Express): void => {
+  console.time("Sentry Setup");
   Sentry.setupExpressErrorHandler(app, {
     shouldHandleError: shouldCaptureError
   });
+  console.timeEnd("Sentry Setup");
 };

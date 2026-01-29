@@ -25,6 +25,7 @@ import {
   UserService
 } from "./services/index.js";
 
+console.time("Container Initialization");
 const container = createContainer({
   injectionMode: InjectionMode.CLASSIC
 });
@@ -55,4 +56,5 @@ container
     feedbackController: asClass(FeedbackController).scoped()
   });
 
+console.timeEnd("Container Initialization");
 export default container;
