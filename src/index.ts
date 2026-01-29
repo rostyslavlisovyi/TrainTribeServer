@@ -1,7 +1,21 @@
+import { scopePerRequest } from "awilix-express";
 import cors from "cors";
 import dotenv from "dotenv";
 import type { Express, Request, Response } from "express";
+import express from "express";
 import "../instrument.js";
+
+import connectDB from "./config/database.js";
+import { setupSwagger } from "./config/swagger.js";
+import container from "./container.js";
+import {
+  authContainerMiddleware,
+  authenticate,
+  cronJobMiddleware
+} from "./middlewares/index.js";
+import { apiRouter, cronJobRouter } from "./routes/index.js";
+import { CityService } from "./services/index.js";
+import { registerSentryHandlers } from "./utils/sentry.js";
 
 dotenv.config();
 
@@ -52,23 +66,11 @@ function getApp(): Promise<Express> {
 
 async function initializeApp(): Promise<Express> {
   console.time("App Initialization");
-  console.time("Module Imports");
-
-  const express = (await import("express")).default;
-  const { scopePerRequest } = await import("awilix-express");
-  const cors = (await import("cors")).default;
-
-  const connectDB = (await import("./config/database.js")).default;
-  const { setupSwagger } = await import("./config/swagger.js");
-  const container = (await import("./container.js")).default;
-  const { authContainerMiddleware, authenticate, cronJobMiddleware } =
-    await import("./middlewares/index.js");
-  const { apiRouter, cronJobRouter } = await import("./routes/index.js");
-  const { registerSentryHandlers } = await import("./utils/sentry.js");
-
-  console.timeEnd("Module Imports");
+  console.time("Module Setup");
 
   const app = express();
+
+  console.timeEnd("Module Setup");
 
   /* ------------------------------- MIDDLEWARES ------------------------------ */
 
@@ -151,7 +153,6 @@ async function startServer(): Promise<void> {
 
   console.time("Server Startup");
   const SERVER_PORT = parseInt(process.env.SERVER_PORT ?? "3000", 10);
-  const { CityService } = await import("./services/index.js");
 
   const app = await getApp();
 
