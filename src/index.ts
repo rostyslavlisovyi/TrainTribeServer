@@ -34,11 +34,11 @@ function getApp(): Promise<Express> {
   if (!appPromise) {
     console.time("getApp");
     appPromise = initializeApp()
-      .then(((ap)p) => {
+      .then((app) => {
         console.timeEnd("getApp");
         return app;
       })
-      .catch(((erro)r) => {
+      .catch((error) => {
         console.timeEnd("getApp");
         throw error;
       });
