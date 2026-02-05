@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable indent */
 import axios from "axios";
 import chalk from "chalk";
@@ -16,7 +17,7 @@ export class CityService extends BaseService<ICity> {
     try {
       console.log(chalk.yellow("Downloading Excel file..."));
       const urlInstat =
-        "https://www.istat.it/wp-content/uploads/2024/09/Elenco-comuni-italiani.xlsx";
+        "https://www.istat.it/storage/codici-unita-amministrative/Elenco-comuni-italiani.xlsx";
 
       const response = await axios({
         method: "get",
@@ -29,18 +30,31 @@ export class CityService extends BaseService<ICity> {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      let cities: Partial<ICity & { istatCodeAlt: string }>[] = jsonData.map(
+        (row: any) => {
+          const istatCode = row["Codice Comune formato numerico"]
+            ?.toString()
+            .padStart(6, "0");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let cities: Partial<ICity>[] = jsonData.map((row: any) => ({
-        istatCode: row["Codice Comune formato alfanumerico"],
-        region: row["Denominazione Regione"],
-        name: row["Denominazione in italiano"],
-        province:
-          row[
-            // eslint-disable-next-line max-len
-            "Denominazione dell'Unità territoriale sovracomunale \r\n(valida a fini statistici)"
+          const istatCodeAlt = row[
+            "Codice Comune numerico con 107 Province (dal 2017 al 2025)"
           ]
-      }));
+            ?.toString()
+            .padStart(6, "0");
+
+          return {
+            istatCode,
+            istatCodeAlt,
+            region: row["Denominazione Regione"],
+            name: row["Denominazione in italiano"],
+            province:
+              row[
+                // eslint-disable-next-line max-len
+                "Denominazione dell'Unità territoriale sovracomunale \r\n(valida a fini statistici)"
+              ]
+          };
+        }
+      );
 
       console.log(chalk.green(`Processed ${cities.length} cities`));
 
@@ -59,7 +73,7 @@ export class CityService extends BaseService<ICity> {
       )}&format=json`;
       const sparqlResponse = await axios.get(sparqlUrl, {
         headers: {
-          "User-Agent": "NodeJS-App",
+          "User-Agent": "TrainTribe-App",
           Accept: "application/json"
         }
       });
@@ -90,8 +104,11 @@ export class CityService extends BaseService<ICity> {
       }
 
       cities = cities.map((city) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const extra = wikidataMap.get(city.istatCode!);
+        const extra =
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          wikidataMap.get(city.istatCode!) ||
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          wikidataMap.get(city.istatCodeAlt!);
         return extra?.latitude && extra?.longitude
           ? {
               ...city,
@@ -100,7 +117,7 @@ export class CityService extends BaseService<ICity> {
                 coordinates: [extra.longitude, extra.latitude]
               }
             }
-          : city;
+          : { ...city, location: undefined };
       });
 
       console.log(chalk.green("Dati arricchiti con Wikidata"));
@@ -110,7 +127,6 @@ export class CityService extends BaseService<ICity> {
           cities.filter((x) => !x.location).length
         )
       );
-
       // SINCRONIZZAZIONE DEL DB
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const istatCodesFromExcel = cities.map((c) => c.istatCode!);
