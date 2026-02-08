@@ -16,6 +16,10 @@ import {
 import { apiRouter, cronJobRouter } from "./routes/index.js";
 import { CityService } from "./services/index.js";
 import { registerSentryHandlers } from "./utils/sentry.js";
+import {
+  createTimer,
+  logInitializationMetrics
+} from "./utils/performance.js";
 
 dotenv.config();
 
@@ -66,10 +70,13 @@ function getApp(): Promise<Express> {
 
 async function initializeApp(): Promise<Express> {
   console.time("App Initialization");
+  const appInitializationTimer = createTimer();
   console.time("Module Setup");
+  const moduleSetupTimer = createTimer();
 
   const app = express();
 
+  const moduleSetupMs = moduleSetupTimer();
   console.timeEnd("Module Setup");
 
   /* ------------------------------- MIDDLEWARES ------------------------------ */
@@ -102,7 +109,9 @@ async function initializeApp(): Promise<Express> {
   /* ----------------------------- DB CONNECTION ------------------------------ */
   // Protected internally with promise cache
   console.time("Database Connection");
+  const dbConnectionTimer = createTimer();
   await connectDB();
+  const dbConnectionMs = dbConnectionTimer();
   console.timeEnd("Database Connection");
 
   /* ---------------------------- OPTIONAL SERVICES ---------------------------- */
@@ -131,7 +140,14 @@ async function initializeApp(): Promise<Express> {
     console.timeEnd("Swagger Setup");
   }
 
+  const totalMs = appInitializationTimer();
   console.timeEnd("App Initialization");
+
+  logInitializationMetrics({
+    totalMs,
+    moduleSetupMs,
+    dbConnectionMs
+  });
   return app;
 }
 
