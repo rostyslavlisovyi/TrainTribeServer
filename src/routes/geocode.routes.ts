@@ -1,10 +1,13 @@
 import express, { Request, Router } from "express";
-import { GeocodeController } from "../controllers/index.js";
+
+function getGeocodeController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.geocodeController;
+}
 
 const geocodeRoutes: Router = express.Router();
-
-const controller = (req: Request) =>
-  req.container.resolve<GeocodeController>("geocodeController");
 
 /**
  * @swagger
@@ -38,7 +41,9 @@ const controller = (req: Request) =>
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-geocodeRoutes.get("/search", (req, res) => controller(req).search(req, res));
+geocodeRoutes.get("/search", (req, res) =>
+  getGeocodeController(req).search(req, res)
+);
 
 /**
  * @swagger
@@ -76,6 +81,8 @@ geocodeRoutes.get("/search", (req, res) => controller(req).search(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-geocodeRoutes.get("/reverse", (req, res) => controller(req).reverse(req, res));
+geocodeRoutes.get("/reverse", (req, res) =>
+  getGeocodeController(req).reverse(req, res)
+);
 
 export default geocodeRoutes;

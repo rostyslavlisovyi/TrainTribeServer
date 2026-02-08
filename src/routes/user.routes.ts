@@ -1,15 +1,19 @@
 import express, { Request, Router } from "express";
-import { UserController } from "../controllers/index.js";
 import { handleValidationErrors } from "../middlewares/index.js";
 import {
   validateUserCreation,
   validateUserUpdate
 } from "../validators/index.js";
 
+function getUserController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.userController;
+}
+
 const userRoute: Router = express.Router();
 
-const controller = (req: Request) =>
-  req.container.resolve<UserController>("userController");
 // GET: Get user by Auth ID
 /**
  * @swagger
@@ -91,11 +95,11 @@ const controller = (req: Request) =>
  *                   type: string
  *                   example: INTERNAL SERVER ERROR
  */
-userRoute.get("/me", (req, res) => controller(req).getMe(req, res));
+userRoute.get("/me", (req, res) => getUserController(req).getMe(req, res));
 
-userRoute.get("/:id", (req, res) => controller(req).get(req, res));
+userRoute.get("/:id", (req, res) => getUserController(req).get(req, res));
 
-userRoute.post("/list", (req, res) => controller(req).list(req, res));
+userRoute.post("/list", (req, res) => getUserController(req).list(req, res));
 
 // POST: Create new user
 /**
@@ -236,7 +240,7 @@ userRoute.post(
   validateUserCreation,
   handleValidationErrors,
   (req: express.Request, res: express.Response) =>
-    controller(req).create(req, res)
+    getUserController(req).create(req, res)
 );
 
 /**
@@ -390,7 +394,7 @@ userRoute.put(
   validateUserUpdate,
   handleValidationErrors,
   (req: express.Request, res: express.Response) =>
-    controller(req).update(req, res)
+    getUserController(req).update(req, res)
 );
 
 export default userRoute;

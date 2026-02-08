@@ -1,11 +1,16 @@
 import express, { Request, Router } from "express";
-import { FeedbackController } from "../controllers/index.js";
+
+function getFeedbackController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.feedbackController;
+}
 
 const feedbackRoute: Router = express.Router();
 
-const controller = (req: Request) =>
-  req.container.resolve<FeedbackController>("feedbackController");
-
-feedbackRoute.post("/", (req, res) => controller(req).sendFeedback(req, res));
+feedbackRoute.post("/", (req, res) =>
+  getFeedbackController(req).sendFeedback(req, res)
+);
 
 export default feedbackRoute;

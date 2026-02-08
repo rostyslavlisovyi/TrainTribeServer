@@ -1,10 +1,14 @@
 import express, { Request, Router } from "express";
-import { CityController } from "../controllers/index.js";
+
+function getCityController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.cityController;
+}
 
 const cityRoute: Router = express.Router();
 
-const controller = (req: Request) =>
-  req.container.resolve<CityController>("cityController");
 /**
  * @swagger
  * /city/list:
@@ -70,7 +74,7 @@ const controller = (req: Request) =>
  *         $ref: '#/components/responses/InternalServerError'
  */
 
-cityRoute.post("/list", (req, res) => controller(req).list(req, res));
+cityRoute.post("/list", (req, res) => getCityController(req).list(req, res));
 
 /**
  * @swagger
@@ -105,7 +109,7 @@ cityRoute.post("/list", (req, res) => controller(req).list(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.get("/:id", (req, res) => controller(req).get(req, res));
+cityRoute.get("/:id", (req, res) => getCityController(req).get(req, res));
 
 /**
  * @swagger
@@ -154,7 +158,7 @@ cityRoute.get("/:id", (req, res) => controller(req).get(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.post("/", (req, res) => controller(req).create(req, res));
+cityRoute.post("/", (req, res) => getCityController(req).create(req, res));
 
 /**
  * @swagger
@@ -213,7 +217,7 @@ cityRoute.post("/", (req, res) => controller(req).create(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.put("/:id", (req, res) => controller(req).update(req, res));
+cityRoute.put("/:id", (req, res) => getCityController(req).update(req, res));
 
 /**
  * @swagger
@@ -236,6 +240,6 @@ cityRoute.put("/:id", (req, res) => controller(req).update(req, res));
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-cityRoute.delete("/:id", (req, res) => controller(req).delete(req, res));
+cityRoute.delete("/:id", (req, res) => getCityController(req).delete(req, res));
 
 export default cityRoute;

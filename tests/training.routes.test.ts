@@ -1,11 +1,9 @@
-import { scopePerRequest } from "awilix-express";
 import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import request from "supertest";
-import container from "../src/container.js";
-import { authContainerMiddleware } from "../src/middlewares/index.js";
+import { requestContextMiddleware } from "../src/middlewares/index.js";
 import CommentModel from "../src/models/MongoDB/comment.model.js";
 import NotificationModel from "../src/models/MongoDB/notification.model.js";
 import TrainingModel from "../src/models/MongoDB/training.model.js";
@@ -24,7 +22,6 @@ let currentAuthId = "training-auth";
 
 const app = express();
 app.use(express.json());
-app.use(scopePerRequest(container));
 app.use((req, _res, next) => {
   req.auth = {
     payload: {
@@ -33,7 +30,7 @@ app.use((req, _res, next) => {
   } as AuthResult;
   next();
 });
-app.use(authContainerMiddleware);
+app.use(requestContextMiddleware);
 app.use("/training", trainingRoutes);
 
 const futureDate = () => new Date(Date.now() + 60 * 60 * 1000);
@@ -41,6 +38,11 @@ const baseLocation = {
   type: "Point",
   coordinates: [12.4839, 41.8947]
 } as const;
+
+const trainingRouteAddress = () => ({
+  city: "Rome",
+  country: "Italy"
+});
 
 const uniqueEmail = () =>
   `training-${new mongoose.Types.ObjectId().toString()}@test.com`;
@@ -74,7 +76,7 @@ async function createTraining(
     title: "Morning Run",
     description: "Easy pace",
     date: futureDate(),
-    address: "Central Park",
+    address: trainingRouteAddress(),
     location: baseLocation,
     sport: SportsEnum.RUNNING,
     difficultyLevel: TrainingLevelEnum.BEGINNER,
@@ -117,7 +119,7 @@ describe("Training routes", () => {
       title: "Tempo Session",
       description: "Threshold workout",
       date: futureDate().toISOString(),
-      address: "Test track",
+      address: trainingRouteAddress(),
       location: baseLocation,
       sport: SportsEnum.RUNNING,
       creator: creator._id.toString(),

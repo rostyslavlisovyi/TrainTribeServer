@@ -1,12 +1,17 @@
 import express, { Request, Router } from "express";
-import { ReviewController } from "../controllers/index.js";
+
+function getReviewController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.reviewController;
+}
 
 const reviewRoutes: Router = express.Router({ mergeParams: true });
 
-const controller = (req: Request) =>
-  req.container.resolve<ReviewController>("reviewController");
-
-reviewRoutes.post("/list", (req, res) => controller(req).list(req, res));
+reviewRoutes.post("/list", (req, res) =>
+  getReviewController(req).list(req, res)
+);
 
 /**
  * @swagger
@@ -60,7 +65,7 @@ reviewRoutes.post("/list", (req, res) => controller(req).list(req, res));
  *       500:
  *         description: Internal server error
  */
-reviewRoutes.post("/", (req, res) => controller(req).create(req, res));
+reviewRoutes.post("/", (req, res) => getReviewController(req).create(req, res));
 
 /**
  * @swagger
@@ -119,7 +124,9 @@ reviewRoutes.post("/", (req, res) => controller(req).create(req, res));
  *       500:
  *         description: Internal server error
  */
-reviewRoutes.put("/:id", (req, res) => controller(req).updateReview(req, res));
+reviewRoutes.put("/:id", (req, res) =>
+  getReviewController(req).updateReview(req, res)
+);
 
 /**
  * @swagger
@@ -158,7 +165,7 @@ reviewRoutes.put("/:id", (req, res) => controller(req).updateReview(req, res));
  *         description: Internal server error
  */
 reviewRoutes.delete("/:id", (req, res) =>
-  controller(req).deleteReview(req, res)
+  getReviewController(req).deleteReview(req, res)
 );
 
 /**

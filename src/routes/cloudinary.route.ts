@@ -1,16 +1,19 @@
 import express, { Request, Router } from "express";
-import { CloudinaryController } from "../controllers/index.js";
+
+function getCloudinaryController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.cloudinaryController;
+}
 
 const cloudinaryRoute: Router = express.Router();
 
-const controller = (req: Request) =>
-  req.container.resolve<CloudinaryController>("cloudinaryController");
-
 cloudinaryRoute.post("/signature-upload", (req, res) =>
-  controller(req).getSignatureUpload(req, res)
+  getCloudinaryController(req).getSignatureUpload(req, res)
 );
 cloudinaryRoute.post("/signature-delete", (req, res) =>
-  controller(req).getSignatureDelete(req, res)
+  getCloudinaryController(req).getSignatureDelete(req, res)
 );
 
 export default cloudinaryRoute;

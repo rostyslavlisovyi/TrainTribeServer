@@ -1,4 +1,3 @@
-import { scopePerRequest } from "awilix-express";
 import cors from "cors";
 import dotenv from "dotenv";
 import type { Express, Request, Response } from "express";
@@ -7,11 +6,10 @@ import "../instrument.js";
 
 import connectDB from "./config/database.js";
 import { setupSwagger } from "./config/swagger.js";
-import container from "./container.js";
 import {
-  authContainerMiddleware,
   authenticate,
-  cronJobMiddleware
+  cronJobMiddleware,
+  requestContextMiddleware
 } from "./middlewares/index.js";
 import { apiRouter, cronJobRouter } from "./routes/index.js";
 import { CityService } from "./services/index.js";
@@ -82,7 +80,7 @@ async function initializeApp(): Promise<Express> {
   /* ------------------------------- MIDDLEWARES ------------------------------ */
 
   app.use(express.json());
-  app.use(scopePerRequest(container));
+  app.use(express.urlencoded({ extended: true }));
 
   const allowedOrigins =
     process.env.APP_URL?.split(",").map((url) => url.trim()) || [];
@@ -98,7 +96,6 @@ async function initializeApp(): Promise<Express> {
 
   app.use("/api", cors(corsOptions));
   app.options("/api/*", cors(corsOptions));
-  app.use(express.urlencoded({ extended: true }));
 
   /* ---------------------------------- ROUTES -------------------------------- */
 
@@ -124,10 +121,11 @@ async function initializeApp(): Promise<Express> {
   /* --------------------------------- API ----------------------------------- */
 
   app.use("/api", authenticate);
-  app.use("/api", authContainerMiddleware);
+  app.use("/api", requestContextMiddleware);
   app.use("/api", apiRouter);
 
   app.use("/cron-job", cronJobMiddleware);
+  app.use("/cron-job", requestContextMiddleware);
   app.use("/cron-job", cronJobRouter);
 
   registerSentryHandlers(app);

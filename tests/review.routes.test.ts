@@ -1,11 +1,9 @@
-import { scopePerRequest } from "awilix-express";
 import express from "express";
 import type { AuthResult } from "express-oauth2-jwt-bearer";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import request from "supertest";
-import container from "../src/container.js";
-import { authContainerMiddleware } from "../src/middlewares/index.js";
+import { requestContextMiddleware } from "../src/middlewares/index.js";
 import ReviewModel from "../src/models/MongoDB/review.model.js";
 import TrainingModel from "../src/models/MongoDB/training.model.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
@@ -17,7 +15,6 @@ let currentAuthId = "reviewer-auth";
 
 const app = express();
 app.use(express.json());
-app.use(scopePerRequest(container));
 app.use((req, _res, next) => {
   req.auth = {
     payload: {
@@ -26,8 +23,13 @@ app.use((req, _res, next) => {
   } as AuthResult;
   next();
 });
-app.use(authContainerMiddleware);
+app.use(requestContextMiddleware);
 app.use("/review", reviewRoutes);
+
+const reviewTrainingAddress = () => ({
+  city: "Rome",
+  country: "Italy"
+});
 
 describe("Review routes", () => {
   beforeAll(async () => {
@@ -66,7 +68,7 @@ describe("Review routes", () => {
       status: TrainingStatusEnum.COMPLETED,
       sport: "RUNNING",
       date: new Date(),
-      address: "Test address",
+      address: reviewTrainingAddress(),
       location: { type: "Point", coordinates: [12, 50] },
       participants: [
         {

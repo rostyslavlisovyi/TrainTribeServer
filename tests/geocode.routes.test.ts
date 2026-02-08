@@ -1,7 +1,7 @@
-import type { AwilixContainer } from "awilix";
-import express from "express";
+import express, { Request } from "express";
 import request from "supertest";
 import { GeocodeController } from "../src/controllers/geocode.controller.js";
+import type { RequestContext } from "../src/context/requestContext.js";
 import geocodeRoutes from "../src/routes/geocode.routes.js";
 
 const createApp = () => {
@@ -12,13 +12,15 @@ const createApp = () => {
 
   const controller = new GeocodeController(geocodeService as never);
 
-  const container = {
-    resolve: () => controller
-  } as unknown as AwilixContainer;
-
   const app = express();
   app.use((req, _res, next) => {
-    (req as any).container = container;
+    (req as Request & { context: RequestContext }).context = {
+      auth: undefined,
+      services: {} as never,
+      controllers: {
+        geocodeController: controller
+      } as RequestContext["controllers"]
+    } as RequestContext;
     next();
   });
   app.use("/geocode", geocodeRoutes);
