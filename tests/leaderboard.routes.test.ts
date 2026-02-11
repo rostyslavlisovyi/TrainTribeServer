@@ -1,7 +1,8 @@
-import type { AwilixContainer } from "awilix";
-import express from "express";
+import express, { Request } from "express";
 import request from "supertest";
 import { LeaderboardController } from "../src/controllers/leaderboard.controller.js";
+import type { RequestContext } from "../src/context/requestContext.js";
+import { authenticate } from "../src/middlewares/index.js";
 import leaderboardRoutes from "../src/routes/leaderboard.routes.js";
 
 const verifyIdToken = jest.fn(async () => ({
@@ -24,13 +25,16 @@ const createApp = () => {
   };
   const controller = new LeaderboardController(leaderboardService as never);
 
-  const container = {
-    resolve: () => controller
-  } as unknown as AwilixContainer;
-
   const app = express();
+  app.use(authenticate);
   app.use((req, _res, next) => {
-    (req as any).container = container;
+    (req as Request & { context: RequestContext }).context = {
+      auth: undefined,
+      services: {} as never,
+      controllers: {
+        leaderboardController: controller
+      } as RequestContext["controllers"]
+    } as RequestContext;
     next();
   });
   app.use("/leaderboard", leaderboardRoutes);

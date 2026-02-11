@@ -1,10 +1,13 @@
 import express, { Request, Router } from "express";
-import { LeaderboardController } from "../controllers/leaderboard.controller.js";
+
+function getLeaderboardController(req: Request) {
+  if (!req.context) {
+    throw new Error("Request context not initialized");
+  }
+  return req.context.controllers.leaderboardController();
+}
 
 const leaderboardRoutes: Router = express.Router();
-
-const controller = (req: Request) =>
-  req.container.resolve<LeaderboardController>("leaderboardController");
 
 /**
  * @swagger
@@ -47,7 +50,7 @@ const controller = (req: Request) =>
  *         description: Internal server error
  */
 leaderboardRoutes.get("/list", (req, res) =>
-  controller(req).getMonthlyLeaderboard(req, res)
+  getLeaderboardController(req).getMonthlyLeaderboard(req, res)
 );
 
 /**

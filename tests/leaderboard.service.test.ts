@@ -81,7 +81,8 @@ describe("LeaderboardService", () => {
     expect(filtered[0].user.firstName).toBe("Alice");
   });
 
-  it("ignores entries from previous months", async () => {
+  // eslint-disable-next-line max-len
+  it("falls back to the latest month with entries when current month is empty", async () => {
     const service = new LeaderboardService();
     const user = await createUser({ firstName: "Charlie" });
 
@@ -92,6 +93,8 @@ describe("LeaderboardService", () => {
 
     const leaderboard = await service.getMonthlyLeaderboard();
 
-    expect(leaderboard).toHaveLength(0);
+    expect(leaderboard).toHaveLength(1);
+    expect(leaderboard[0].totalPoints).toBe(30);
+    expect(leaderboard[0].user.firstName).toBe("Charlie");
   });
 });

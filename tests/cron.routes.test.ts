@@ -1,7 +1,7 @@
-import type { AwilixContainer } from "awilix";
-import express from "express";
+import express, { Request } from "express";
 import request from "supertest";
 import { CronJobController } from "../src/controllers/cronJob.controller.js";
+import type { RequestContext } from "../src/context/requestContext.js";
 import cronJobRoute from "../src/routes/cronJob.routes.js";
 
 const createApp = () => {
@@ -20,17 +20,15 @@ const createApp = () => {
     cronJobService as never
   );
 
-  const container = {
-    resolve: () => controller
-  } as unknown as AwilixContainer;
-
-  interface RequestWithContainer extends express.Request {
-    container: AwilixContainer;
-  }
-
   const app = express();
   app.use((req, _res, next) => {
-    (req as RequestWithContainer).container = container;
+    (req as Request & { context: RequestContext }).context = {
+      auth: undefined,
+      services: {} as never,
+      controllers: {
+        cronJobController: controller
+      } as RequestContext["controllers"]
+    } as RequestContext;
     next();
   });
   app.use("/cron", cronJobRoute);

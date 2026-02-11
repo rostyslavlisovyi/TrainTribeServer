@@ -1,7 +1,7 @@
-import type { AwilixContainer } from "awilix";
-import express from "express";
+import express, { Request } from "express";
 import request from "supertest";
 import { CloudinaryController } from "../src/controllers/cloudinary.controller.js";
+import type { RequestContext } from "../src/context/requestContext.js";
 import cloudinaryRoute from "../src/routes/cloudinary.route.js";
 
 const createApp = () => {
@@ -23,14 +23,16 @@ const createApp = () => {
 
   const controller = new CloudinaryController(cloudinaryService as never);
 
-  const container = {
-    resolve: () => controller
-  } as unknown as AwilixContainer;
-
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).container = container;
+    (req as Request & { context: RequestContext }).context = {
+      auth: undefined,
+      services: {} as never,
+      controllers: {
+        cloudinaryController: controller
+      } as RequestContext["controllers"]
+    } as RequestContext;
     next();
   });
   app.use("/cloudinary", cloudinaryRoute);

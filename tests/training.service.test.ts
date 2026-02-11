@@ -16,6 +16,11 @@ jest.setTimeout(20000);
 
 let mongo: MongoMemoryServer;
 
+const trainingAddress = () => ({
+  city: "Rome",
+  country: "Italy"
+});
+
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri();
@@ -52,7 +57,7 @@ async function seedTraining(
     status,
     sport: "RUNNING",
     date: new Date(),
-    address: "Test address",
+    address: trainingAddress(),
     location: {
       type: "Point",
       coordinates: [0, 0]
@@ -157,7 +162,7 @@ describe("TrainingService.addParticipant", () => {
       status: TrainingStatusEnum.CANCELLED,
       sport: "RUNNING",
       date: new Date(),
-      address: "Test",
+      address: trainingAddress(),
       location: { type: "Point", coordinates: [0, 0] },
       participants: []
     });
@@ -187,7 +192,7 @@ describe("TrainingService.addParticipant", () => {
       status: TrainingStatusEnum.SCHEDULED,
       sport: "RUNNING",
       date: new Date(),
-      address: "Park",
+      address: trainingAddress(),
       location: { type: "Point", coordinates: [0, 0] },
       participants: []
     });
@@ -238,7 +243,7 @@ describe("TrainingService.removeParticipant", () => {
       status: TrainingStatusEnum.CANCELLED,
       sport: "RUNNING",
       date: new Date(),
-      address: "Test",
+      address: trainingAddress(),
       location: { type: "Point", coordinates: [0, 0] },
       participants: [
         {
@@ -273,7 +278,7 @@ describe("TrainingService.removeParticipant", () => {
       status: TrainingStatusEnum.SCHEDULED,
       sport: "RUNNING",
       date: new Date(),
-      address: "Track",
+      address: trainingAddress(),
       location: { type: "Point", coordinates: [0, 0] },
       participants: [
         {

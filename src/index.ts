@@ -1,4 +1,3 @@
-import { scopePerRequest } from "awilix-express";
 import cors from "cors";
 import dotenv from "dotenv";
 import type { Express, Request, Response } from "express";
@@ -7,14 +6,14 @@ import "../instrument.js";
 
 import connectDB from "./config/database.js";
 import { setupSwagger } from "./config/swagger.js";
-import container from "./container.js";
 import {
-  authContainerMiddleware,
   authenticate,
-  cronJobMiddleware
+  cronJobMiddleware,
+  requestContextMiddleware
 } from "./middlewares/index.js";
 import { apiRouter, cronJobRouter } from "./routes/index.js";
 import { CityService } from "./services/index.js";
+import { createTimer, logInitializationMetrics } from "./utils/performance.js";
 import { registerSentryHandlers } from "./utils/sentry.js";
 
 dotenv.config();
@@ -66,16 +65,19 @@ function getApp(): Promise<Express> {
 
 async function initializeApp(): Promise<Express> {
   console.time("App Initialization");
+  const appInitializationTimer = createTimer();
   console.time("Module Setup");
+  const moduleSetupTimer = createTimer();
 
   const app = express();
 
+  const moduleSetupMs = moduleSetupTimer();
   console.timeEnd("Module Setup");
 
   /* ------------------------------- MIDDLEWARES ------------------------------ */
 
   app.use(express.json());
-  app.use(scopePerRequest(container));
+  app.use(express.urlencoded({ extended: true }));
 
   const allowedOrigins =
     process.env.APP_URL?.split(",").map((url) => url.trim()) || [];
@@ -91,7 +93,6 @@ async function initializeApp(): Promise<Express> {
 
   app.use("/api", cors(corsOptions));
   app.options("/api/*", cors(corsOptions));
-  app.use(express.urlencoded({ extended: true }));
 
   /* ---------------------------------- ROUTES -------------------------------- */
 
@@ -102,7 +103,9 @@ async function initializeApp(): Promise<Express> {
   /* ----------------------------- DB CONNECTION ------------------------------ */
   // Protected internally with promise cache
   console.time("Database Connection");
+  const dbConnectionTimer = createTimer();
   await connectDB();
+  const dbConnectionMs = dbConnectionTimer();
   console.timeEnd("Database Connection");
 
   /* ---------------------------- OPTIONAL SERVICES ---------------------------- */
@@ -115,10 +118,11 @@ async function initializeApp(): Promise<Express> {
   /* --------------------------------- API ----------------------------------- */
 
   app.use("/api", authenticate);
-  app.use("/api", authContainerMiddleware);
+  app.use("/api", requestContextMiddleware);
   app.use("/api", apiRouter);
 
   app.use("/cron-job", cronJobMiddleware);
+  app.use("/cron-job", requestContextMiddleware);
   app.use("/cron-job", cronJobRouter);
 
   registerSentryHandlers(app);
@@ -131,7 +135,14 @@ async function initializeApp(): Promise<Express> {
     console.timeEnd("Swagger Setup");
   }
 
+  const totalMs = appInitializationTimer();
   console.timeEnd("App Initialization");
+
+  logInitializationMetrics({
+    totalMs,
+    moduleSetupMs,
+    dbConnectionMs
+  });
   return app;
 }
 
