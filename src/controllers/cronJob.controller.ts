@@ -25,6 +25,7 @@ export class CronJobController {
     try {
       await this.cronJobService.createNotificationTrainingCompletionReminder();
       await this.cronJobService.createNotificationTodayTrainingsReminder();
+      await this.cronJobService.createNotificationRememberToCreateTraining();
       res.status(200).json(new BaseResponse(true));
     } catch (error) {
       handleError(res, req, error);

@@ -16,7 +16,7 @@
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
     "typecheck": "tsc --noEmit",
-    "merge:staging": "git checkout staging && git pull && git merge develop && git push",
+    "merge:staging": "git checkout staging && git pull && git merge develop && git push && git checkout develop",
     "merge:main": "git checkout staging && git pull && git merge develop && git push && git checkout main && git pull && git merge staging && git push"
   },
   "keywords": [],

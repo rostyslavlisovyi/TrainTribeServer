@@ -130,4 +130,23 @@ export class NotificationService extends BaseService<INotification> {
 
     return count > 0;
   }
+
+  async hasReceivedNotificationTypeToday(
+    userId: mongoose.Types.ObjectId,
+    type: NotificationEnum
+  ): Promise<boolean> {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(startOfDay);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const count = await this.model.countDocuments({
+      user: userId,
+      type: type,
+      createdAt: { $gte: startOfDay, $lt: tomorrow }
+    });
+
+    return count > 0;
+  }
 }

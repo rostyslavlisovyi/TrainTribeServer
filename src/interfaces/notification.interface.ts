@@ -92,4 +92,8 @@ export type INotification =
         trainingTitle: string;
         trainingId: mongoose.Types.ObjectId;
       };
+    })
+  | (BaseNotification & {
+      type: NotificationEnum.REMEMBER_TO_CREATE_TRAINING;
+      data: Record<string, never>;
     });
