@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import { AuthResult } from "express-oauth2-jwt-bearer";
 import { NotFoundError } from "../errors/index.js";
-import { ITraining, IUser } from "../interfaces/index.js";
+import { ITraining, ITrainingParticipant, IUser } from "../interfaces/index.js";
 import { BaseResponse } from "../models/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
 import { NotificationService, TrainingService } from "../services/index.js";
@@ -273,13 +273,14 @@ export class TrainingController extends BaseController<
   async changeStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, participants } = req.body;
       const user = await this.getAuthUser();
 
       const data = await this.service.changeStatus(
         id,
         user._id.toString(),
-        status as TrainingStatusEnum
+        status as TrainingStatusEnum,
+        participants as ITrainingParticipant[]
       );
 
       if (status === TrainingStatusEnum.COMPLETED) {

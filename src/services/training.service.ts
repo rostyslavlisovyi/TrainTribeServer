@@ -7,7 +7,7 @@ import {
   ForbiddenError,
   NotFoundError
 } from "../errors/index.js";
-import { ITraining, IUser } from "../interfaces/index.js";
+import { ITraining, ITrainingParticipant, IUser } from "../interfaces/index.js";
 import { CityModel } from "../models/index.js";
 import CommentModel from "../models/MongoDB/comment.model.js";
 import TrainingModel from "../models/MongoDB/training.model.js";
@@ -355,7 +355,8 @@ export class TrainingService extends BaseService<ITraining> {
   async changeStatus(
     id: string,
     userId: string,
-    newStatus: TrainingStatusEnum
+    newStatus: TrainingStatusEnum,
+    participants: ITrainingParticipant[] = []
   ) {
     const training = await this.model.findById(id);
     if (!training) {
@@ -383,7 +384,7 @@ export class TrainingService extends BaseService<ITraining> {
       training.status !== TrainingStatusEnum.COMPLETED
     ) {
       // Only award points if there's at least one participant besides the creator
-      if (training.participants && training.participants.length > 0) {
+      if (participants && participants.length > 0) {
         // Award 5 points to creator
         await UserModel.findByIdAndUpdate(userId, {
           $inc: { trainingPoints: CONSTANTS.POINT_CREATOR_TRAINING }
@@ -395,7 +396,7 @@ export class TrainingService extends BaseService<ITraining> {
         });
 
         // Award 1 point to each participant
-        for (const attendance of training.participants) {
+        for (const attendance of participants) {
           if (attendance.attended) {
             await UserModel.findByIdAndUpdate(attendance.participant, {
               $inc: {
@@ -415,6 +416,11 @@ export class TrainingService extends BaseService<ITraining> {
           }
         }
       }
+      this.model.findByIdAndUpdate(
+        id,
+        { participants: participants },
+        { new: true }
+      );
     }
 
     if (
