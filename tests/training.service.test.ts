@@ -10,7 +10,7 @@ import TrainingModel from "../src/models/MongoDB/training.model.js";
 import UserModel from "../src/models/MongoDB/user.model.js";
 import UserLeaderboardModel from "../src/models/MongoDB/userLeaderboard.model.js";
 import { TrainingService } from "../src/services/training.service.js";
-import { TrainingStatusEnum } from "../src/types/index.js";
+import { TrainingLevelEnum, TrainingStatusEnum } from "../src/types/index.js";
 
 jest.setTimeout(20000);
 
@@ -120,7 +120,8 @@ describe("TrainingService.changeStatus", () => {
     const updated = await service.changeStatus(
       training._id.toString(),
       creator._id.toString(),
-      TrainingStatusEnum.COMPLETED
+      TrainingStatusEnum.COMPLETED,
+      training.participants
     );
 
     expect(updated?.status).toBe(TrainingStatusEnum.COMPLETED);
@@ -294,5 +295,94 @@ describe("TrainingService.removeParticipant", () => {
     );
 
     expect(updated?.participants).toHaveLength(0);
+  });
+});
+
+describe("TrainingService.createWithRecurrence", () => {
+  it("generates additional trainings for selected weekdays", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-creator",
+      email: "recurring-creator@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-01T10:00:00.000Z");
+    const endDate = new Date("2024-01-15T10:00:00.000Z");
+
+    const { master, occurrences } = await service.createWithRecurrence({
+      title: "Morning Run",
+      description: "Recurring session",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: startDate,
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      difficultyLevel: TrainingLevelEnum.BEGINNER,
+      duration: 60,
+      participants: [],
+      likes: [],
+      comments: [],
+      recurrence: {
+        daysOfWeek: [2, 4],
+        endDate
+      },
+      isRecurring: true
+    });
+
+    expect(master.isRecurring).toBe(true);
+    expect(master.recurrence?.recurrenceId).toBeDefined();
+    expect(occurrences.length).toBeGreaterThan(0);
+
+    const total = await TrainingModel.countDocuments({
+      "recurrence.recurrenceId": master.recurrence?.recurrenceId
+    });
+    expect(total).toBe(occurrences.length + 1);
+  });
+
+  it("throws when recurrence configuration is invalid", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-invalid",
+      email: "recurring-invalid@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-01T10:00:00.000Z");
+
+    await expect(
+      service.createWithRecurrence({
+        title: "Invalid",
+        creator: creator._id,
+        sport: "RUNNING",
+        date: startDate,
+        address: trainingAddress(),
+        location: { type: "Point", coordinates: [0, 0] },
+        recurrence: {
+          daysOfWeek: [],
+          endDate: new Date("2023-12-01T10:00:00.000Z")
+        },
+        isRecurring: true
+      })
+    ).rejects.toBeInstanceOf(BadRequestError);
+  });
+
+  it("behaves like regular create when recurrence is disabled", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-none",
+      email: "recurring-none@test.com"
+    });
+
+    const service = new TrainingService();
+    const { master, occurrences } = await service.createWithRecurrence({
+      title: "Single",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: new Date(),
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      isRecurring: false
+    });
+
+    expect(master).toBeDefined();
+    expect(occurrences).toHaveLength(0);
   });
 });

@@ -40,6 +40,94 @@ export class TrainingService extends BaseService<ITraining> {
     return newTraining;
   }
 
+  async createWithRecurrence(
+    payload: Partial<ITraining> & {
+      recurrence?: { daysOfWeek?: number[]; endDate?: Date | string };
+      isRecurring?: boolean;
+    }
+  ): Promise<{ master: ITraining; occurrences: ITraining[] } | { master: ITraining; occurrences: [] }> {
+    if (!payload.isRecurring || !payload.recurrence) {
+      const master = await this.create(payload);
+      return { master, occurrences: [] };
+    }
+
+    const baseDate = payload.date ? new Date(payload.date) : null;
+    if (!baseDate || Number.isNaN(baseDate.getTime())) {
+      throw new BadRequestError("A valid start date is required for recurring trainings");
+    }
+
+    const { daysOfWeek = [], endDate } = payload.recurrence;
+    if (!daysOfWeek.length) {
+      throw new BadRequestError("Select at least one weekday for recurrence");
+    }
+
+    if (!endDate) {
+      throw new BadRequestError("Recurrence end date is required");
+    }
+
+    const normalizedEndDate = new Date(endDate);
+    if (Number.isNaN(normalizedEndDate.getTime())) {
+      throw new BadRequestError("Recurrence end date must be valid");
+    }
+
+    if (normalizedEndDate.getTime() <= baseDate.getTime()) {
+      throw new BadRequestError("Recurrence end date must be after the start date");
+    }
+
+    const diffDays = Math.ceil(
+      (normalizedEndDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const MAX_RANGE_DAYS = 180;
+    if (diffDays > MAX_RANGE_DAYS) {
+      throw new BadRequestError("Recurrence cannot span more than 180 days");
+    }
+
+    const recurrenceId = new mongoose.Types.ObjectId().toString();
+    const uniqueDays = Array.from(
+      new Set([...daysOfWeek, baseDate.getDay()])
+    );
+
+    const basePayload: Partial<ITraining> = {
+      ...payload,
+      isRecurring: true,
+      recurrence: {
+        recurrenceId,
+        daysOfWeek: uniqueDays,
+        endDate: normalizedEndDate
+      }
+    };
+
+    const master = await this.create(basePayload);
+
+    const occurrences: ITraining[] = [];
+    const timestamps = this.generateOccurrenceDates(
+      baseDate,
+      uniqueDays,
+      normalizedEndDate
+    );
+
+    for (const occurrenceDate of timestamps) {
+      if (occurrenceDate.getTime() === baseDate.getTime()) {
+        continue;
+      }
+
+      const clonePayload: Partial<ITraining> = {
+        ...payload,
+        date: occurrenceDate,
+        isRecurring: true,
+        recurrence: basePayload.recurrence,
+        participants: [],
+        comments: [],
+        likes: [],
+        status: TrainingStatusEnum.SCHEDULED
+      };
+
+      occurrences.push(await this.create(clonePayload));
+    }
+
+    return { master, occurrences };
+  }
+
   override async delete(id: string): Promise<boolean> {
     const training = await this.model.findById(id);
 
@@ -439,5 +527,24 @@ export class TrainingService extends BaseService<ITraining> {
     );
 
     return result as unknown as ITraining;
+  }
+
+  private generateOccurrenceDates(
+    startDate: Date,
+    daysOfWeek: number[],
+    endDate: Date
+  ): Date[] {
+    const occurrences: Date[] = [];
+    const cursor = new Date(startDate);
+
+    while (cursor.getTime() <= endDate.getTime()) {
+      if (daysOfWeek.includes(cursor.getDay())) {
+        const instance = new Date(cursor);
+        occurrences.push(instance);
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return occurrences;
   }
 }
