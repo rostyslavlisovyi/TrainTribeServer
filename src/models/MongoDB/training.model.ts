@@ -64,6 +64,12 @@ const TrainingSchema = new Schema<ITraining>(
       type: String,
       enum: Object.values(TrainingStatusEnum),
       default: TrainingStatusEnum.SCHEDULED
+    },
+    isRecurring: { type: Boolean, default: false },
+    recurrence: {
+      recurrenceId: { type: String },
+      daysOfWeek: [{ type: Number, min: 0, max: 6 }],
+      endDate: { type: Date }
     }
   },
   {
@@ -75,6 +81,7 @@ TrainingSchema.index({ location: "2dsphere" });
 TrainingSchema.index({ date: 1, sport: 1, creator: 1 });
 TrainingSchema.index({ date: 1 });
 TrainingSchema.index({ creator: 1 });
+TrainingSchema.index({ "recurrence.recurrenceId": 1 });
 
 const TrainingModel: Model<ITraining> = mongoose.model<ITraining>(
   "Training",
