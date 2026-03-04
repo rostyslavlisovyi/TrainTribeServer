@@ -18,8 +18,8 @@ const createApp = () => {
       auth: undefined,
       services: {} as never,
       controllers: {
-        geocodeController: controller
-      } as RequestContext["controllers"]
+        geocodeController: () => controller
+      }
     } as RequestContext;
     next();
   });

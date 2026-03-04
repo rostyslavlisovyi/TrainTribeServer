@@ -138,6 +138,46 @@ describe("Training routes", () => {
     );
   });
 
+  it("creates recurring trainings when recurrence is provided", async () => {
+    const creator = await createUser({ authId: "recurring-route" });
+
+    const startDate = futureDate();
+    const startDay = startDate.getDay();
+    const payload = {
+      title: "Series Run",
+      description: "Recurring series",
+      date: startDate.toISOString(),
+      address: trainingRouteAddress(),
+      location: baseLocation,
+      sport: SportsEnum.RUNNING,
+      creator: creator._id.toString(),
+      difficultyLevel: TrainingLevelEnum.BEGINNER,
+      duration: 30,
+      isRecurring: true,
+      recurrence: {
+        daysOfWeek: [startDay, (startDay + 2) % 7],
+        endDate: new Date(
+          startDate.getTime() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString()
+      }
+    };
+
+    const response = await request(app)
+      .post("/training")
+      .send(payload)
+      .expect(201);
+
+    expect(response.body.data.training).toBeDefined();
+    expect(Array.isArray(response.body.data.occurrences)).toBe(true);
+    expect(response.body.data.occurrences.length).toBeGreaterThan(0);
+
+    const recurrenceId = response.body.data.training.recurrence.recurrenceId;
+    const total = await TrainingModel.countDocuments({
+      "recurrence.recurrenceId": recurrenceId
+    });
+    expect(total).toBe(response.body.data.occurrences.length + 1);
+  });
+
   it("lists trainings with pagination", async () => {
     await createTraining();
 

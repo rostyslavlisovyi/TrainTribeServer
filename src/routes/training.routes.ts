@@ -124,7 +124,17 @@ trainingRoutes.get("/:id", (req, res) =>
  *         application/json:
  *           schema:
  *             type: object
- *             required: [title, description, date, address, latitude, longitude, sport, creator, difficultyLevel, duration]
+ *             required:
+ *               [
+ *                 title,
+ *                 description,
+ *                 date,
+ *                 address,
+ *                 sport,
+ *                 creator,
+ *                 difficultyLevel,
+ *                 duration
+ *               ]
  *             properties:
  *               title:
  *                 type: string
@@ -137,14 +147,9 @@ trainingRoutes.get("/:id", (req, res) =>
  *                 format: date-time
  *                 description: Date and time of the training
  *               address:
- *                 type: string
- *                 description: Physical address where the training takes place
- *               latitude:
- *                 type: string
- *                 description: Latitude coordinate of the training location
- *               longitude:
- *                 type: string
- *                 description: Longitude coordinate of the training location
+ *                 $ref: '#/components/schemas/GeocodeAddress'
+ *               location:
+ *                 $ref: '#/components/schemas/GeoLocation'
  *               sport:
  *                 type: string
  *                 enum: [SWIMMING, CYCLING, RUNNING, WALKING, TRIATHLON]
@@ -164,6 +169,24 @@ trainingRoutes.get("/:id", (req, res) =>
  *               duration:
  *                 type: number
  *                 description: Duration of the training in minutes
+ *               isRecurring:
+ *                 type: boolean
+ *                 description: When true, create future trainings for the provided recurrence pattern
+ *               recurrence:
+ *                 type: object
+ *                 description: Recurrence configuration (required when isRecurring is true)
+ *                 properties:
+ *                   daysOfWeek:
+ *                     type: array
+ *                     items:
+ *                       type: integer
+ *                       minimum: 0
+ *                       maximum: 6
+ *                     description: Weekdays to repeat on (0 = Sunday)
+ *                   endDate:
+ *                     type: string
+ *                     format: date-time
+ *                     description: Last date to generate trainings for the series
  *     responses:
  *       201:
  *         description: Training created successfully
@@ -173,7 +196,16 @@ trainingRoutes.get("/:id", (req, res) =>
  *               type: object
  *               properties:
  *                 data:
- *                   $ref: '#/components/schemas/Training'
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/Training'
+ *                     - type: object
+ *                       properties:
+ *                         training:
+ *                           $ref: '#/components/schemas/Training'
+ *                         occurrences:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/Training'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  *       500:

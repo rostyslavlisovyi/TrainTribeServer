@@ -27,26 +27,17 @@ export class TrainingController extends BaseController<
 
   override async create(req: Request, res: Response): Promise<void> {
     try {
-      const training = await this.service.create(req.body);
-
-      const recommendedUsers =
-        await this.service.getPotentialParticipants(training);
-
-      await Promise.all(
-        recommendedUsers.map((user) =>
-          this.notificationService.create({
-            user: user._id,
-            triggeredBy: training.creator,
-            type: NotificationEnum.TRAINING_CREATED_NEAR_TO_USER,
-            data: {
-              trainingId: training._id,
-              trainingTitle: training.title
-            }
-          })
-        )
+      const { master, occurrences } = await this.service.createWithRecurrence(
+        req.body
       );
 
-      res.status(201).json(new BaseResponse(training));
+      await this.notifyPotentialParticipants(master);
+
+      const responseData = occurrences.length
+        ? { training: master, occurrences }
+        : master;
+
+      res.status(201).json(new BaseResponse(responseData));
     } catch (error) {
       handleError(res, req, error);
     }
@@ -313,5 +304,25 @@ export class TrainingController extends BaseController<
     } catch (error) {
       handleError(res, req, error);
     }
+  }
+
+  private async notifyPotentialParticipants(training: ITraining) {
+    const recommendedUsers = await this.service.getPotentialParticipants(
+      training
+    );
+
+    await Promise.all(
+      recommendedUsers.map((user) =>
+        this.notificationService.create({
+          user: user._id,
+          triggeredBy: training.creator,
+          type: NotificationEnum.TRAINING_CREATED_NEAR_TO_USER,
+          data: {
+            trainingId: training._id,
+            trainingTitle: training.title
+          }
+        })
+      )
+    );
   }
 }

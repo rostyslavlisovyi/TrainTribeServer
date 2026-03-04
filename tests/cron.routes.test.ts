@@ -12,7 +12,8 @@ const createApp = () => {
     createNotificationTrainingCompletionReminder: jest
       .fn()
       .mockResolvedValue(0),
-    createNotificationTodayTrainingsReminder: jest.fn().mockResolvedValue(0)
+    createNotificationTodayTrainingsReminder: jest.fn().mockResolvedValue(0),
+    createNotificationRememberToCreateTraining: jest.fn().mockResolvedValue(0)
   };
 
   const controller = new CronJobController(
@@ -26,8 +27,8 @@ const createApp = () => {
       auth: undefined,
       services: {} as never,
       controllers: {
-        cronJobController: controller
-      } as RequestContext["controllers"]
+        cronJobController: () => controller
+      }
     } as RequestContext;
     next();
   });
@@ -59,6 +60,9 @@ describe("Cron routes", () => {
     ).toHaveBeenCalledTimes(1);
     expect(
       cronJobService.createNotificationTodayTrainingsReminder
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      cronJobService.createNotificationRememberToCreateTraining
     ).toHaveBeenCalledTimes(1);
   });
 });

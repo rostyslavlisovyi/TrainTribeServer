@@ -32,8 +32,8 @@ const createApp = () => {
       auth: undefined,
       services: {} as never,
       controllers: {
-        leaderboardController: controller
-      } as RequestContext["controllers"]
+        leaderboardController: () => controller
+      }
     } as RequestContext;
     next();
   });

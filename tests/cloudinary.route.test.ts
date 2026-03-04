@@ -30,8 +30,8 @@ const createApp = () => {
       auth: undefined,
       services: {} as never,
       controllers: {
-        cloudinaryController: controller
-      } as RequestContext["controllers"]
+        cloudinaryController: () => controller
+      }
     } as RequestContext;
     next();
   });
