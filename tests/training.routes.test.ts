@@ -178,6 +178,49 @@ describe("Training routes", () => {
     expect(total).toBe(response.body.data.occurrences.length + 1);
   });
 
+  it("cancels a recurrence and removes future trainings", async () => {
+    const creator = await createUser({ authId: "cancel-series" });
+    currentAuthId = creator.authId;
+
+    const startDate = futureDate();
+    const payload = {
+      title: "Series Run",
+      description: "Recurring series",
+      date: startDate.toISOString(),
+      address: trainingRouteAddress(),
+      location: baseLocation,
+      sport: SportsEnum.RUNNING,
+      creator: creator._id.toString(),
+      difficultyLevel: TrainingLevelEnum.BEGINNER,
+      duration: 30,
+      isRecurring: true,
+      recurrence: {
+        daysOfWeek: [startDate.getDay()],
+        endDate: new Date(
+          startDate.getTime() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString()
+      }
+    };
+
+    const creationResponse = await request(app)
+      .post("/training")
+      .send(payload)
+      .expect(201);
+
+    const recurrenceId =
+      creationResponse.body.data.training.recurrence.recurrenceId;
+
+    const cancelResponse = await request(app)
+      .delete(`/training/recurrence/${recurrenceId}`)
+      .expect(200);
+
+    expect(cancelResponse.body.data.cancelledCount).toBeGreaterThanOrEqual(1);
+    const remaining = await TrainingModel.countDocuments({
+      "recurrence.recurrenceId": recurrenceId
+    });
+    expect(remaining).toBeLessThanOrEqual(1);
+  });
+
   it("lists trainings with pagination", async () => {
     await createTraining();
 

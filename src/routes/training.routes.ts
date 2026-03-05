@@ -219,6 +219,45 @@ trainingRoutes.post("/", (req, res) =>
 
 /**
  * @swagger
+ * /training/recurrence/{recurrenceId}:
+ *   delete:
+ *     summary: Cancel a recurring training series
+ *     description: Deletes only future trainings belonging to the series and turns off recurrence for the master training.
+ *     tags: [Trainings]
+ *     parameters:
+ *       - in: path
+ *         name: recurrenceId
+ *         required: true
+         schema:
+ *           type: string
+ *         description: Recurrence identifier of the series
+ *     responses:
+ *       200:
+ *         description: Recurrence cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cancelledCount:
+ *                       type: integer
+ *                       description: Number of upcoming trainings deleted
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+trainingRoutes.delete("/recurrence/:recurrenceId", (req, res) =>
+  getTrainingController(req).cancelRecurrence(req, res)
+);
+
+/**
+ * @swagger
  * /training/{id}:
  *   put:
  *     summary: Update a training by ID

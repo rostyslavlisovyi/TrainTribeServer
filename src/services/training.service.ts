@@ -360,6 +360,36 @@ export class TrainingService extends BaseService<ITraining> {
     return model;
   }
 
+  async cancelRecurrence(recurrenceId: string, userId: string) {
+    if (!recurrenceId) {
+      throw new BadRequestError("Recurrence id is required");
+    }
+
+    const master = await this.model.findOne({
+      "recurrence.recurrenceId": recurrenceId,
+      creator: userId
+    });
+
+    if (!master) {
+      throw new NotFoundError("Recurring training");
+    }
+
+    const now = new Date();
+    const deleteResult = await this.model.deleteMany({
+      "recurrence.recurrenceId": recurrenceId,
+      _id: { $ne: master._id },
+      date: { $gt: now }
+    });
+
+    master.isRecurring = false;
+    master.recurrence = undefined;
+    await master.save();
+
+    return {
+      cancelledCount: deleteResult.deletedCount ?? 0
+    };
+  }
+
   async removeLike(id: string, userId: string) {
     const model = this.model.findByIdAndUpdate(
       id,

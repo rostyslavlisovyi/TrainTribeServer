@@ -223,6 +223,20 @@ export class TrainingController extends BaseController<
     }
   }
 
+  async cancelRecurrence(req: Request, res: Response) {
+    try {
+      const { recurrenceId } = req.params;
+      const user = await this.getAuthUser();
+      const result = await this.service.cancelRecurrence(
+        recurrenceId,
+        user._id.toString()
+      );
+      res.status(200).json(new BaseResponse(result));
+    } catch (error) {
+      handleError(res, req, error);
+    }
+  }
+
   async replyComment(req: Request, res: Response) {
     try {
       const { id, commentId } = req.params;
