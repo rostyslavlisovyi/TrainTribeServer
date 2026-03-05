@@ -447,4 +447,68 @@ describe("TrainingService.createWithRecurrence", () => {
       occurrences.every((training) => training.date.getDate() === 20)
     ).toBe(true);
   });
+
+  it("handles weekly recurrence crossing months", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-weekly",
+      email: "recurring-weekly@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-30T07:00:00.000Z"); // Tuesday
+    const endDate = new Date("2024-02-15T07:00:00.000Z");
+
+    const { occurrences } = await service.createWithRecurrence({
+      title: "Weekly Run",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: startDate,
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      isRecurring: true,
+      recurrence: {
+        frequency: "weekly",
+        interval: 1,
+        daysOfWeek: [2],
+        endDate
+      }
+    });
+
+    expect(occurrences.length).toBeGreaterThanOrEqual(2);
+    expect(
+      occurrences.every((training) => training.date.getDay() === 2)
+    ).toBe(true);
+  });
+
+  it("clips monthly recurrence when day exceeds month length", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-monthly-edge",
+      email: "recurring-monthly-edge@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-31T07:00:00.000Z");
+    const endDate = new Date("2024-03-31T07:00:00.000Z");
+
+    const { occurrences } = await service.createWithRecurrence({
+      title: "Monthly Edge Run",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: startDate,
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      isRecurring: true,
+      recurrence: {
+        frequency: "monthly",
+        interval: 1,
+        dayOfMonth: 31,
+        endDate
+      }
+    });
+
+    expect(occurrences.length).toBeGreaterThanOrEqual(1);
+    expect(occurrences.every((training) => training.date.getDate() === 31)).toBe(
+      true
+    );
+  });
 });
