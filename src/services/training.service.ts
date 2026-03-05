@@ -42,7 +42,13 @@ export class TrainingService extends BaseService<ITraining> {
 
   async createWithRecurrence(
     payload: Partial<ITraining> & {
-      recurrence?: { daysOfWeek?: number[]; endDate?: Date | string };
+      recurrence?: {
+        frequency?: "daily" | "weekly" | "monthly";
+        interval?: number;
+        daysOfWeek?: number[];
+        dayOfMonth?: number;
+        endDate?: Date | string;
+      };
       isRecurring?: boolean;
     }
   ): Promise<{ master: ITraining; occurrences: ITraining[] } | { master: ITraining; occurrences: [] }> {
@@ -56,7 +62,13 @@ export class TrainingService extends BaseService<ITraining> {
       throw new BadRequestError("A valid start date is required for recurring trainings");
     }
 
-    const { daysOfWeek = [], endDate } = payload.recurrence;
+    const {
+      daysOfWeek = [],
+      endDate,
+      frequency = "weekly",
+      interval = 1,
+      dayOfMonth
+    } = payload.recurrence;
     if (!daysOfWeek.length) {
       throw new BadRequestError("Select at least one weekday for recurrence");
     }
@@ -87,12 +99,18 @@ export class TrainingService extends BaseService<ITraining> {
       new Set([...daysOfWeek, baseDate.getDay()])
     );
 
+    const normalizedInterval = interval > 0 ? interval : 1;
+    const sanitizedDayOfMonth = dayOfMonth;
+
     const basePayload: Partial<ITraining> = {
       ...payload,
       isRecurring: true,
       recurrence: {
         recurrenceId,
+        frequency,
+        interval: normalizedInterval,
         daysOfWeek: uniqueDays,
+        dayOfMonth: sanitizedDayOfMonth,
         endDate: normalizedEndDate
       }
     };

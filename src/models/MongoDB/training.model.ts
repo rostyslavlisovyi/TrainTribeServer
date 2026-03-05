@@ -68,7 +68,14 @@ const TrainingSchema = new Schema<ITraining>(
     isRecurring: { type: Boolean, default: false },
     recurrence: {
       recurrenceId: { type: String },
+      frequency: {
+        type: String,
+        enum: ["daily", "weekly", "monthly"],
+        default: "weekly"
+      },
+      interval: { type: Number, min: 1, default: 1 },
       daysOfWeek: [{ type: Number, min: 0, max: 6 }],
+      dayOfMonth: { type: Number, min: 1, max: 31 },
       endDate: { type: Date }
     }
   },

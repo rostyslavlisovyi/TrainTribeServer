@@ -7,9 +7,14 @@ import {
 import { IGeoLocation } from "./geoLocation.interface.js";
 import { IGeocodeAddress, ITrainingParticipant } from "./index.js";
 
+export type RecurrenceFrequency = "daily" | "weekly" | "monthly";
+
 export interface TrainingRecurrence {
   recurrenceId: string;
-  daysOfWeek: number[];
+  frequency: RecurrenceFrequency;
+  interval: number;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
   endDate: Date;
 }
 
