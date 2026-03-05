@@ -1,4 +1,6 @@
 import express, { Request, Router } from "express";
+import { handleValidationErrors } from "../middlewares/index.js";
+import { validateTrainingRecurrence } from "../validators/index.js";
 
 function getTrainingController(req: Request) {
   if (!req.context) {
@@ -226,8 +228,11 @@ trainingRoutes.get("/:id", (req, res) =>
  es/InternalServerError'
 
  */
-trainingRoutes.post("/", (req, res) =>
-  getTrainingController(req).create(req, res)
+trainingRoutes.post(
+  "/",
+  validateTrainingRecurrence,
+  handleValidationErrors,
+  (req, res) => getTrainingController(req).create(req, res)
 );
 
 /**
