@@ -183,6 +183,19 @@ trainingRoutes.get("/:id", (req, res) =>
  *                       minimum: 0
  *                       maximum: 6
  *                     description: Weekdays to repeat on (0 = Sunday)
+ *                   frequency:
+ *                     type: string
+ *                     enum: [daily, weekly, monthly]
+ *                     description: Defines how often the training repeats
+ *                   interval:
+ *                     type: integer
+ *                     minimum: 1
+ *                     description: Number of frequency units between occurrences (e.g. every 2 weeks)
+ *                   dayOfMonth:
+ *                     type: integer
+ *                     minimum: 1
+ *                     maximum: 31
+ *                     description: Day of the month for monthly recurrences
  *                   endDate:
  *                     type: string
  *                     format: date-time

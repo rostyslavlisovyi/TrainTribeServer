@@ -385,4 +385,66 @@ describe("TrainingService.createWithRecurrence", () => {
     expect(master).toBeDefined();
     expect(occurrences).toHaveLength(0);
   });
+
+  it("supports daily recurrence with interval", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-daily",
+      email: "recurring-daily@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-01T07:00:00.000Z");
+    const endDate = new Date("2024-01-10T07:00:00.000Z");
+
+    const { occurrences } = await service.createWithRecurrence({
+      title: "Daily Run",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: startDate,
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      isRecurring: true,
+      recurrence: {
+        frequency: "daily",
+        interval: 2,
+        endDate
+      }
+    });
+
+    expect(occurrences.length).toBeGreaterThan(0);
+    const lastOccurrence = occurrences[occurrences.length - 1];
+    expect(lastOccurrence.date.getTime()).toBeLessThanOrEqual(endDate.getTime());
+  });
+
+  it("supports monthly recurrence with custom day", async () => {
+    const creator = await UserModel.create({
+      authId: "recurring-monthly",
+      email: "recurring-monthly@test.com"
+    });
+
+    const service = new TrainingService();
+    const startDate = new Date("2024-01-15T07:00:00.000Z");
+    const endDate = new Date("2024-04-30T07:00:00.000Z");
+
+    const { occurrences } = await service.createWithRecurrence({
+      title: "Monthly Run",
+      creator: creator._id,
+      sport: "RUNNING",
+      date: startDate,
+      address: trainingAddress(),
+      location: { type: "Point", coordinates: [0, 0] },
+      isRecurring: true,
+      recurrence: {
+        frequency: "monthly",
+        interval: 1,
+        dayOfMonth: 20,
+        endDate
+      }
+    });
+
+    expect(occurrences.length).toBeGreaterThanOrEqual(2);
+    expect(
+      occurrences.every((training) => training.date.getDate() === 20)
+    ).toBe(true);
+  });
 });

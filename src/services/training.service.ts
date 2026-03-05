@@ -63,15 +63,12 @@ export class TrainingService extends BaseService<ITraining> {
     }
 
     const {
-      daysOfWeek = [],
+      daysOfWeek,
       endDate,
       frequency = "weekly",
       interval = 1,
       dayOfMonth
     } = payload.recurrence;
-    if (!daysOfWeek.length) {
-      throw new BadRequestError("Select at least one weekday for recurrence");
-    }
 
     if (!endDate) {
       throw new BadRequestError("Recurrence end date is required");
@@ -95,12 +92,23 @@ export class TrainingService extends BaseService<ITraining> {
     }
 
     const recurrenceId = new mongoose.Types.ObjectId().toString();
-    const uniqueDays = Array.from(
-      new Set([...daysOfWeek, baseDate.getDay()])
-    );
-
     const normalizedInterval = interval > 0 ? interval : 1;
-    const sanitizedDayOfMonth = dayOfMonth;
+
+    let normalizedDays: number[] | undefined = daysOfWeek
+      ? Array.from(new Set(daysOfWeek))
+      : undefined;
+    if (frequency === "weekly") {
+      if (!normalizedDays || normalizedDays.length === 0) {
+        normalizedDays = [baseDate.getDay()];
+      }
+    } else {
+      normalizedDays = undefined;
+    }
+
+    const sanitizedDayOfMonth =
+      frequency === "monthly"
+        ? dayOfMonth ?? baseDate.getDate()
+        : undefined;
 
     const basePayload: Partial<ITraining> = {
       ...payload,
@@ -109,7 +117,7 @@ export class TrainingService extends BaseService<ITraining> {
         recurrenceId,
         frequency,
         interval: normalizedInterval,
-        daysOfWeek: uniqueDays,
+        daysOfWeek: normalizedDays,
         dayOfMonth: sanitizedDayOfMonth,
         endDate: normalizedEndDate
       }
@@ -118,11 +126,14 @@ export class TrainingService extends BaseService<ITraining> {
     const master = await this.create(basePayload);
 
     const occurrences: ITraining[] = [];
-    const timestamps = this.generateOccurrenceDates(
-      baseDate,
-      uniqueDays,
-      normalizedEndDate
-    );
+    const timestamps = this.generateOccurrenceDates({
+      startDate: baseDate,
+      endDate: normalizedEndDate,
+      frequency,
+      interval: normalizedInterval,
+      daysOfWeek: normalizedDays,
+      dayOfMonth: sanitizedDayOfMonth
+    });
 
     for (const occurrenceDate of timestamps) {
       if (occurrenceDate.getTime() === baseDate.getTime()) {
@@ -577,20 +588,59 @@ export class TrainingService extends BaseService<ITraining> {
     return result as unknown as ITraining;
   }
 
-  private generateOccurrenceDates(
-    startDate: Date,
-    daysOfWeek: number[],
-    endDate: Date
-  ): Date[] {
+  private generateOccurrenceDates({
+    startDate,
+    endDate,
+    frequency,
+    interval,
+    daysOfWeek,
+    dayOfMonth
+  }: {
+    startDate: Date;
+    endDate: Date;
+    frequency: "daily" | "weekly" | "monthly";
+    interval: number;
+    daysOfWeek?: number[];
+    dayOfMonth?: number;
+  }): Date[] {
     const occurrences: Date[] = [];
-    const cursor = new Date(startDate);
 
-    while (cursor.getTime() <= endDate.getTime()) {
-      if (daysOfWeek.includes(cursor.getDay())) {
-        const instance = new Date(cursor);
-        occurrences.push(instance);
+    if (frequency === "daily") {
+      const cursor = new Date(startDate);
+      while (cursor.getTime() <= endDate.getTime()) {
+        occurrences.push(new Date(cursor));
+        cursor.setDate(cursor.getDate() + interval);
       }
-      cursor.setDate(cursor.getDate() + 1);
+      return occurrences;
+    }
+
+    if (frequency === "weekly") {
+      const daySet = new Set(daysOfWeek ?? [startDate.getDay()]);
+      const cursor = new Date(startDate);
+      while (cursor.getTime() <= endDate.getTime()) {
+        const weeksBetween = Math.floor(
+          (cursor.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)
+        );
+        if (weeksBetween % interval === 0 && daySet.has(cursor.getDay())) {
+          occurrences.push(new Date(cursor));
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return occurrences;
+    }
+
+    // monthly
+    const normalizedDay = dayOfMonth ?? startDate.getDate();
+    let cursor = new Date(startDate);
+    cursor.setDate(normalizedDay);
+    while (cursor.getTime() <= endDate.getTime()) {
+      if (cursor.getTime() >= startDate.getTime()) {
+        occurrences.push(new Date(cursor));
+      }
+      const next = new Date(cursor);
+      next.setMonth(next.getMonth() + interval);
+      next.setDate(normalizedDay);
+      cursor = next;
     }
 
     return occurrences;
